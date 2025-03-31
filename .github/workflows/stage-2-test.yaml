@@ -40,6 +40,12 @@ jobs:
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
+        with:
+          submodules: "true"
+      - name: "Setup dotnet"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.x"
       - name: "Run unit test suite"
         run: |
           make test-unit
