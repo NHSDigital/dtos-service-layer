@@ -3,7 +3,7 @@
 [![CI/CD Pull Request](https://github.com/NHSDigital/dtos-service-layer/actions/workflows/cicd-1-pull-request.yaml/badge.svg)](https://github.com/nhs-england-tools/repository-template/actions/workflows/cicd-1-pull-request.yaml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=NHSDigital_dtos-service-layer&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=NHSDigital_dtos-service-layer)
 
-Service Layer 
+Service Layer
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@ Service Layer
   - [Configuration](#configuration)
   - [Usage](#usage)
     - [Testing](#testing)
-  - [Contact](#contact)
+  - [Contacts](#contacts)
   - [Licence](#licence)
 
 ## Setup
@@ -54,7 +54,6 @@ The following software packages, or their equivalents, are expected to be instal
 
 Rename the `.env.example` file to `.env` and populate the missing environment variables which are listed at the top of the file.
 
-
 ## Usage
 
 You can run the Azure functions with `make all`
@@ -63,7 +62,7 @@ You can run the Azure functions with `make all`
 
 The full test suite can be ran with `make test`.
 
-Unit tests can be ran with `make test-unit` 
+Unit tests can be ran with `make test-unit`
 
 ## Contacts
 
