@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Azure.Messaging;
 using Azure.Messaging.EventGrid;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using ServiceLayer.API.Models;
 using ServiceLayer.API.Shared;
@@ -14,17 +14,18 @@ namespace ServiceLayer.API.Functions;
 public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPublisherClient eventGridPublisherClient)
 {
     [Function("CreateEpisodeEvent")]
-    public async Task<IActionResult> CreateEpisodeEvent([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "bsselect/episodes")] HttpRequest req)
+    public async Task<IActionResult> CreateEpisodeEvent([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "bsselect/episodes")] HttpRequestData req)
     {
-        BSSelectEpisodeEvent? bssEpisodeEvent;
+        BSSelectEpisode? bssEpisodeEvent;
 
         try
         {
-            bssEpisodeEvent = await JsonSerializer.DeserializeAsync<BSSelectEpisodeEvent>(req.Body);
+            bssEpisodeEvent = await JsonSerializer.DeserializeAsync<BSSelectEpisode>(req.Body);
 
             if (bssEpisodeEvent == null)
             {
-                return new BadRequestObjectResult("Deserialization resulted in null.");
+                logger.LogError("Deserialization returned null");
+                return new BadRequestObjectResult("Deserialization returned null");
             }
 
             var validationResults = new List<ValidationResult>();
@@ -42,16 +43,17 @@ public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPubli
         {
             var createPathwayEnrolment = new CreatePathwayParticipantDto
             {
-                NhsNumber = bssEpisodeEvent.NhsNumber,
-                DOB = bssEpisodeEvent.DateOfBirth,
-                Name = $"{bssEpisodeEvent.FirstGivenName} {bssEpisodeEvent.FamilyName}",
+                PathwayTypeId = new Guid("11111111-1111-1111-1111-111111111113"),
+                PathwayTypeName = "Breast Screening Routine",
                 ScreeningName = "Breast Screening",
-                PathwayTypeName = "Breast Screening Routine"
+                NhsNumber = bssEpisodeEvent.NhsNumber!,
+                DOB = (DateOnly)bssEpisodeEvent.DateOfBirth!,
+                Name = $"{bssEpisodeEvent.FirstGivenName} {bssEpisodeEvent.FamilyName}",
             };
 
             var cloudEvent = new CloudEvent(
                 "ServiceLayer",
-                "CreateBrestScreeningPathwayEnrolment",
+                "CreatePathwayEnrolment",
                 createPathwayEnrolment
             );
 
