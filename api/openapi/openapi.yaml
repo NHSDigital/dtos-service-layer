@@ -1,0 +1,68 @@
+openapi: 3.0.3
+info:
+  title: ServiceLayer API
+  version: 1.0.0
+  description: API used to ingest episodes from screening services into NSP
+
+paths:
+
+  /bsselect/episodes/ingress:
+    post:
+      summary: BS Select Episode Ingress
+      description: Validates the incoming BS Select episode and enqueues it for further processing within the NSP
+      operationId: BS Select Episode Ingress
+      tags:
+        - Episodes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BSSelectEpisode"
+      responses:
+        '200':
+          description: Episode accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BSSelectEpisode"
+        '400':
+          description: Bad request. Supplied episode payload invalid.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "nhs_number is required"
+        '500':
+          description: Internal server error. This indicates an unexpected failure in the service.
+
+components:
+  schemas:
+    BSSelectEpisode:
+      type: object
+      required:
+        - episode_id
+        - nhs_number
+        - date_of_birth
+        - first_given_name
+        - family_name
+      properties:
+        episode_id:
+          type: string
+          description: Unique identifier for the Episode
+        nhs_number:
+          type: string
+          pattern: '^\d{10}$'
+          description: NHS Number (exactly 10 digits)
+        date_of_birth:
+          type: string
+          format: date
+          description: Date of birth of the Participant
+        first_given_name:
+          type: string
+          maxLength: 100
+          description: First name of the Participant
+        family_name:
+          type: string
+          maxLength: 100
+          description: Surname of the Participant
