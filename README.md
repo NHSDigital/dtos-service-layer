@@ -14,6 +14,8 @@ Service Layer
   - [Configuration](#configuration)
   - [Usage](#usage)
     - [Testing](#testing)
+  - [OpenAPI Specifications](#openapi-specifications)
+  - [API Request Collection](#api-request-collection)
   - [Contacts](#contacts)
   - [Licence](#licence)
 
@@ -63,6 +65,18 @@ You can run the Azure functions with `make all`
 The full test suite can be ran with `make test`.
 
 Unit tests can be ran with `make test-unit`
+
+## OpenAPI Specifications
+
+The following OpenAPI Specification exist for Service Layer:
+
+- Service Layer API - [Raw](https://raw.githubusercontent.com/NHSDigital/dtos-service-layer/refs/heads/main/api/openapi/openapi.yaml) / [Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/NHSDigital/dtos-service-layer/refs/heads/main/api/openapi/openapi.yaml)
+
+## API Request Collection
+
+An API request collection for Service Layer exists in HAR format. It can be imported into Postman or Insomnia.
+
+- [Collection folder](api/api-request-collection)
 
 ## Contacts
 
