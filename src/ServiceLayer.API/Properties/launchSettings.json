@@ -2,7 +2,7 @@
   "profiles": {
     "ServiceLayer.API": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7065",
+      "commandLineArgs": "--port 7001",
       "launchBrowser": false
     }
   }
