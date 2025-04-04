@@ -28,7 +28,6 @@ public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPubli
                 return new BadRequestObjectResult("Deserialization returned null");
             }
 
-            var validationResults = new List<ValidationResult>();
             var validationContext = new ValidationContext(bssEpisodeEvent);
 
             Validator.ValidateObject(bssEpisodeEvent, validationContext, true);
