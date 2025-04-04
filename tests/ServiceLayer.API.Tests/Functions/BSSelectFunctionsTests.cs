@@ -39,7 +39,7 @@ public class BSSelectFunctionsTests
         _mockEventGridPublisherClient.Setup(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(mockResponse);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         Assert.IsType<OkResult>(response);
@@ -53,7 +53,7 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(null);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
@@ -75,11 +75,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The episode_id is required", result.Value);
+        Assert.Equal("episode_id is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -101,11 +101,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The episode_id is required", result.Value);
+        Assert.Equal("episode_id is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -123,11 +123,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The nhs_number is required", result.Value);
+        Assert.Equal("nhs_number is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -149,11 +149,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The nhs_number is required", result.Value);
+        Assert.Equal("nhs_number is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -175,11 +175,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The nhs_number must be exactly 10 digits", result.Value);
+        Assert.Equal("nhs_number must be exactly 10 digits", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -197,11 +197,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The date_of_birth is required", result.Value);
+        Assert.Equal("date_of_birth is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -221,11 +221,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The date_of_birth is required", result.Value);
+        Assert.Equal("date_of_birth is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -243,11 +243,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The first_given_name is required", result.Value);
+        Assert.Equal("first_given_name is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -269,11 +269,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The first_given_name is required", result.Value);
+        Assert.Equal("first_given_name is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -291,11 +291,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The family_name is required", result.Value);
+        Assert.Equal("family_name is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -317,11 +317,11 @@ public class BSSelectFunctionsTests
         var request = _setupRequest.CreateMockHttpRequest(episode);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
-        Assert.Equal("The family_name is required", result.Value);
+        Assert.Equal("family_name is required", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
@@ -342,7 +342,7 @@ public class BSSelectFunctionsTests
         _mockEventGridPublisherClient.Setup(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(mockResponse);
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<StatusCodeResult>(response);
@@ -368,7 +368,7 @@ public class BSSelectFunctionsTests
             .ThrowsAsync(new RequestFailedException("Failed to send event to Event Grid"));
 
         // Act
-        var response = await _functions.CreateEpisodeEvent(request);
+        var response = await _functions.IngressEpisode(request);
 
         // Assert
         var result = Assert.IsType<StatusCodeResult>(response);

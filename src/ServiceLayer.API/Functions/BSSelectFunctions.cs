@@ -13,8 +13,8 @@ namespace ServiceLayer.API.Functions;
 
 public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPublisherClient eventGridPublisherClient)
 {
-    [Function("CreateEpisodeEvent")]
-    public async Task<IActionResult> CreateEpisodeEvent([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "bsselect/episodes")] HttpRequestData req)
+    [Function("BSSelectIngressEpisode")]
+    public async Task<IActionResult> IngressEpisode([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "bsselect/episodes/ingress")] HttpRequestData req)
     {
         BSSelectEpisode? bssEpisodeEvent;
 
@@ -53,7 +53,7 @@ public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPubli
 
             var cloudEvent = new CloudEvent(
                 "ServiceLayer",
-                "CreatePathwayEnrolment",
+                "EpisodeEvent",
                 createPathwayEnrolment
             );
 
@@ -71,7 +71,7 @@ public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPubli
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to send CreateBrestScreeningPathwayEnrolment event");
+            logger.LogError(ex, "Failed to send event to Event Grid");
             return new StatusCodeResult(500);
         }
     }
