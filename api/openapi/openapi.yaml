@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: ServiceLayer API
+  title: Service Layer API
   version: 1.0.0
   description: API used to ingest episodes from screening services into NSP
 
