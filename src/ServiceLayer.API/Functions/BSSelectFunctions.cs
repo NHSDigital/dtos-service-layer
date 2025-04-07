@@ -62,7 +62,7 @@ public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPubli
             if (response.IsError)
             {
                 logger.LogError(
-                    "Failed to send event to Event Grid.\nSource: {source}\nType: {type}\n Response status code: {code}",
+                    "Failed to send event to Event Grid.\nSource: {Source}\nType: {Type}\n Response status code: {Status}",
                     cloudEvent.Source, cloudEvent.Type, response.Status);
                 return new StatusCodeResult(500);
             }
