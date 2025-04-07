@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using ServiceLayer.API.Shared;
 
 namespace ServiceLayer.API.Models;
 
@@ -16,7 +17,8 @@ public class BSSelectEpisode
 
     [JsonPropertyName("date_of_birth")]
     [Required(ErrorMessage = "date_of_birth is required")]
-    public DateOnly? DateOfBirth { get; set; }
+    [ValidDateOnly(ErrorMessage = "date_of_birth is invalid")]
+    public string? DateOfBirth { get; set; }
 
     [JsonPropertyName("first_given_name")]
     [Required(ErrorMessage = "first_given_name is required")]

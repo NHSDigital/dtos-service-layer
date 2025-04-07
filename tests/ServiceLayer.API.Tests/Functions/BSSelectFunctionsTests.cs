@@ -207,6 +207,8 @@ public class BSSelectFunctionsTests
 
     [Theory]
     [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
     public async Task CreateEpisodeEvent_ShouldReturnBadRequest_WhenDateOfBirthIsEmptyValue(string? dateOfBirth)
     {
         // Arrange
@@ -226,6 +228,31 @@ public class BSSelectFunctionsTests
         // Assert
         var result = Assert.IsType<BadRequestObjectResult>(response);
         Assert.Equal("date_of_birth is required", result.Value);
+        _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
+    }
+
+    [Theory]
+    [InlineData("ABC")]
+    [InlineData("123")]
+    public async Task CreateEpisodeEvent_ShouldReturnBadRequest_WhenDateOfBirthIsInvalidValue(string? dateOfBirth)
+    {
+        // Arrange
+        var episode = new
+        {
+            episode_id = "123",
+            nhs_number = "9990000000",
+            date_of_birth = dateOfBirth,
+            first_given_name = "Test",
+            family_name = "User",
+        };
+        var request = _setupRequest.CreateMockHttpRequest(episode);
+
+        // Act
+        var response = await _functions.IngressEpisode(request);
+
+        // Assert
+        var result = Assert.IsType<BadRequestObjectResult>(response);
+        Assert.Equal("date_of_birth is invalid", result.Value);
         _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 

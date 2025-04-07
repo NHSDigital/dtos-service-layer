@@ -46,7 +46,7 @@ public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPubli
                 PathwayTypeName = "Breast Screening Routine",
                 ScreeningName = "Breast Screening",
                 NhsNumber = bssEpisodeEvent.NhsNumber!,
-                DOB = (DateOnly)bssEpisodeEvent.DateOfBirth!,
+                DOB = DateOnly.Parse(bssEpisodeEvent.DateOfBirth!),
                 Name = $"{bssEpisodeEvent.FirstGivenName} {bssEpisodeEvent.FamilyName}",
             };
 
