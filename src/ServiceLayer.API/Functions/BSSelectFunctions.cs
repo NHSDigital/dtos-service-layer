@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Text.Json;
 using Azure.Messaging;
 using Azure.Messaging.EventGrid;
@@ -46,7 +47,7 @@ public class BSSelectFunctions(ILogger<BSSelectFunctions> logger, EventGridPubli
                 PathwayTypeName = "Breast Screening Routine",
                 ScreeningName = "Breast Screening",
                 NhsNumber = bssEpisodeEvent.NhsNumber!,
-                DOB = DateOnly.Parse(bssEpisodeEvent.DateOfBirth!),
+                DOB = DateOnly.Parse(bssEpisodeEvent.DateOfBirth!, CultureInfo.CurrentCulture),
                 Name = $"{bssEpisodeEvent.FirstGivenName} {bssEpisodeEvent.FamilyName}",
             };
 
