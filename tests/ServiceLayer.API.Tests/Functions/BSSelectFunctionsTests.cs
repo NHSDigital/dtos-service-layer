@@ -1,4 +1,5 @@
 ﻿using System.Dynamic;
+using System.Globalization;
 using Azure;
 using Azure.Messaging;
 using Azure.Messaging.EventGrid;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ServiceLayer.API.Functions;
+using ServiceLayer.API.Shared;
 using ServiceLayer.API.Tests.Utils;
 
 namespace ServiceLayer.API.Tests.Functions;
@@ -45,14 +47,34 @@ public class BSSelectFunctionsTests
         // Arrange
         var request = _setupRequest.CreateMockHttpRequest(_episode);
         var mockResponse = Mock.Of<Response>(r => r.IsError == false);
-        _mockEventGridPublisherClient.Setup(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>())).ReturnsAsync(mockResponse);
+        CloudEvent? capturedEvent = null;
+        _mockEventGridPublisherClient.Setup(x => x.SendEventAsync(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<CloudEvent, CancellationToken>((ce, _) =>
+            {
+                capturedEvent = ce;
+            })
+            .ReturnsAsync(mockResponse);
 
         // Act
         var response = await _functions.IngressEpisode(request);
 
         // Assert
         Assert.IsType<OkResult>(response);
-        _mockEventGridPublisherClient.Verify(x => x.SendEventAsync(It.IsAny<CloudEvent>(), default), Times.Once());
+        _mockEventGridPublisherClient.Verify(x =>
+            x.SendEventAsync(It.Is<CloudEvent>(ce =>
+                ce.Type == "EpisodeEvent" &&
+                ce.Source == "ServiceLayer" &&
+                ce.Data != null
+            ), default), Times.Once());
+
+        var data = capturedEvent!.Data!.ToObjectFromJson<CreatePathwayParticipantDto>();
+        Assert.NotNull(data);
+        Assert.Equal(new Guid("11111111-1111-1111-1111-111111111113"), data.PathwayTypeId);
+        Assert.Equal("Breast Screening Routine", data.PathwayTypeName);
+        Assert.Equal("Breast Screening", data.ScreeningName);
+        Assert.Equal(_episode.nhs_number, data.NhsNumber);
+        Assert.Equal(DateOnly.Parse(_episode.date_of_birth, CultureInfo.CurrentCulture), data.DOB);
+        Assert.Equal($"{_episode.first_given_name} {_episode.family_name}", data.Name);
     }
 
     [Fact]
