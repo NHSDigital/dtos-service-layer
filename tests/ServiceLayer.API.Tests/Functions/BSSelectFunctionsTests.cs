@@ -145,15 +145,8 @@ public class BSSelectFunctionsTests
     public async Task CreateEpisodeEvent_ShouldReturnBadRequest_WhenNhsNumberIsInvalidValue(string? nhsNumber)
     {
         // Arrange
-        var episode = new
-        {
-            episode_id = "123",
-            nhs_number = nhsNumber,
-            date_of_birth = "1970-01-01",
-            first_given_name = "Test",
-            family_name = "User",
-        };
-        var request = _setupRequest.CreateMockHttpRequest(episode);
+        _episode.nhs_number = nhsNumber;
+        var request = _setupRequest.CreateMockHttpRequest(_episode);
 
         // Act
         var response = await _functions.IngressEpisode(request);
@@ -170,15 +163,8 @@ public class BSSelectFunctionsTests
     public async Task CreateEpisodeEvent_ShouldReturnBadRequest_WhenDateOfBirthIsInvalidValue(string? dateOfBirth)
     {
         // Arrange
-        var episode = new
-        {
-            episode_id = "123",
-            nhs_number = "9990000000",
-            date_of_birth = dateOfBirth,
-            first_given_name = "Test",
-            family_name = "User",
-        };
-        var request = _setupRequest.CreateMockHttpRequest(episode);
+        _episode.date_of_birth = dateOfBirth;
+        var request = _setupRequest.CreateMockHttpRequest(_episode);
 
         // Act
         var response = await _functions.IngressEpisode(request);
