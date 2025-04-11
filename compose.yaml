@@ -1,9 +1,9 @@
 services:
-  ### ✅ API Backend (Azure Functions in .NET 9) ###
+  ### ✅ API (Azure Functions in .NET 9) ###
   api:
     container_name: "api"
     build:
-      context: ./src/api
+      context: ./src
       dockerfile: ServiceLayer.API/Dockerfile
     platform: linux/amd64
     restart: always
@@ -15,7 +15,6 @@ services:
       - "${API_PORT}:80"
     networks:
       - backend
-
 
 networks:
   backend:
