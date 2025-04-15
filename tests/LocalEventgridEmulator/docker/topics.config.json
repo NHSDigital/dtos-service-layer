@@ -1,0 +1,19 @@
+{
+  "topics": [
+    {
+      "name": "test-topic",
+      "type": "CloudEvent",
+      "port": 60201,
+      "key": "TheLocal+DevelopmentKey=",
+      "subscribers": {
+        "http": [
+          {
+            "name": "TestEventGridSubscriber",
+            "endpoint": "http://host.docker.internal:7010/runtime/webhooks/EventGrid?functionName=EventHandler",
+            "disableValidation": true
+          }
+        ]
+      }
+    }
+  ]
+}

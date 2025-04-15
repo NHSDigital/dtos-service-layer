@@ -1,0 +1,31 @@
+services:
+  azureventgridsimulator:
+    image: acrukshubdevparman.azurecr.io/azureeventgridsimulator:latest
+    container_name: azureeventgridsimulator-dev
+    ports:
+      # add a port mapping for each topic in the settings file
+      - "60201:60201"
+    volumes:
+      # map a local folder './docker' to a read-only folder '/aegs' in the container
+      # this allows us to access files (e.g. settings or certificates) from within the container
+      - ./docker:/aegs:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # specify cert details note: can be generated like so:
+      # dotnet dev-certs https --export-path ./docker/azureEventGridSimulator.pfx --password Y0urSup3rCrypt1cPa55w0rd! --trust
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/aegs/azureEventGridSimulator.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=Y0urSup3rCrypt1cPa55w0rd!
+
+      # logging configuration
+      - AEGS_Serilog__MinimumLevel__Default=Verbose
+
+      # you could also define topics/subscribers via via a configfile
+      - AEGS_ConfigFile=/aegs/topics.config.json
+
+    #env_file:
+      # you can also define environment variables via a file
+      #- ./my.env
+
+volumes:
+  docker:
+  cosmosdb-data:
