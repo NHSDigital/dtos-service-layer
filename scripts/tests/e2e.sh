@@ -1,25 +1,25 @@
 #!/bin/bash
 
-# Start the Service Layer in background
-cd src/ServiceLayer.API/
-func start &
-cd ../..
+# Start the Service Layer in the background
+(
+  cd src/ServiceLayer.API/ && func start &
+)
 
 # Start the LocalEventgridEmulator in detached mode
-cd tests/LocalEventgridEmulator
-docker-compose up -d
-cd ../..
+docker-compose -f tests/LocalEventgridEmulator/docker-compose.yml up -d
 
-# Start the TestEventGridSubscriber in background
-cd tests/e2e/TestEventGridSubscriber
-func start &
-cd ..
+# Start the TestEventGridSubscriber in the background
+(
+  cd tests/e2e/TestEventGridSubscriber && func start &
+)
 
-# Optional: Wait a few seconds to let services start
+# Wait a few seconds to let services start
 sleep 15
 
 # Run the Playwright test
-npm test
+(
+  cd tests/e2e && npm test
+)
 
 echo "Killing all background jobs"
 kill $(jobs -p)
