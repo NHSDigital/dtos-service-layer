@@ -34,7 +34,7 @@ services:
   azurite:
     container_name: "azurite"
     build:
-      context: ./azurite
+      context: ./SetUp/Azurite
     restart: always
     ports:
       - "${AZURITE_BLOB_PORT:-10000}:10000"
@@ -43,11 +43,11 @@ services:
     volumes:
       - azurite-data:/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:10000/devstoreaccount1?comp=list || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+        test: ["CMD", "curl", "-s", "-f", "-o", "/dev/null", "http://localhost:10000/"]
+        interval: 15s
+        timeout: 10s
+        retries: 5
+        start_period: 30s
     networks:
       - backend
 
@@ -55,7 +55,7 @@ services:
   db:
     container_name: "db"
     build:
-      context: ./database
+      context: ./SetUp/Database
     platform: linux/amd64
     restart: always
     environment:
