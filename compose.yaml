@@ -24,7 +24,7 @@ services:
       start_period: 40s
     depends_on:
       azurite:
-        condition: service_started
+        condition: service_healthy
       # db:
       #   condition: service_healthy
     networks:
@@ -41,11 +41,11 @@ services:
       - "${AZURITE_QUEUE_PORT:-10001}:10001"
       - "${AZURITE_TABLE_PORT:-10002}:10002"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:10000/devstoreaccount1?comp=list"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
+      test: [ "CMD-SHELL", "/bin/sh -c 'nc -z 127.0.0.1 10000 || exit 1'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     volumes:
       - azurite-data:/data
     networks:
