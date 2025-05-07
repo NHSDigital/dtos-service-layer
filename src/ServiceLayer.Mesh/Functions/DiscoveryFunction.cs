@@ -12,7 +12,6 @@ namespace ServiceLayer.Mesh.Functions
     public class DiscoveryFunction
     {
         private readonly ILogger _logger;
-
         private readonly IMeshInboxService _meshInboxService;
         private readonly ServiceLayerDbContext _serviceLayerDbContext;
 
@@ -28,7 +27,10 @@ namespace ServiceLayer.Mesh.Functions
         {
             _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            var response = await _meshInboxService.GetMessagesAsync(Environment.GetEnvironmentVariable("MailboxId"));
+            var mailboxId = Environment.GetEnvironmentVariable("MailboxId")
+                ?? throw new InvalidOperationException($"Environment variable 'MailboxId' is not set or is empty.");
+
+            var response = await _meshInboxService.GetMessagesAsync(mailboxId);
 
             if (response.Response.Messages.Count() > 500)
             {
@@ -47,15 +49,16 @@ namespace ServiceLayer.Mesh.Functions
                     {
                         FileId = messageId,
                         FileType = "",
-                        MailboxId = Environment.GetEnvironmentVariable("MailboxId"),
+                        MailboxId = mailboxId,
                         Status = "Discovered"
                     };
 
-                    _serviceLayerDbContext.MeshFiles.Add(meshFile);
+                    await _serviceLayerDbContext.MeshFiles.AddAsync(meshFile);
+                    await _serviceLayerDbContext.SaveChangesAsync();
 
                     QueueClient queueClient;
 
-                    if (Environment.GetEnvironmentVariable("ASPNETCORE_ENV") == "Dev")
+                    if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
                     {
                         queueClient = new QueueClient("UseDevelopmentStorage=true", "my-local-queue");
                     }
