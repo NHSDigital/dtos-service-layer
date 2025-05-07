@@ -1,14 +1,22 @@
-FROM mcr.microsoft.com/mssql/server:2022-latest
+# Use Debian base
+FROM debian:bullseye-slim
 
-USER root
+# Install tools
+RUN apt-get update && \
+    apt-get install -y curl apt-transport-https gnupg2 && \
+    curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
+    curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+    apt-get update && \
+    ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc && \
+    apt-get clean
 
-# Copy both files to the container
-COPY ./init-database.sh /SetUp/Database/init-database.sh
-COPY ./InitialTestData.sql /SetUp/Database/InitialTestData.sql
+# Add tools to PATH
+ENV PATH="/opt/mssql-tools/bin:$PATH"
 
-# Make the script executable
-RUN chmod +x /SetUp/Database/init-database.sh
+# Copy script and SQL
+COPY db-setup-entrypoint.sh .
+COPY create_database_statement.sql .
 
-USER SA
-# ENTRYPOINT ["/bin/bash", "-c", "/opt/mssql/bin/sqlservr & echo 'Waiting for SQL Server to initialize...' && sleep 40 && /bin/bash /SetUp/Database/init-database.sh & wait"]
-ENTRYPOINT ["/bin/bash", "-c", "/opt/mssql/bin/sqlservr & sleep 30 && /bin/bash /SetUp/Database/init-database.sh & wait $!"]
+RUN chmod +x ./db-setup-entrypoint.sh
+
+ENTRYPOINT ["./db-setup-entrypoint.sh"]

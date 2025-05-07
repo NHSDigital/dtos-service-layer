@@ -9,13 +9,13 @@ services:
     restart: always
     environment:
       FUNCTIONS_WORKER_RUNTIME: "dotnet-isolated"
-      AzureWebJobsStorage: "${AZURITE_CONNECTION_STRING}"
+      AzureWebJobsStorage: "${AZURE_WEB_JOBS_STORAGE}"
       AzureWebJobsSecretStorageType: "files"
       DatabaseConnectionString: "${DatabaseConnectionString}"
       EVENT_GRID_TOPIC_URL: "${EVENT_GRID_TOPIC_URL}"
       EVENT_GRID_TOPIC_KEY: "${EVENT_GRID_TOPIC_KEY}"
     ports:
-      - "${API_PORT:-7071}:80"
+      - "${API_PORT}:80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/api/health"]
       interval: 30s
@@ -25,8 +25,8 @@ services:
     depends_on:
       azurite:
         condition: service_healthy
-      # db:
-      #   condition: service_healthy
+      db:
+        condition: service_healthy
     networks:
       - backend
 
@@ -37,9 +37,9 @@ services:
     restart: always
     command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --debug /data/debug.log"
     ports:
-      - "${AZURITE_BLOB_PORT:-10000}:10000"
-      - "${AZURITE_QUEUE_PORT:-10001}:10001"
-      - "${AZURITE_TABLE_PORT:-10002}:10002"
+      - "${AZURITE_BLOB_PORT}:10000"
+      - "${AZURITE_QUEUE_PORT}:10001"
+      - "${AZURITE_TABLE_PORT}:10002"
     healthcheck:
       test: [ "CMD-SHELL", "/bin/sh -c 'nc -z 127.0.0.1 10000 || exit 1'" ]
       interval: 10s
@@ -52,33 +52,26 @@ services:
       - backend
 
   ### ✅ Database (SQL Server) ###
-  # db:
-  #   container_name: "db"
-  #   build:
-  #     context: ./SetUp/Database
-  #   platform: linux/amd64
-  #   restart: always
-  #   environment:
-  #     ACCEPT_EULA: "Y"
-  #     MSSQL_SA_PASSWORD: "${DATABASE_PASSWORD}"
-  #     DB_NAME: "${DB_NAME:-participant_database}"
-  #     MSSQL_PID: "Developer"
-  #     MSSQL_COLLATION: "SQL_Latin1_General_CP1_CI_AS"
-  #     MSSQL_MEMORY_LIMIT_MB: "2048"
-  #     MSSQL_LCID: "1033"
-  #   ports:
-  #     - "${SQL_PORT:-1433}:1433"
-  #   volumes:
-  #     - db-data:/var/opt/mssql
-  #     - ./SetUp/Database:/scripts/db
-  #   healthcheck:
-  #     test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U {DATABASE_USER} -P ${DATABASE_PASSWORD} -Q 'SELECT 1' -C -N || exit 1" ]
-  #     interval: 15s
-  #     timeout: 15s
-  #     retries: 5
-  #     start_period: 30s
-  #   networks:
-  #     - backend
+  db:
+    container_name: "db"
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: always
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DATABASE_PASSWORD}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - db-data:/var/opt/mssql
+    healthcheck:
+      test: [ "CMD-SHELL", "pgrep -x sqlservr || exit 1" ]
+      interval: 15s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
 
 networks:
   backend:
