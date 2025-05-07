@@ -11,9 +11,9 @@ services:
       FUNCTIONS_WORKER_RUNTIME: "dotnet-isolated"
       AzureWebJobsStorage: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;"
       AzureWebJobsSecretStorageType: "files"
-      EventGridEndpoint: "${EVENT_GRID_ENDPOINT:-https://yourname.eventgrid.azure.net/api/events}"
-      EventGridKey: "${EVENT_GRID_KEY:-your-event-grid-key}"
-      SqlConnectionString: "Server=db;Database=${DB_NAME:-participant_database};User=sa;Password=${SQL_PASSWORD};TrustServerCertificate=True"
+      DatabaseConnectionString: "Server=db;Database=participant_database;User Id=sa;Password=${DATABASE_PASSWORD};TrustServerCertificate=True"
+      EVENT_GRID_TOPIC_URL: "${EVENT_GRID_TOPIC_URL}"
+      EVENT_GRID_TOPIC_KEY: "${EVENT_GRID_TOPIC_KEY}"
     ports:
       - "${API_PORT:-7071}:80"
     healthcheck:
@@ -25,59 +25,54 @@ services:
     depends_on:
       azurite:
         condition: service_started
-      db:
-        condition: service_healthy
+      # db:
+      #   condition: service_healthy
     networks:
       - backend
 
   ### ✅ Azurite (Azure Storage Emulator) ###
   azurite:
     container_name: "azurite"
-    build:
-      context: ./SetUp/Azurite
+    image: mcr.microsoft.com/azure-storage/azurite:latest
     restart: always
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --debug /data/debug.log --loose"
     ports:
       - "${AZURITE_BLOB_PORT:-10000}:10000"
       - "${AZURITE_QUEUE_PORT:-10001}:10001"
       - "${AZURITE_TABLE_PORT:-10002}:10002"
     volumes:
       - azurite-data:/data
-    healthcheck:
-        test: ["CMD", "curl", "-s", "-f", "-o", "/dev/null", "http://localhost:10000/"]
-        interval: 15s
-        timeout: 10s
-        retries: 5
-        start_period: 30s
     networks:
       - backend
 
   ### ✅ Database (SQL Server) ###
-  db:
-    container_name: "db"
-    build:
-      context: ./SetUp/Database
-    platform: linux/amd64
-    restart: always
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "${SQL_PASSWORD}"
-      DB_NAME: "${DB_NAME:-participant_database}"
-      MSSQL_PID: "Developer"
-      MSSQL_COLLATION: "SQL_Latin1_General_CP1_CI_AS"
-      MSSQL_MEMORY_LIMIT_MB: "2048"
-      MSSQL_LCID: "1033"
-    ports:
-      - "${SQL_PORT:-1433}:1433"
-    volumes:
-      - db-data:/var/opt/mssql
-    healthcheck:
-      test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${SQL_PASSWORD} -Q 'SELECT 1' || exit 1" ]
-      interval: 15s
-      timeout: 15s
-      retries: 5
-      start_period: 30s
-    networks:
-      - backend
+  # db:
+  #   container_name: "db"
+  #   build:
+  #     context: ./SetUp/Database
+  #   platform: linux/amd64
+  #   restart: always
+  #   environment:
+  #     ACCEPT_EULA: "Y"
+  #     MSSQL_SA_PASSWORD: "${DATABASE_PASSWORD}"
+  #     DB_NAME: "${DB_NAME:-participant_database}"
+  #     MSSQL_PID: "Developer"
+  #     MSSQL_COLLATION: "SQL_Latin1_General_CP1_CI_AS"
+  #     MSSQL_MEMORY_LIMIT_MB: "2048"
+  #     MSSQL_LCID: "1033"
+  #   ports:
+  #     - "${SQL_PORT:-1433}:1433"
+  #   volumes:
+  #     - db-data:/var/opt/mssql
+  #     - ./SetUp/Database:/scripts/db
+  #   healthcheck:
+  #     test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${DATABASE_PASSWORD} -Q 'SELECT 1' -C -N || exit 1" ]
+  #     interval: 15s
+  #     timeout: 15s
+  #     retries: 5
+  #     start_period: 30s
+  #   networks:
+  #     - backend
 
 networks:
   backend:

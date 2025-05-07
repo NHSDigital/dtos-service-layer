@@ -2,16 +2,13 @@ FROM mcr.microsoft.com/mssql/server:2022-latest
 
 USER root
 
-# Create directory for SQL scripts
-RUN mkdir -p /scripts/db
-
-# Copy database scripts
-COPY ./init-database.sh /scripts/
-COPY ./InitialTestData.sql /scripts/db/
+# Copy both files to the container
+COPY ./init-database.sh /SetUp/Database/init-database.sh
+COPY ./InitialTestData.sql /SetUp/Database/InitialTestData.sql
 
 # Make the script executable
-RUN chmod +x /scripts/init-database.sh
+RUN chmod +x /SetUp/Database/init-database.sh
 
-# Set up the entrypoint
-USER mssql
-ENTRYPOINT /bin/bash -c "/opt/mssql/bin/sqlservr & sleep 30 && /scripts/init-database.sh & wait"
+USER SA
+# ENTRYPOINT ["/bin/bash", "-c", "/opt/mssql/bin/sqlservr & echo 'Waiting for SQL Server to initialize...' && sleep 40 && /bin/bash /SetUp/Database/init-database.sh & wait"]
+ENTRYPOINT ["/bin/bash", "-c", "/opt/mssql/bin/sqlservr & sleep 30 && /bin/bash /SetUp/Database/init-database.sh & wait $!"]
