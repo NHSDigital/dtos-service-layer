@@ -1,12 +1,13 @@
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Hosting;
 using NHS.MESH.Client;
+using ServiceLayer.Mesh.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
-var host = new HostBuilder();
-
-host.ConfigureFunctionsWebApplication();
-
-host.ConfigureServices(services =>
+var host = new HostBuilder()
+    .ConfigureFunctionsWebApplication()
+    .ConfigureServices(services =>
     {
         services
             .AddMeshClient(_ => _.MeshApiBaseUrl = Environment.GetEnvironmentVariable("MeshApiBaseUrl"))
@@ -15,8 +16,16 @@ host.ConfigureServices(services =>
                 Password = Environment.GetEnvironmentVariable("MeshPassword"),
                 SharedKey = Environment.GetEnvironmentVariable("MeshSharedKey"),
                 //Cert = cert
-            })
-            .Build();
+            }).Build();
+
+        services.AddDbContext<ServiceLayerDbContext>(options =>
+        {
+            var databaseConnectionString = Environment.GetEnvironmentVariable("DatabaseConnectionString");
+            if (string.IsNullOrEmpty(databaseConnectionString))
+                throw new InvalidOperationException("The connection string has not been initialized.");
+
+            options.UseSqlServer(databaseConnectionString);
+        });
     });
 
 
