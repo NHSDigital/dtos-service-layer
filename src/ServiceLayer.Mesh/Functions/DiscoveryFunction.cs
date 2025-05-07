@@ -1,8 +1,11 @@
+using Azure.Identity;
+using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
 using ServiceLayer.Mesh.Data;
+using ServiceLayer.Mesh.Models;
 
 namespace ServiceLayer.Mesh.Functions
 {
@@ -33,16 +36,38 @@ namespace ServiceLayer.Mesh.Functions
                 // dotnet-mesh-client needs to be updated to support pagination for when inbox containers more than 500 messages
             }
 
-            foreach (var message in response.Response.Messages)
+            foreach (var messageId in response.Response.Messages)
             {
                 // Check if message has been seen before
-                var doesFileIdExist = await _serviceLayerDbContext.MeshFiles.AnyAsync(m => m.FileId == message.ToString());
+                var doesFileIdExist = await _serviceLayerDbContext.MeshFiles.AnyAsync(m => m.FileId == messageId.ToString());
 
+                if (!doesFileIdExist)
+                {
+                    var meshFile = new MeshFile()
+                    {
+                        FileId = messageId,
+                        FileType = "",
+                        MailboxId = Environment.GetEnvironmentVariable("MailboxId"),
+                        Status = "Discovered"
+                    };
 
-                // If no then insert into db
-                // Then enqueue message
+                    _serviceLayerDbContext.MeshFiles.Add(meshFile);
 
-                // If no then do nothing
+                    QueueClient queueClient;
+
+                    if (Environment.GetEnvironmentVariable("ASPNETCORE_ENV") == "Dev")
+                    {
+                        queueClient = new QueueClient("UseDevelopmentStorage=true", "my-local-queue");
+                    }
+                    else
+                    {
+                        var credential = new ManagedIdentityCredential();
+                        queueClient = new QueueClient(new Uri(Environment.GetEnvironmentVariable("QueueUrl")), credential);
+                    }
+
+                    queueClient.CreateIfNotExists();
+                    queueClient.SendMessage(messageId);
+                }
             }
 
             if (myTimer.ScheduleStatus is not null)
