@@ -61,10 +61,6 @@ public class DiscoveryFunctionTests
                 Response = new CheckInboxResponse { Messages = new[] { testMessageId } }
             });
 
-        _queueClientMock
-            .Setup(q => q.SendMessage(It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()))
-            .Returns(Response.FromValue<SendReceipt>(null, Mock.Of<Response>()));
-
         // Act
         await _function.Run(null);
 
@@ -138,10 +134,6 @@ public class DiscoveryFunctionTests
             {
                 Response = new CheckInboxResponse { Messages = messageIds }
             });
-
-        _queueClientMock
-            .Setup(q => q.SendMessage(It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()))
-            .Returns(Response.FromValue<SendReceipt>(null, Mock.Of<Response>()));
 
         // Act
         await _function.Run(null);
