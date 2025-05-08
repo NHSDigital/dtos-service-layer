@@ -108,4 +108,53 @@ public class DiscoveryFunctionTests
 
         _queueClientMock.Verify(q => q.SendMessage(It.IsAny<string>()), Times.Never);
     }
+
+    [Fact]
+    public async Task Run_NoMessagesInInbox_DoesNothing()
+    {
+        // Arrange
+        _meshInboxServiceMock.Setup(s => s.GetMessagesAsync("test-mailbox"))
+            .ReturnsAsync(new MeshResponse<CheckInboxResponse>
+            {
+                Response = new CheckInboxResponse { Messages = Array.Empty<string>() }
+            });
+
+        // Act
+        await _function.Run(null);
+
+        // Assert
+        Assert.Empty(_dbContext.MeshFiles);
+        _queueClientMock.Verify(q => q.SendMessage(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Run_MultipleMessagesInInbox_AllAreProcessed()
+    {
+        // Arrange
+        var messageIds = new[] { "msg-1", "msg-2", "msg-3" };
+
+        _meshInboxServiceMock.Setup(s => s.GetMessagesAsync("test-mailbox"))
+            .ReturnsAsync(new MeshResponse<CheckInboxResponse>
+            {
+                Response = new CheckInboxResponse { Messages = messageIds }
+            });
+
+        _queueClientMock
+            .Setup(q => q.SendMessage(It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()))
+            .Returns(Response.FromValue<SendReceipt>(null, Mock.Of<Response>()));
+
+        // Act
+        await _function.Run(null);
+
+        // Assert
+        foreach (var id in messageIds)
+        {
+            var meshFile = _dbContext.MeshFiles.FirstOrDefault(f => f.FileId == id);
+            Assert.NotNull(meshFile);
+            Assert.Equal(MeshFileStatus.Discovered, meshFile.Status);
+            Assert.Equal("test-mailbox", meshFile.MailboxId);
+        }
+
+        _queueClientMock.Verify(q => q.SendMessage(It.IsAny<string>()), Times.Exactly(messageIds.Length));
+    }
 }
