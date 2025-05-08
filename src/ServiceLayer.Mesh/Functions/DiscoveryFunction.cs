@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
@@ -14,68 +13,57 @@ namespace ServiceLayer.Mesh.Functions
         private readonly ILogger _logger;
         private readonly IMeshInboxService _meshInboxService;
         private readonly ServiceLayerDbContext _serviceLayerDbContext;
+        private readonly QueueClient _queueClient;
 
-        public DiscoveryFunction(ILoggerFactory loggerFactory, IMeshInboxService meshInboxService, ServiceLayerDbContext serviceLayerDbContext)
+        public DiscoveryFunction(ILogger<DiscoveryFunction> logger, IMeshInboxService meshInboxService, ServiceLayerDbContext serviceLayerDbContext, QueueClient queueClient)
         {
-            _logger = loggerFactory.CreateLogger<DiscoveryFunction>();
+            _logger = logger;
             _meshInboxService = meshInboxService;
             _serviceLayerDbContext = serviceLayerDbContext;
+            _queueClient = queueClient;
         }
 
         [Function("DiscoveryFunction")]
         public async Task Run([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer)
         {
-            _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
+            _logger.LogInformation($"DiscoveryFunction started at: {DateTime.Now}");
 
             var mailboxId = Environment.GetEnvironmentVariable("MailboxId")
                 ?? throw new InvalidOperationException($"Environment variable 'MailboxId' is not set or is empty.");
 
             var response = await _meshInboxService.GetMessagesAsync(mailboxId);
 
-            if (response.Response.Messages.Count() > 500)
-            {
-                // TODO: Get next page
-                // dotnet-mesh-client needs to be updated to support pagination for when inbox containers more than 500 messages
-            }
+            _queueClient.CreateIfNotExists();
 
             foreach (var messageId in response.Response.Messages)
             {
-                // Check if message has been seen before
-                var doesFileIdExist = await _serviceLayerDbContext.MeshFiles.AnyAsync(m => m.FileId == messageId.ToString());
+                using var transaction = await _serviceLayerDbContext.Database.BeginTransactionAsync();
 
-                if (!doesFileIdExist)
+                var existing = await _serviceLayerDbContext.MeshFiles
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(f => f.FileId == messageId);
+
+                if (existing == null)
                 {
-                    var meshFile = new MeshFile()
+                    _serviceLayerDbContext.MeshFiles.Add(new MeshFile
                     {
                         FileId = messageId,
-                        FileType = "",
+                        FileType = MeshFileType.NbssAppointmentEvents,
                         MailboxId = mailboxId,
-                        Status = "Discovered"
-                    };
+                        Status = MeshFileStatus.Discovered,
+                        FirstSeenUtc = DateTime.UtcNow,
+                        LastUpdatedUtc = DateTime.UtcNow
+                    });
 
-                    await _serviceLayerDbContext.MeshFiles.AddAsync(meshFile);
                     await _serviceLayerDbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
-                    QueueClient queueClient;
-
-                    if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-                    {
-                        queueClient = new QueueClient("UseDevelopmentStorage=true", "my-local-queue");
-                    }
-                    else
-                    {
-                        var credential = new ManagedIdentityCredential();
-                        queueClient = new QueueClient(new Uri(Environment.GetEnvironmentVariable("QueueUrl")), credential);
-                    }
-
-                    queueClient.CreateIfNotExists();
-                    queueClient.SendMessage(messageId);
+                    _queueClient.SendMessage(messageId);
                 }
-            }
-
-            if (myTimer.ScheduleStatus is not null)
-            {
-                _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
+                else
+                {
+                    await transaction.RollbackAsync();
+                }
             }
         }
     }
