@@ -4,11 +4,11 @@ GO
 IF NOT EXISTS (
         SELECT name
         FROM sys.databases
-        WHERE name = N'Test'
+        WHERE name = N'ServiceLayer'
         )
     CREATE DATABASE [Test];
 GO
 
 IF SERVERPROPERTY('ProductVersion') > '12'
-    ALTER DATABASE [Test] SET QUERY_STORE = ON;
+    ALTER DATABASE [ServiceLayer] SET QUERY_STORE = ON;
 GO
