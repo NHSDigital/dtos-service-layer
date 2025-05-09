@@ -1,9 +1,8 @@
 services:
-  ### ✅ API (Azure Functions in .NET 9) ###
   api:
     container_name: "api"
     build:
-      context: ./src
+      context: ./Src
       dockerfile: ServiceLayer.API/Dockerfile
     platform: linux/amd64
     restart: always
@@ -11,11 +10,88 @@ services:
       FUNCTIONS_WORKER_RUNTIME: "dotnet-isolated"
       AzureWebJobsStorage: "${AZURE_WEB_JOBS_STORAGE}"
       AzureWebJobsSecretStorageType: "files"
+      DatabaseConnectionString: "${DatabaseConnectionString}"
+      EVENT_GRID_TOPIC_URL: "${EVENT_GRID_TOPIC_URL}"
+      EVENT_GRID_TOPIC_KEY: "${EVENT_GRID_TOPIC_KEY}"
     ports:
       - "${API_PORT}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      azurite:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+  azurite:
+    container_name: "azurite"
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    restart: always
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --debug /data/debug.log"
+    ports:
+      - "${AZURITE_BLOB_PORT}:10000"
+      - "${AZURITE_QUEUE_PORT}:10001"
+      - "${AZURITE_TABLE_PORT}:10002"
+    healthcheck:
+      test: ["CMD-SHELL", "/bin/sh -c 'nc -z 127.0.0.1 10000 || exit 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    volumes:
+      - azurite-data:/data
+    networks:
+      - backend
+
+  db:
+    container_name: "db"
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: always
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DATABASE_PASSWORD}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    user: "root"
+    volumes:
+      - db-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f sqlservr || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 60s
+    networks:
+      - backend
+
+  db-setup:
+    container_name: "db-setup"
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    restart: "no"
+    environment:
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - backend
 
 networks:
   backend:
+    name: backend-network
     driver: bridge
+volumes:
+  azurite-data:
+    name: azurite-data
+  db-data:
+    name: db-data
+    driver: local
