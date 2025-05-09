@@ -25,7 +25,7 @@ services:
       azurite:
         condition: service_healthy
       db:
-        condition: service_healthy
+        condition: service_started
     networks:
       - backend
 
@@ -61,12 +61,12 @@ services:
       - "1433:1433"
     volumes:
       - db-data:/var/opt/mssql
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P \"${DATABASE_PASSWORD}\" -Q \"SELECT 1;\" || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 6
-      start_period: 60s
+    # healthcheck:
+    #   test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P \"${DATABASE_PASSWORD}\" -Q \"SELECT 1;\" || exit 1"]
+    #   interval: 20s
+    #   timeout: 10s
+    #   retries: 6
+    #   start_period: 60s
     networks:
       - backend
 
@@ -80,7 +80,7 @@ services:
       DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_started
     networks:
       - backend
 

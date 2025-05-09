@@ -4,11 +4,11 @@ GO
 IF NOT EXISTS (
         SELECT name
         FROM sys.databases
-        WHERE name = N'PathwayCoordinator'
+        WHERE name = N'Test'
         )
-    CREATE DATABASE [PathwayCoordinator];
+    CREATE DATABASE [Test];
 GO
 
 IF SERVERPROPERTY('ProductVersion') > '12'
-    ALTER DATABASE [PathwayCoordinator] SET QUERY_STORE = ON;
+    ALTER DATABASE [Test] SET QUERY_STORE = ON;
 GO
