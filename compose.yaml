@@ -49,6 +49,17 @@ services:
     networks:
       - backend
 
+  azurite-setup:
+    container_name: azurite-setup
+    build:
+      context: ./
+      dockerfile: ./setup/azurite/Dockerfile
+    network_mode: host
+    depends_on:
+      - azurite
+    environment:
+      - AZURITE_CONNECTION_STRING=${AZURITE_CONNECTION_STRING}
+
   db:
     container_name: "db"
     image: mcr.microsoft.com/mssql/server:2022-latest
