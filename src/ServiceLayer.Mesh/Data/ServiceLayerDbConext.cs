@@ -11,5 +11,7 @@ public class ServiceLayerDbContext(DbContextOptions<ServiceLayerDbContext> optio
     {
         // Configure relationships, keys, etc.
         modelBuilder.Entity<MeshFile>().HasKey(p => p.FileId);
+        modelBuilder.Entity<MeshFile>().Property(e => e.Status).HasConversion<string>();
+        modelBuilder.Entity<MeshFile>().Property(e => e.FileType).HasConversion<string>();
     }
 }

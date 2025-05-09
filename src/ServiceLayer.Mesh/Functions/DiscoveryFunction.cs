@@ -24,7 +24,7 @@ namespace ServiceLayer.Mesh.Functions
         }
 
         [Function("DiscoveryFunction")]
-        public async Task Run([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("%DiscoveryTimerExpression%")] TimerInfo myTimer)
         {
             _logger.LogInformation($"DiscoveryFunction started at: {DateTime.Now}");
 
