@@ -71,17 +71,34 @@ services:
     networks:
       - backend
 
-  db-setup:
-    container_name: "db-setup"
+  # db-setup:
+  #   container_name: "db-setup"
+  #   build:
+  #     context: ./database
+  #     dockerfile: Dockerfile
+  #   restart: "no"
+  #   environment:
+  #     DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   networks:
+  #     - backend
+
+  db-migrations:
+    container_name: db-migrations
     build:
-      context: ./database
-      dockerfile: Dockerfile
-    restart: "no"
-    environment:
-      DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
+      context: .
+      dockerfile: database/Dockerfile.migrations
+      args:
+        DatabaseConnectionString: "Server=db;Database={DATABASE_NAME};User Id={DATABASE_USER};Password=${DATABASE_PASSWORD};TrustServerCertificate=True"
     depends_on:
       db:
         condition: service_healthy
+    environment:
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
+      EVENT_GRID_TOPIC_URL: "${EVENT_GRID_TOPIC_URL}"
+      EVENT_GRID_TOPIC_KEY: "${EVENT_GRID_TOPIC_KEY}"
     networks:
       - backend
 
