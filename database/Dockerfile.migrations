@@ -1,27 +1,23 @@
 # Stage 1: Create the EF migration script
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
 WORKDIR /src
-
 # Define build arguments
 ARG DatabaseConnectionString
-
 # Set environment variable during the build process
 ENV DatabaseConnectionString=${DatabaseConnectionString}
 ENV EVENT_GRID_TOPIC_URL=${EVENT_GRID_TOPIC_URL}
 ENV EVENT_GRID_TOPIC_KEY=${EVENT_GRID_TOPIC_KEY}
 
 # Copy csproj files first (for layer caching)
-COPY ./src/ServiceLayer.API/ServiceLayer.API.csproj ./
-
+COPY ./src/ServiceLayer.API/ServiceLayer.API.csproj ./ServiceLayer.API/
 # Restore dependencies
-RUN dotnet restore
+RUN dotnet restore ./ServiceLayer.API/ServiceLayer.API.csproj
 
 # Copy source files
-COPY ./src/ServiceLayer.API/ ./
+COPY ./src/ServiceLayer.API/ ./ServiceLayer.API/
 
 # Install dotnet-ef to a local tools directory
 RUN dotnet tool install dotnet-ef --tool-path /tools
-
 # Configure environment variables
 ENV PATH="/tools:$PATH" \
     DOTNET_CLI_HOME=/tmp \
@@ -29,27 +25,28 @@ ENV PATH="/tools:$PATH" \
     DOTNET_NOLOGO=true
 
 # Build the project
-RUN dotnet build
+RUN dotnet build ./ServiceLayer.API/ServiceLayer.API.csproj
+
+# Create the initial migration
+RUN dotnet ef migrations add InitialMigration --project ./ServiceLayer.API/ --output-dir Data/Migrations
+
+# Create directory for output SQL script
+RUN mkdir -p /database
 
 # Generate the SQL migration script
 RUN dotnet ef migrations script -o /database/migration.sql --project ./ServiceLayer.API/
 
 # Stage 2: Run migrations and seed data
 FROM mcr.microsoft.com/mssql-tools:latest AS migration-env
-
 # Copy the generated migration SQL script from the build stage
 COPY --from=build-env /database/migration.sql /database/migration.sql
 COPY ./database/ /database/
-
 # Create non-root user
 RUN addgroup --system appgroup && \
     adduser --system --ingroup appgroup appuser
-
 # Make sure the script is executable
 RUN chmod +x /database/migrate-and-seed.sh
-
 # Run as non-root user
 USER appuser
-
 # Run EF migrations and seed data
 ENTRYPOINT ["/database/migrate-and-seed.sh"]
