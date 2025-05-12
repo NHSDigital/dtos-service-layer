@@ -71,20 +71,6 @@ services:
     networks:
       - backend
 
-  # db-setup:
-  #   container_name: "db-setup"
-  #   build:
-  #     context: ./database
-  #     dockerfile: Dockerfile
-  #   restart: "no"
-  #   environment:
-  #     DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   networks:
-  #     - backend
-
   db-migrations:
     container_name: db-migrations
     build:
