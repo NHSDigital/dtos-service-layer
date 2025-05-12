@@ -82,6 +82,8 @@ services:
       db:
         condition: service_healthy
     environment:
+      DATABASE_NAME: "${DATABASE_NAME}"
+      DATABASE_USER: "${DATABASE_USER}"
       DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
       EVENT_GRID_TOPIC_URL: "${EVENT_GRID_TOPIC_URL}"
       EVENT_GRID_TOPIC_KEY: "${EVENT_GRID_TOPIC_KEY}"

@@ -11,13 +11,13 @@ ENV EVENT_GRID_TOPIC_URL=${EVENT_GRID_TOPIC_URL}
 ENV EVENT_GRID_TOPIC_KEY=${EVENT_GRID_TOPIC_KEY}
 
 # Copy csproj files first (for layer caching)
-COPY ./src/ServiceLayer.API/ServiceLayer.API.csproj ./ServiceLayer.API/
+COPY ./src/ServiceLayer.API/ServiceLayer.API.csproj ./
 
 # Restore dependencies
-RUN dotnet restore ./ServiceLayer.API/ServiceLayer.API.csproj
+RUN dotnet restore
 
 # Copy source files
-COPY ./src/ServiceLayer.API/ ./ServiceLayer.API/
+COPY ./src/ServiceLayer.API/ ./
 
 # Install dotnet-ef to a local tools directory
 RUN dotnet tool install dotnet-ef --tool-path /tools
@@ -29,27 +29,27 @@ ENV PATH="/tools:$PATH" \
     DOTNET_NOLOGO=true
 
 # Build the project
-RUN dotnet build ./ServiceLayer.API/ServiceLayer.API.csproj
+RUN dotnet build
 
 # Generate the SQL migration script
-RUN dotnet ef migrations script -o /migrations/migration.sql --project ./ServiceLayer.API/
+RUN dotnet ef migrations script -o /database/migration.sql --project ./ServiceLayer.API/
 
 # Stage 2: Run migrations and seed data
 FROM mcr.microsoft.com/mssql-tools:latest AS migration-env
 
 # Copy the generated migration SQL script from the build stage
-COPY --from=build-env /migrations/migration.sql /scripts/migration.sql
+COPY --from=build-env /database/migration.sql /database/migration.sql
 COPY ./database/ /database/
 
 # Create non-root user
 RUN addgroup --system appgroup && \
     adduser --system --ingroup appgroup appuser
 
-# Make sure the script is executable and in the right location
+# Make sure the script is executable
 RUN chmod +x /database/migrate-and-seed.sh
 
 # Run as non-root user
 USER appuser
 
-# Run EF migrations and seed data (fix the path)
+# Run EF migrations and seed data
 ENTRYPOINT ["/database/migrate-and-seed.sh"]
