@@ -6,6 +6,7 @@ using Azure.Identity;
 using Microsoft.EntityFrameworkCore;
 using NHS.MESH.Client;
 using ServiceLayer.Mesh.Data;
+using Azure.Storage.Blobs;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -51,6 +52,13 @@ var host = new HostBuilder()
                 var credential = new ManagedIdentityCredential();
                 return new QueueClient(new Uri(queueUrl), credential);
             }
+        });
+
+        services.AddSingleton(provider =>
+        {
+            return new BlobContainerClient(
+                Environment.GetEnvironmentVariable("AzureWebJobsStorage"),
+                Environment.GetEnvironmentVariable("BlobContainerName"));
         });
     });
 

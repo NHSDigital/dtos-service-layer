@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
@@ -15,20 +16,19 @@ public class ExtractFunction
     private readonly IMeshInboxService _meshInboxService;
     private readonly ServiceLayerDbContext _serviceLayerDbContext;
     private readonly QueueClient _queueClient;
-    private readonly BlobClient _blobClient;
+    private readonly BlobContainerClient _blobContainerClient;
 
-
-    public ExtractFunction(ILogger logger, IMeshInboxService meshInboxService, ServiceLayerDbContext serviceLayerDbContext, QueueClient queueClient, BlobClient blobClient)
+    public ExtractFunction(ILogger logger, IMeshInboxService meshInboxService, ServiceLayerDbContext serviceLayerDbContext, QueueClient queueClient, BlobContainerClient blobClient)
     {
         _logger = logger;
         _meshInboxService = meshInboxService;
         _serviceLayerDbContext = serviceLayerDbContext;
         _queueClient = queueClient;
-        _blobClient = blobClient;
+        _blobContainerClient = blobClient;
     }
 
     [Function("ExtractFunction")]
-    public async Task Run([QueueTrigger("TODO")] ExtractQueueMessage message)
+    public async Task Run([QueueTrigger("my-local-queue")] ExtractQueueMessage message) // TODO: Queue name
     {
         _logger.LogInformation($"ExtractFunction started at: {DateTime.Now}");
 
@@ -59,8 +59,8 @@ public class ExtractFunction
         await _serviceLayerDbContext.SaveChangesAsync();
         await transaction.CommitAsync();
 
-        var mailboxId = Environment.GetEnvironmentVariable("BSSMailBox")
-            ?? throw new InvalidOperationException($"Environment variable 'BSSMailBox' is not set or is empty.");
+        var mailboxId = Environment.GetEnvironmentVariable("MeshMailboxId")
+            ?? throw new InvalidOperationException($"Environment variable 'MeshMailboxId' is not set or is empty.");
 
         var meshResponse = await _meshInboxService.GetMessageByIdAsync(mailboxId, file.FileId);
         if (!meshResponse.IsSuccessful)
@@ -68,8 +68,45 @@ public class ExtractFunction
             // TODO - what to do if unsuccessful?
             throw new InvalidOperationException($"Mesh extraction failed: {meshResponse.Error}");
         }
+
+        await UploadFileToBlobStorage(new BlobFile(meshResponse.Response.FileAttachment.Content, mailboxId));
     }
 
+    public async Task<bool> UploadFileToBlobStorage(BlobFile blobFile, bool overwrite = false)
+    {
+        var blobClient = _blobContainerClient.GetBlobClient(blobFile.FileName);
+
+        await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.None);
+
+        try
+        {
+            await blobClient.UploadAsync(blobFile.Data, overwrite: overwrite);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "There has been a problem while uploading the file: {Message}", ex.Message);
+            return false;
+        }
+
+        return true;
+    }
+}
+
+public class BlobFile
+{
+    public BlobFile(byte[] bytes, string fileName)
+    {
+        Data = new MemoryStream(bytes);
+        FileName = fileName;
+    }
+    public BlobFile(Stream stream, string fileName)
+    {
+        Data = stream;
+        FileName = fileName;
+    }
+
+    public Stream Data { get; set; }
+    public string FileName { get; set; }
 }
 
 public class ExtractQueueMessage
