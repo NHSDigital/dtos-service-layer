@@ -91,6 +91,7 @@ jobs:
       - name: "Checkout code"
         uses: actions/checkout@v4
         with:
+          submodules: 'true'
           fetch-depth: 0 # Full history is needed to improving relevancy of reporting
       - name: "Perform static analysis"
         uses: ./.github/actions/perform-static-analysis
