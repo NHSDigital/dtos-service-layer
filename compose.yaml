@@ -77,7 +77,7 @@ services:
       context: .
       dockerfile: database/Dockerfile.migrations
       args:
-        DatabaseConnectionString: "Server=db;Database={DATABASE_NAME};User Id={DATABASE_USER};Password=${DATABASE_PASSWORD};TrustServerCertificate=True"
+        DatabaseConnectionString: "${DatabaseConnectionString}"
     depends_on:
       db:
         condition: service_healthy
