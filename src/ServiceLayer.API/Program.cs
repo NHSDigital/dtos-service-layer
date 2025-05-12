@@ -32,6 +32,7 @@ var host = new HostBuilder()
         {
             options.UseSqlServer(databaseConnectionString);
         });
+        services.AddLogging();
     })
     .Build();
 
