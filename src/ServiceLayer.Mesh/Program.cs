@@ -34,10 +34,6 @@ var host = new HostBuilder()
         services.AddSingleton(provider =>
         {
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            var queueUrl = Environment.GetEnvironmentVariable("QueueUrl");
-
-            if (string.IsNullOrWhiteSpace(queueUrl))
-                throw new InvalidOperationException("QueueUrl environment variable is not set.");
 
             if (environment == "Development")
             {
@@ -45,6 +41,13 @@ var host = new HostBuilder()
             }
             else
             {
+                var queueUrl = Environment.GetEnvironmentVariable("QueueUrl");
+
+                if (string.IsNullOrWhiteSpace(queueUrl))
+                {
+                    throw new InvalidOperationException("QueueUrl environment variable is not set.");
+                }
+
                 var credential = new ManagedIdentityCredential();
                 return new QueueClient(new Uri(queueUrl), credential);
             }

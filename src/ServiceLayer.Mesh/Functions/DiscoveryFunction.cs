@@ -28,8 +28,8 @@ namespace ServiceLayer.Mesh.Functions
         {
             _logger.LogInformation($"DiscoveryFunction started at: {DateTime.Now}");
 
-            var mailboxId = Environment.GetEnvironmentVariable("MailboxId")
-                ?? throw new InvalidOperationException($"Environment variable 'MailboxId' is not set or is empty.");
+            var mailboxId = Environment.GetEnvironmentVariable("BSSMailBox")
+                ?? throw new InvalidOperationException($"Environment variable 'BSSMailBox' is not set or is empty.");
 
             var response = await _meshInboxService.GetMessagesAsync(mailboxId);
 
@@ -40,10 +40,9 @@ namespace ServiceLayer.Mesh.Functions
                 using var transaction = await _serviceLayerDbContext.Database.BeginTransactionAsync();
 
                 var existing = await _serviceLayerDbContext.MeshFiles
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(f => f.FileId == messageId);
+                    .AnyAsync(f => f.FileId == messageId);
 
-                if (existing == null)
+                if (!existing)
                 {
                     _serviceLayerDbContext.MeshFiles.Add(new MeshFile
                     {
