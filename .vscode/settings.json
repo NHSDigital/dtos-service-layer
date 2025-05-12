@@ -3,10 +3,5 @@
     "MD013": false,
     "MD024": { "siblings_only": true },
     "MD033": false
-  },
-  "azureFunctions.deploySubpath": "src\\ServiceLayer.Mesh/bin/Release/net9.0/publish",
-  "azureFunctions.projectLanguage": "C#",
-  "azureFunctions.projectRuntime": "~4",
-  "debug.internalConsoleOptions": "neverOpen",
-  "azureFunctions.preDeployTask": "publish (functions)"
+  }
 }
