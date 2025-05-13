@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using ServiceLayer.Mesh.Data;
 
-namespace ParticipantManager.API.Data;
+namespace ServiceLayer.Mesh.Data;
 
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ServiceLayerDbContext>
 {
