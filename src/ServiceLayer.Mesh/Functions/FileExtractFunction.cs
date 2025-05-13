@@ -1,8 +1,8 @@
-using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Models;
@@ -11,10 +11,12 @@ using ServiceLayer.Mesh.Storage;
 namespace ServiceLayer.Mesh.Functions;
 
 public class FileExtractFunction(
-    ILogger logger,
+    ILogger<FileExtractFunction> logger,
+    IFileExtractFunctionConfiguration configuration,
     IMeshInboxService meshInboxService,
     ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
+    IFileExtractQueueClient fileExtractQueueClient,
     IMeshFilesBlobStore meshFileBlobStore)
 {
     [Function("FileExtractFunction")]
@@ -51,57 +53,38 @@ public class FileExtractFunction(
         await serviceLayerDbContext.SaveChangesAsync();
         await transaction.CommitAsync();
 
-        // TODO - approx after this point we'll need to wrap everything in a try-catch. On failure we should
-        //        update the meshfile to FailedExtract, and move the message to the poison queue
-
-        var mailboxId = Environment.GetEnvironmentVariable("NBSSMailBoxId")
-            ?? throw new InvalidOperationException($"Environment variable 'NBSSMailBoxId' is not set or is empty.");
-
-        var meshResponse = await meshInboxService.GetMessageByIdAsync(mailboxId, file.FileId);
-        if (!meshResponse.IsSuccessful)
+        try
         {
-            // TODO - what to do if unsuccessful?
-            throw new InvalidOperationException($"Mesh extraction failed: {meshResponse.Error}");
+            var meshResponse = await meshInboxService.GetMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
+            if (!meshResponse.IsSuccessful)
+            {
+                // TODO - what to do if unsuccessful?
+                throw new InvalidOperationException($"Mesh extraction failed: {meshResponse.Error}");
+            }
+
+            var blobPath = await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
+
+            var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, message.FileId);
+            if (!meshAcknowledgementResponse.IsSuccessful)
+            {
+                // TODO - what to do if unsuccessful?
+                throw new InvalidOperationException($"Mesh acknowledgement failed: {meshResponse.Error}");
+            }
+
+            file.Status = MeshFileStatus.Extracted;
+            file.LastUpdatedUtc = DateTime.UtcNow;
+            file.BlobPath = blobPath;
+            await serviceLayerDbContext.SaveChangesAsync();
+
+            await fileTransformQueueClient.EnqueueFileTransformAsync(file);
         }
-
-        await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "");
+            file.Status = MeshFileStatus.FailedExtract;
+            file.LastUpdatedUtc = DateTime.UtcNow;
+            await serviceLayerDbContext.SaveChangesAsync();
+            await fileExtractQueueClient.SendToPoisonQueueAsync(message);
+        }
     }
-
-    // public async Task<bool> UploadFileToBlobStorage(BlobFile blobFile, bool overwrite = false)
-    // {
-    //     var blobClient = blobContainerClient.GetBlobClient(blobFile.FileName);
-    //
-    //     await blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.None);
-    //
-    //     try
-    //     {
-    //         await blobClient.UploadAsync(blobFile.Data, overwrite: overwrite);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         logger.LogError(ex, "There has been a problem while uploading the file: {Message}", ex.Message);
-    //         return false;
-    //     }
-    //
-    //     return true;
-    // }
 }
-
-// public class BlobFile
-// {
-//     public BlobFile(byte[] bytes, string fileName)
-//     {
-//         Data = new MemoryStream(bytes);
-//         FileName = fileName;
-//     }
-//     public BlobFile(Stream stream, string fileName)
-//     {
-//         Data = stream;
-//         FileName = fileName;
-//     }
-//
-//     public Stream Data { get; set; }
-//     public string FileName { get; set; }
-// }
-
-

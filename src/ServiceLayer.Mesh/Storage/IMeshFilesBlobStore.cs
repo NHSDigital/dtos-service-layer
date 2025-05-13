@@ -8,5 +8,5 @@ public interface IMeshFilesBlobStore
     public Task<Stream> DownloadAsync(MeshFile file);
 
     // Mesh client gives us a byte array, hence this not taking a stream.
-    public Task UploadAsync(MeshFile file, byte[] data);
+    public Task<string> UploadAsync(MeshFile file, byte[] data);
 }
