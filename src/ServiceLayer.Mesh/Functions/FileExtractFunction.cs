@@ -65,7 +65,7 @@ public class FileExtractFunction(
             var blobPath = await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
 
             var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, message.FileId);
-            if (!meshResponse.IsSuccessful)
+            if (!meshAcknowledgementResponse.IsSuccessful)
             {
                 // TODO - what to do if unsuccessful?
                 throw new InvalidOperationException($"Mesh acknowledgement failed: {meshResponse.Error}");
