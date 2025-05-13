@@ -16,7 +16,7 @@ public class FileExtractFunction(
     IMeshInboxService meshInboxService,
     ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
-    IMeshFilesBlobStore mesFileBlobStore)
+    IMeshFilesBlobStore meshFileBlobStore)
 {
     [Function("FileExtractFunction")]
     public async Task Run([QueueTrigger("file-extract")] FileExtractQueueMessage message) // TODO: Queue name
@@ -52,6 +52,9 @@ public class FileExtractFunction(
         await serviceLayerDbContext.SaveChangesAsync();
         await transaction.CommitAsync();
 
+        // TODO - approx after this point we'll need to wrap everything in a try-catch. On failure we should
+        //        update the meshfile to FailedExtract, and move the message to the poison queue
+
         var mailboxId = Environment.GetEnvironmentVariable("MeshMailboxId")
             ?? throw new InvalidOperationException($"Environment variable 'MeshMailboxId' is not set or is empty.");
 
@@ -62,7 +65,7 @@ public class FileExtractFunction(
             throw new InvalidOperationException($"Mesh extraction failed: {meshResponse.Error}");
         }
 
-        await mesFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
+        await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
     }
 
     public async Task<bool> UploadFileToBlobStorage(BlobFile blobFile, bool overwrite = false)
