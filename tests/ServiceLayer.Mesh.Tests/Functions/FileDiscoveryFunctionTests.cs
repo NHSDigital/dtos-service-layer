@@ -32,7 +32,7 @@ public class FileDiscoveryFunctionTests
 
         _dbContext = new ServiceLayerDbContext(options);
 
-        Environment.SetEnvironmentVariable("MailboxId", "test-mailbox");
+        Environment.SetEnvironmentVariable("BSSMailBox", "test-mailbox");
         Environment.SetEnvironmentVariable("QueueUrl", "https://fakestorageaccount.queue.core.windows.net/testqueue");
 
         _function = new FileDiscoveryFunction(
