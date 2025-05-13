@@ -39,4 +39,7 @@
     <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext" />
     <ProjectReference Include="..\dotnet-mesh-client\application\DotNetMeshClient\NHS.Mesh.Client\NHS.Mesh.Client.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Storage\" />
+  </ItemGroup>
 </Project>

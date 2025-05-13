@@ -7,11 +7,15 @@ using Microsoft.EntityFrameworkCore;
 using NHS.MESH.Client;
 using ServiceLayer.Mesh.Data;
 using Azure.Storage.Blobs;
+using ServiceLayer.Mesh.Messaging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        var isLocalEnvironment = environment == "Development";
+
         // MESH Client config
         services
             .AddMeshClient(_ => _.MeshApiBaseUrl = Environment.GetEnvironmentVariable("MeshApiBaseUrl"))
@@ -31,28 +35,21 @@ var host = new HostBuilder()
             options.UseSqlServer(connectionString);
         });
 
-        // Register QueueClient as singleton
+        // Register QueueClients as singletons
         services.AddSingleton(provider =>
         {
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
-            if (environment == "Development")
+            if (isLocalEnvironment)
             {
-                return new QueueClient("UseDevelopmentStorage=true", "my-local-queue");
+                var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+                return new QueueServiceClient(connectionString);
             }
-            else
-            {
-                var queueUrl = Environment.GetEnvironmentVariable("QueueUrl");
 
-                if (string.IsNullOrWhiteSpace(queueUrl))
-                {
-                    throw new InvalidOperationException("QueueUrl environment variable is not set.");
-                }
-
-                var credential = new ManagedIdentityCredential();
-                return new QueueClient(new Uri(queueUrl), credential);
-            }
+            var meshStorageAccountUrl = Environment.GetEnvironmentVariable("MeshStorageAccountUrl");
+            return new QueueServiceClient(new Uri(meshStorageAccountUrl), new DefaultAzureCredential());
         });
+
+        services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();
+        services.AddSingleton<IFileTransformQueueClient, FileTransformQueueClient>();
 
         services.AddSingleton(provider =>
         {

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
 using ServiceLayer.Mesh.Data;
+using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Models;
 
 namespace ServiceLayer.Mesh.Functions;
@@ -28,7 +29,7 @@ public class ExtractFunction
     }
 
     [Function("ExtractFunction")]
-    public async Task Run([QueueTrigger("my-local-queue")] ExtractQueueMessage message) // TODO: Queue name
+    public async Task Run([QueueTrigger("file-extract")] FileExtractQueueMessage message) // TODO: Queue name
     {
         _logger.LogInformation($"ExtractFunction started at: {DateTime.Now}");
 
@@ -109,7 +110,4 @@ public class BlobFile
     public string FileName { get; set; }
 }
 
-public class ExtractQueueMessage
-{
-    public string FileId { get; set; }
-}
+
