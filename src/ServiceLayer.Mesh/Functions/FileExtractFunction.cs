@@ -7,6 +7,7 @@ using NHS.MESH.Client.Contracts.Services;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Models;
+using ServiceLayer.Mesh.Storage;
 
 namespace ServiceLayer.Mesh.Functions;
 
@@ -15,7 +16,7 @@ public class FileExtractFunction(
     IMeshInboxService meshInboxService,
     ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
-    BlobContainerClient blobContainerClient)
+    IMeshFilesBlobStore mesFileBlobStore)
 {
     [Function("FileExtractFunction")]
     public async Task Run([QueueTrigger("file-extract")] FileExtractQueueMessage message) // TODO: Queue name
@@ -61,7 +62,7 @@ public class FileExtractFunction(
             throw new InvalidOperationException($"Mesh extraction failed: {meshResponse.Error}");
         }
 
-        await UploadFileToBlobStorage(new BlobFile(meshResponse.Response.FileAttachment.Content, mailboxId));
+        await mesFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
     }
 
     public async Task<bool> UploadFileToBlobStorage(BlobFile blobFile, bool overwrite = false)
