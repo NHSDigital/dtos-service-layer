@@ -2,6 +2,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Models;
@@ -10,6 +11,7 @@ namespace ServiceLayer.Mesh.Functions
 {
     public class FileDiscoveryFunction(
         ILogger<FileDiscoveryFunction> logger,
+        IFileDiscoveryFunctionConfiguration configuration,
         IMeshInboxService meshInboxService,
         ServiceLayerDbContext serviceLayerDbContext,
         IFileExtractQueueClient fileExtractQueueClient)
@@ -19,11 +21,7 @@ namespace ServiceLayer.Mesh.Functions
         {
             logger.LogInformation($"DiscoveryFunction started at: {DateTime.Now}");
 
-            // TODO - abstract this out into an injectable configuration interface for testing purposes
-            var mailboxId = Environment.GetEnvironmentVariable("NBSSMailBoxId")
-                ?? throw new InvalidOperationException($"Environment variable 'NBSSMailBoxId' is not set or is empty.");
-
-            var response = await meshInboxService.GetMessagesAsync(mailboxId);
+            var response = await meshInboxService.GetMessagesAsync(configuration.NbssMeshMailboxId);
 
             foreach (var messageId in response.Response.Messages)
             {
@@ -38,7 +36,7 @@ namespace ServiceLayer.Mesh.Functions
                     {
                         FileId = messageId,
                         FileType = MeshFileType.NbssAppointmentEvents,
-                        MailboxId = mailboxId,
+                        MailboxId = configuration.NbssMeshMailboxId,
                         Status = MeshFileStatus.Discovered,
                         FirstSeenUtc = DateTime.UtcNow,
                         LastUpdatedUtc = DateTime.UtcNow

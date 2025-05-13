@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NHS.MESH.Client.Contracts.Services;
 using NHS.MESH.Client.Models;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
@@ -32,11 +33,12 @@ public class FileDiscoveryFunctionTests
 
         _dbContext = new ServiceLayerDbContext(options);
 
-        Environment.SetEnvironmentVariable("NBSSMailBoxId", "test-mailbox");
-        Environment.SetEnvironmentVariable("QueueUrl", "https://fakestorageaccount.queue.core.windows.net/testqueue");
+        var functionConfiguration = new Mock<IFileDiscoveryFunctionConfiguration>();
+        functionConfiguration.Setup(c => c.NbssMeshMailboxId).Returns("test-mailbox");
 
         _function = new FileDiscoveryFunction(
             _loggerMock.Object,
+            functionConfiguration.Object,
             _meshInboxServiceMock.Object,
             _dbContext,
             _queueClientMock.Object

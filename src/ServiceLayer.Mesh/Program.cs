@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using NHS.MESH.Client;
 using ServiceLayer.Mesh.Data;
 using Azure.Storage.Blobs;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
 
 var host = new HostBuilder()
@@ -19,7 +20,7 @@ var host = new HostBuilder()
         // MESH Client config
         services
             .AddMeshClient(_ => _.MeshApiBaseUrl = Environment.GetEnvironmentVariable("MeshApiBaseUrl"))
-            .AddMailbox(Environment.GetEnvironmentVariable("NBSSMailBoxId"), new NHS.MESH.Client.Configuration.MailboxConfiguration
+            .AddMailbox(Environment.GetEnvironmentVariable("NbssMailboxId"), new NHS.MESH.Client.Configuration.MailboxConfiguration
             {
                 Password = Environment.GetEnvironmentVariable("MeshPassword"),
                 SharedKey = Environment.GetEnvironmentVariable("MeshSharedKey"),
@@ -57,6 +58,8 @@ var host = new HostBuilder()
                 Environment.GetEnvironmentVariable("AzureWebJobsStorage"),
                 Environment.GetEnvironmentVariable("BlobContainerName"));
         });
+
+        services.AddTransient<IFileDiscoveryFunctionConfiguration, AppConfiguration>();
     });
 
 
