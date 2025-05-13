@@ -20,8 +20,8 @@ namespace ServiceLayer.Mesh.Functions
             logger.LogInformation($"DiscoveryFunction started at: {DateTime.Now}");
 
             // TODO - abstract this out into an injectable configuration interface for testing purposes
-            var mailboxId = Environment.GetEnvironmentVariable("BSSMailBox")
-                ?? throw new InvalidOperationException($"Environment variable 'BSSMailBox' is not set or is empty.");
+            var mailboxId = Environment.GetEnvironmentVariable("NBSSMailBoxId")
+                ?? throw new InvalidOperationException($"Environment variable 'NBSSMailBoxId' is not set or is empty.");
 
             var response = await meshInboxService.GetMessagesAsync(mailboxId);
 

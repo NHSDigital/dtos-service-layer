@@ -19,7 +19,7 @@ var host = new HostBuilder()
         // MESH Client config
         services
             .AddMeshClient(_ => _.MeshApiBaseUrl = Environment.GetEnvironmentVariable("MeshApiBaseUrl"))
-            .AddMailbox(Environment.GetEnvironmentVariable("BSSMailBox"), new NHS.MESH.Client.Configuration.MailboxConfiguration
+            .AddMailbox(Environment.GetEnvironmentVariable("NBSSMailBoxId"), new NHS.MESH.Client.Configuration.MailboxConfiguration
             {
                 Password = Environment.GetEnvironmentVariable("MeshPassword"),
                 SharedKey = Environment.GetEnvironmentVariable("MeshSharedKey"),
