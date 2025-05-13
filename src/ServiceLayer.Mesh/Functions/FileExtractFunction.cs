@@ -74,9 +74,10 @@ public class FileExtractFunction(
             (file.Status == MeshFileStatus.Extracting && file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-12)))
         {
             logger.LogWarning(
-                "File with id: {fileId} found in MeshFiles table but has unexpected status: {status}.",
+                "File with id: {fileId} found in MeshFiles table but is not suitable for extraction. Status: {status}, LastUpdatedUtc: {lastUpdatedUtc}.",
                 file.FileId,
-                file.Status);
+                file.Status,
+                file.LastUpdatedUtc);
             return false;
         }
         return true;

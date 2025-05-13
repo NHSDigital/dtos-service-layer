@@ -30,6 +30,7 @@ public class FileExtractFunctionTests
         _fileExtractQueueClientMock = new Mock<IFileExtractQueueClient>();
         _fileTransformQueueClientMock = new Mock<IFileTransformQueueClient>();
         _blobStoreMock = new Mock<IMeshFilesBlobStore>();
+        _configurationMock = new Mock<IFileExtractFunctionConfiguration>();
 
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -56,15 +57,41 @@ public class FileExtractFunctionTests
     [Fact]
     public async Task Run_FileNotFound_ExitsSilently()
     {
+        // Arrange
         var message = new FileExtractQueueMessage { FileId = "nonexistent-file" };
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _function.Run(message));
-        Assert.Equal("File not found", exception.Message);
+        // Act
+        await _function.Run(message);
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} not found in MeshFiles table."),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+            ), Times.Once);
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString() == "Exiting function."),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+            ), Times.Once);
+
+        Assert.Equal(0, _dbContext.MeshFiles.Count());
+        _meshInboxServiceMock.Verify(x => x.GetHeadMessageByIdAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _blobStoreMock.Verify(x => x.UploadAsync(It.IsAny<MeshFile>(), It.IsAny<byte[]>()), Times.Never);
+        _fileTransformQueueClientMock.Verify(x => x.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
+        _fileTransformQueueClientMock.Verify(x => x.SendToPoisonQueueAsync(It.IsAny<FileTransformQueueMessage>()), Times.Never);
     }
 
     [Fact]
     public async Task Run_FileInInvalidStatus_ExitsSilently()
     {
+        // Arrange
         var file = new MeshFile
         {
             FileType = MeshFileType.NbssAppointmentEvents,
@@ -78,8 +105,31 @@ public class FileExtractFunctionTests
 
         var message = new FileExtractQueueMessage { FileId = "file-1" };
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _function.Run(message));
-        Assert.Equal("File is not in expected status", exception.Message);
+        // Act
+        await _function.Run(message);
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().StartsWith($"File with id: {message.FileId} found in MeshFiles table but is not suitable for extraction. Status: {file.Status}, LastUpdatedUtc:")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+            ), Times.Once);
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString() == "Exiting function."),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+            ), Times.Once);
+
+        _meshInboxServiceMock.Verify(x => x.GetHeadMessageByIdAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _blobStoreMock.Verify(x => x.UploadAsync(It.IsAny<MeshFile>(), It.IsAny<byte[]>()), Times.Never);
+        _fileTransformQueueClientMock.Verify(x => x.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
+        _fileTransformQueueClientMock.Verify(x => x.SendToPoisonQueueAsync(It.IsAny<FileTransformQueueMessage>()), Times.Never);
     }
 
     [Fact]
