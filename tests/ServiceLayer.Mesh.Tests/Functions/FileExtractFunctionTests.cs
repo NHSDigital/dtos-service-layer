@@ -15,7 +15,8 @@ public class FileExtractFunctionTests
 {
     private readonly Mock<ILogger<FileExtractFunction>> _loggerMock;
     private readonly Mock<IMeshInboxService> _meshInboxServiceMock;
-    private readonly Mock<IFileTransformQueueClient> _queueClientMock;
+    private readonly Mock<IFileTransformQueueClient> _fileTransformQueueClientMock;
+    private readonly Mock<IFileExtractQueueClient> _fileExtractQueueClientMock;
     private readonly Mock<IMeshFilesBlobStore> _blobStoreMock;
     private readonly ServiceLayerDbContext _dbContext;
     private readonly FileExtractFunction _function;
@@ -24,7 +25,8 @@ public class FileExtractFunctionTests
     {
         _loggerMock = new Mock<ILogger<FileExtractFunction>>();
         _meshInboxServiceMock = new Mock<IMeshInboxService>();
-        _queueClientMock = new Mock<IFileTransformQueueClient>();
+        _fileExtractQueueClientMock = new Mock<IFileExtractQueueClient>();
+        _fileTransformQueueClientMock = new Mock<IFileTransformQueueClient>();
         _blobStoreMock = new Mock<IMeshFilesBlobStore>();
 
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
@@ -41,7 +43,8 @@ public class FileExtractFunctionTests
             _loggerMock.Object,
             _meshInboxServiceMock.Object,
             _dbContext,
-            _queueClientMock.Object,
+            _fileTransformQueueClientMock.Object,
+            _fileExtractQueueClientMock.Object,
             _blobStoreMock.Object
         );
     }
