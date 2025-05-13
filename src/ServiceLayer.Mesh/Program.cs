@@ -60,6 +60,9 @@ var host = new HostBuilder()
         });
 
         services.AddTransient<IFileDiscoveryFunctionConfiguration, AppConfiguration>();
+        services.AddTransient<IFileExtractFunctionConfiguration, AppConfiguration>();
+        services.AddTransient<IFileExtractQueueClientConfiguration, AppConfiguration>();
+        services.AddTransient<IFileTransformQueueClientConfiguration, AppConfiguration>();
     });
 
 

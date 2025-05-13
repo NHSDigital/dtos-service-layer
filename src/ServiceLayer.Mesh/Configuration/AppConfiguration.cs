@@ -1,8 +1,16 @@
 namespace ServiceLayer.Mesh.Configuration;
 
-public class AppConfiguration : IFileDiscoveryFunctionConfiguration
+public class AppConfiguration :
+    IFileDiscoveryFunctionConfiguration,
+    IFileExtractFunctionConfiguration,
+    IFileExtractQueueClientConfiguration,
+    IFileTransformQueueClientConfiguration
 {
     public string NbssMeshMailboxId => GetRequired("NbssMailboxId");
+
+    public string FileExtractQueueName => GetRequired("FileExtractQueueName");
+
+    public string FileTransformQueueName => GetRequired("FileTransformQueueName");
 
     private static string GetRequired(string key)
     {
