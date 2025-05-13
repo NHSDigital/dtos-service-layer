@@ -56,7 +56,6 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "${DATABASE_PASSWORD}"
-      MSSQL_PID: "Developer"
     ports:
       - "1433:1433"
     user: "root"
@@ -75,7 +74,7 @@ services:
     container_name: db-migrations
     build:
       context: .
-      dockerfile: database/Dockerfile.migrations
+      dockerfile: src/ServiceLayer.Mesh/Dockerfile.migrations
       args:
         DatabaseConnectionString: "${DatabaseConnectionString}"
     depends_on:
@@ -85,8 +84,6 @@ services:
       DATABASE_NAME: "${DATABASE_NAME}"
       DATABASE_USER: "${DATABASE_USER}"
       DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
-      EVENT_GRID_TOPIC_URL: "${EVENT_GRID_TOPIC_URL}"
-      EVENT_GRID_TOPIC_KEY: "${EVENT_GRID_TOPIC_KEY}"
     networks:
       - backend
 
