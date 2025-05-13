@@ -2,6 +2,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Models;
@@ -10,7 +11,8 @@ using ServiceLayer.Mesh.Storage;
 namespace ServiceLayer.Mesh.Functions;
 
 public class FileExtractFunction(
-    ILogger logger,
+    ILogger<FileExtractFunction> logger,
+    IFileExtractFunctionConfiguration configuration,
     IMeshInboxService meshInboxService,
     ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
@@ -53,10 +55,7 @@ public class FileExtractFunction(
 
         try
         {
-            var mailboxId = Environment.GetEnvironmentVariable("NBSSMailBoxId")
-                ?? throw new InvalidOperationException($"Environment variable 'NBSSMailBoxId' is not set or is empty.");
-
-            var meshResponse = await meshInboxService.GetMessageByIdAsync(mailboxId, file.FileId);
+            var meshResponse = await meshInboxService.GetMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
             if (!meshResponse.IsSuccessful)
             {
                 // TODO - what to do if unsuccessful?
@@ -65,7 +64,7 @@ public class FileExtractFunction(
 
             var blobPath = await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
 
-            var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(mailboxId, message.FileId);
+            var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, message.FileId);
             if (!meshResponse.IsSuccessful)
             {
                 // TODO - what to do if unsuccessful?

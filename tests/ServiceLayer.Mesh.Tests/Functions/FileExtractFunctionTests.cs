@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NHS.MESH.Client.Contracts.Services;
 using NHS.MESH.Client.Models;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
@@ -17,6 +18,7 @@ public class FileExtractFunctionTests
     private readonly Mock<IMeshInboxService> _meshInboxServiceMock;
     private readonly Mock<IFileTransformQueueClient> _fileTransformQueueClientMock;
     private readonly Mock<IFileExtractQueueClient> _fileExtractQueueClientMock;
+    private readonly Mock<IFileExtractFunctionConfiguration> _configurationMock;
     private readonly Mock<IMeshFilesBlobStore> _blobStoreMock;
     private readonly ServiceLayerDbContext _dbContext;
     private readonly FileExtractFunction _function;
@@ -37,10 +39,12 @@ public class FileExtractFunctionTests
 
         _dbContext = new ServiceLayerDbContext(options);
 
-        Environment.SetEnvironmentVariable("NBSSMailBoxId", "test-mailbox");
+        var functionConfiguration = new Mock<IFileExtractFunctionConfiguration>();
+        functionConfiguration.Setup(c => c.NbssMeshMailboxId).Returns("test-mailbox");
 
         _function = new FileExtractFunction(
             _loggerMock.Object,
+            functionConfiguration.Object,
             _meshInboxServiceMock.Object,
             _dbContext,
             _fileTransformQueueClientMock.Object,
