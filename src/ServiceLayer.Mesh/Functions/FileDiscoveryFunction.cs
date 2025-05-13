@@ -8,14 +8,14 @@ using ServiceLayer.Mesh.Models;
 
 namespace ServiceLayer.Mesh.Functions
 {
-    public class DiscoveryFunction(
-        ILogger<DiscoveryFunction> logger,
+    public class FileDiscoveryFunction(
+        ILogger<FileDiscoveryFunction> logger,
         IMeshInboxService meshInboxService,
         ServiceLayerDbContext serviceLayerDbContext,
         IFileExtractQueueClient fileExtractQueueClient)
     {
-        [Function("DiscoveryFunction")]
-        public async Task Run([TimerTrigger("%DiscoveryTimerExpression%")] TimerInfo myTimer)
+        [Function("FileDiscoveryFunction")]
+        public async Task Run([TimerTrigger("%FileDiscoveryTimerExpression%")] TimerInfo myTimer)
         {
             logger.LogInformation($"DiscoveryFunction started at: {DateTime.Now}");
 

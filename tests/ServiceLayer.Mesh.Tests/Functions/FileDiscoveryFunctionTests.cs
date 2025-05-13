@@ -1,22 +1,14 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Models;
 using ServiceLayer.Mesh.Data;
 using Microsoft.EntityFrameworkCore;
 using NHS.MESH.Client.Contracts.Services;
-using Microsoft.Azure.Functions.Worker;
 using NHS.MESH.Client.Models;
 using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
-using Azure;
 
-public class DiscoveryFunctionTests
+public class FileDiscoveryFunctionTests
 {
     private readonly Mock<ILogger<DiscoveryFunction>> _loggerMock;
     private readonly Mock<IMeshInboxService> _meshInboxServiceMock;
@@ -24,7 +16,7 @@ public class DiscoveryFunctionTests
     private readonly Mock<QueueClient> _queueClientMock;
     private readonly DiscoveryFunction _function;
 
-    public DiscoveryFunctionTests()
+    public FileDiscoveryFunctionTests()
     {
         _loggerMock = new Mock<ILogger<DiscoveryFunction>>();
         _meshInboxServiceMock = new Mock<IMeshInboxService>();

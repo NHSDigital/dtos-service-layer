@@ -1,6 +1,5 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Azure.Storage.Queues;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -11,36 +10,27 @@ using ServiceLayer.Mesh.Models;
 
 namespace ServiceLayer.Mesh.Functions;
 
-public class ExtractFunction
+public class FileExtractFunction(
+    ILogger logger,
+    IMeshInboxService meshInboxService,
+    ServiceLayerDbContext serviceLayerDbContext,
+    IFileTransformQueueClient fileTransformQueueClient,
+    BlobContainerClient blobContainerClient)
 {
-    private readonly ILogger _logger;
-    private readonly IMeshInboxService _meshInboxService;
-    private readonly ServiceLayerDbContext _serviceLayerDbContext;
-    private readonly QueueClient _queueClient;
-    private readonly BlobContainerClient _blobContainerClient;
-
-    public ExtractFunction(ILogger logger, IMeshInboxService meshInboxService, ServiceLayerDbContext serviceLayerDbContext, QueueClient queueClient, BlobContainerClient blobClient)
-    {
-        _logger = logger;
-        _meshInboxService = meshInboxService;
-        _serviceLayerDbContext = serviceLayerDbContext;
-        _queueClient = queueClient;
-        _blobContainerClient = blobClient;
-    }
-
-    [Function("ExtractFunction")]
+    [Function("FileExtractFunction")]
     public async Task Run([QueueTrigger("file-extract")] FileExtractQueueMessage message) // TODO: Queue name
     {
-        _logger.LogInformation($"ExtractFunction started at: {DateTime.Now}");
+        logger.LogInformation($"ExtractFunction started at: {DateTime.Now}");
 
-        await using var transaction = await _serviceLayerDbContext.Database.BeginTransactionAsync();
+        await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
-        var file = await _serviceLayerDbContext.MeshFiles
+        var file = await serviceLayerDbContext.MeshFiles
             .FirstOrDefaultAsync(f => f.FileId == message.FileId);
 
         if (file == null)
         {
             // TODO - do we want to throw exception or just exit silently?
+            // ANswer - exit silenty
             throw new InvalidOperationException("File not found");
         }
 
@@ -51,19 +41,20 @@ public class ExtractFunction
             file.Status == MeshFileStatus.Extracting && file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-12))
         {
             // TODO - do we want to throw exception or just exit silently?
+            // ANswer - exit silenty
             throw new InvalidOperationException("File is not in expected status");
         }
 
         file.Status = MeshFileStatus.Extracting;
         file.LastUpdatedUtc = DateTime.UtcNow;
 
-        await _serviceLayerDbContext.SaveChangesAsync();
+        await serviceLayerDbContext.SaveChangesAsync();
         await transaction.CommitAsync();
 
         var mailboxId = Environment.GetEnvironmentVariable("MeshMailboxId")
             ?? throw new InvalidOperationException($"Environment variable 'MeshMailboxId' is not set or is empty.");
 
-        var meshResponse = await _meshInboxService.GetMessageByIdAsync(mailboxId, file.FileId);
+        var meshResponse = await meshInboxService.GetMessageByIdAsync(mailboxId, file.FileId);
         if (!meshResponse.IsSuccessful)
         {
             // TODO - what to do if unsuccessful?
@@ -75,9 +66,9 @@ public class ExtractFunction
 
     public async Task<bool> UploadFileToBlobStorage(BlobFile blobFile, bool overwrite = false)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blobFile.FileName);
+        var blobClient = blobContainerClient.GetBlobClient(blobFile.FileName);
 
-        await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.None);
+        await blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.None);
 
         try
         {
@@ -85,7 +76,7 @@ public class ExtractFunction
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "There has been a problem while uploading the file: {Message}", ex.Message);
+            logger.LogError(ex, "There has been a problem while uploading the file: {Message}", ex.Message);
             return false;
         }
 
