@@ -67,41 +67,41 @@ public class FileExtractFunction(
         await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
     }
 
-    public async Task<bool> UploadFileToBlobStorage(BlobFile blobFile, bool overwrite = false)
-    {
-        var blobClient = blobContainerClient.GetBlobClient(blobFile.FileName);
-
-        await blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.None);
-
-        try
-        {
-            await blobClient.UploadAsync(blobFile.Data, overwrite: overwrite);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "There has been a problem while uploading the file: {Message}", ex.Message);
-            return false;
-        }
-
-        return true;
-    }
+    // public async Task<bool> UploadFileToBlobStorage(BlobFile blobFile, bool overwrite = false)
+    // {
+    //     var blobClient = blobContainerClient.GetBlobClient(blobFile.FileName);
+    //
+    //     await blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.None);
+    //
+    //     try
+    //     {
+    //         await blobClient.UploadAsync(blobFile.Data, overwrite: overwrite);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         logger.LogError(ex, "There has been a problem while uploading the file: {Message}", ex.Message);
+    //         return false;
+    //     }
+    //
+    //     return true;
+    // }
 }
 
-public class BlobFile
-{
-    public BlobFile(byte[] bytes, string fileName)
-    {
-        Data = new MemoryStream(bytes);
-        FileName = fileName;
-    }
-    public BlobFile(Stream stream, string fileName)
-    {
-        Data = stream;
-        FileName = fileName;
-    }
-
-    public Stream Data { get; set; }
-    public string FileName { get; set; }
-}
+// public class BlobFile
+// {
+//     public BlobFile(byte[] bytes, string fileName)
+//     {
+//         Data = new MemoryStream(bytes);
+//         FileName = fileName;
+//     }
+//     public BlobFile(Stream stream, string fileName)
+//     {
+//         Data = stream;
+//         FileName = fileName;
+//     }
+//
+//     public Stream Data { get; set; }
+//     public string FileName { get; set; }
+// }
 
 

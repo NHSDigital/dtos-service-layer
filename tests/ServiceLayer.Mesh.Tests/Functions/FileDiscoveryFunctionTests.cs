@@ -1,26 +1,28 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
-using ServiceLayer.Mesh.Functions;
-using ServiceLayer.Mesh.Models;
-using ServiceLayer.Mesh.Data;
-using Microsoft.EntityFrameworkCore;
 using NHS.MESH.Client.Contracts.Services;
 using NHS.MESH.Client.Models;
-using Azure.Storage.Queues;
+using ServiceLayer.Mesh.Data;
+using ServiceLayer.Mesh.Functions;
+using ServiceLayer.Mesh.Messaging;
+using ServiceLayer.Mesh.Models;
+
+namespace ServiceLayer.Mesh.Tests.Functions;
 
 public class FileDiscoveryFunctionTests
 {
-    private readonly Mock<ILogger<DiscoveryFunction>> _loggerMock;
+    private readonly Mock<ILogger<FileDiscoveryFunction>> _loggerMock;
     private readonly Mock<IMeshInboxService> _meshInboxServiceMock;
     private readonly ServiceLayerDbContext _dbContext;
-    private readonly Mock<QueueClient> _queueClientMock;
-    private readonly DiscoveryFunction _function;
+    private readonly Mock<IFileExtractQueueClient> _queueClientMock;
+    private readonly FileDiscoveryFunction _function;
 
     public FileDiscoveryFunctionTests()
     {
-        _loggerMock = new Mock<ILogger<DiscoveryFunction>>();
+        _loggerMock = new Mock<ILogger<FileDiscoveryFunction>>();
         _meshInboxServiceMock = new Mock<IMeshInboxService>();
-        _queueClientMock = new Mock<QueueClient>();
+        _queueClientMock = new Mock<IFileExtractQueueClient>();
 
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -33,7 +35,7 @@ public class FileDiscoveryFunctionTests
         Environment.SetEnvironmentVariable("MailboxId", "test-mailbox");
         Environment.SetEnvironmentVariable("QueueUrl", "https://fakestorageaccount.queue.core.windows.net/testqueue");
 
-        _function = new DiscoveryFunction(
+        _function = new FileDiscoveryFunction(
             _loggerMock.Object,
             _meshInboxServiceMock.Object,
             _dbContext,
@@ -62,7 +64,8 @@ public class FileDiscoveryFunctionTests
         Assert.Equal(MeshFileStatus.Discovered, meshFile.Status);
         Assert.Equal("test-mailbox", meshFile.MailboxId);
 
-        _queueClientMock.Verify(q => q.SendMessage(It.IsAny<string>()), Times.Once);
+        // TODO - replace the It.IsAny with a more specific matcher, or use a callback
+        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Once);
     }
 
     [Fact]
@@ -94,7 +97,7 @@ public class FileDiscoveryFunctionTests
         var count = _dbContext.MeshFiles.Count(f => f.FileId == duplicateMessageId);
         Assert.Equal(1, count);
 
-        _queueClientMock.Verify(q => q.SendMessage(It.IsAny<string>()), Times.Never);
+        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
     }
 
     [Fact]
@@ -104,7 +107,7 @@ public class FileDiscoveryFunctionTests
         _meshInboxServiceMock.Setup(s => s.GetMessagesAsync("test-mailbox"))
             .ReturnsAsync(new MeshResponse<CheckInboxResponse>
             {
-                Response = new CheckInboxResponse { Messages = Array.Empty<string>() }
+                Response = new CheckInboxResponse { Messages = [] }
             });
 
         // Act
@@ -112,7 +115,7 @@ public class FileDiscoveryFunctionTests
 
         // Assert
         Assert.Empty(_dbContext.MeshFiles);
-        _queueClientMock.Verify(q => q.SendMessage(It.IsAny<string>()), Times.Never);
+        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
     }
 
     [Fact]
@@ -139,6 +142,7 @@ public class FileDiscoveryFunctionTests
             Assert.Equal("test-mailbox", meshFile.MailboxId);
         }
 
-        _queueClientMock.Verify(q => q.SendMessage(It.IsAny<string>()), Times.Exactly(messageIds.Length));
+        // TODO - replace the It.IsAny with more specific matcher, or use a callback to capture the arguments and check the file IDs
+        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Exactly(messageIds.Length));
     }
 }
