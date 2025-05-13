@@ -17,6 +17,8 @@ namespace ServiceLayer.Mesh.Functions
         [Function("FileRetryFunction")]
         public async Task Run([TimerTrigger("%FileRetryTimerExpression%")] TimerInfo myTimer)
         {
+            logger.LogInformation($"FileRetryFunction started at: {DateTime.Now}");
+
             var twelveHoursAgo = DateTime.UtcNow.AddHours(-12);
 
             var files = await serviceLayerDbContext.MeshFiles
@@ -26,6 +28,8 @@ namespace ServiceLayer.Mesh.Functions
                      f.Status == MeshFileStatus.Extracted ||
                      f.Status == MeshFileStatus.Transforming) && f.LastUpdatedUtc <= twelveHoursAgo)
                 .ToListAsync();
+
+            logger.LogInformation($"FileRetryFunction, {files.Count} stale files found");
 
             foreach (var file in files)
             {
