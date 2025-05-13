@@ -20,9 +20,9 @@ public class FileExtractFunction(
     IMeshFilesBlobStore meshFileBlobStore)
 {
     [Function("FileExtractFunction")]
-    public async Task Run([QueueTrigger("file-extract")] FileExtractQueueMessage message) // TODO: Queue name
+    public async Task Run([QueueTrigger("%FileExtractQueueName%")] FileExtractQueueMessage message)
     {
-        logger.LogInformation($"ExtractFunction started at: {DateTime.Now}");
+        logger.LogInformation("{functionName} started at: {time}", nameof(FileDiscoveryFunction), DateTime.UtcNow);
 
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
@@ -31,20 +31,22 @@ public class FileExtractFunction(
 
         if (file == null)
         {
-            // TODO - do we want to throw exception or just exit silently?
-            // ANswer - exit silenty
-            throw new InvalidOperationException("File not found");
+            logger.LogWarning("File with id: {fileId} not found in MeshFiles table. Exiting function.", message.FileId);
+            return;
         }
 
         // We only want to extract files if they are in a Discovered state,
-        //   or are in an Extracting state and have been last touched over 12 hours ago.
+        // or are in an Extracting state and were last touched over 12 hours ago.
         var expectedStatuses = new[] { MeshFileStatus.Discovered, MeshFileStatus.Extracting };
         if (!expectedStatuses.Contains(file.Status) ||
-            file.Status == MeshFileStatus.Extracting && file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-12))
+            (file.Status == MeshFileStatus.Extracting && file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-12)))
         {
-            // TODO - do we want to throw exception or just exit silently?
-            // ANswer - exit silenty
-            throw new InvalidOperationException("File is not in expected status");
+            logger.LogWarning(
+                "File with id: {fileId} found in MeshFiles table but has unexpected Status: {status}, LastUpdatedUtc: {lastUpdatedUtc}. Exiting function.",
+                message.FileId,
+                file.Status,
+                file.LastUpdatedUtc);
+            return;
         }
 
         file.Status = MeshFileStatus.Extracting;
@@ -58,7 +60,6 @@ public class FileExtractFunction(
             var meshResponse = await meshInboxService.GetMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
             if (!meshResponse.IsSuccessful)
             {
-                // TODO - what to do if unsuccessful?
                 throw new InvalidOperationException($"Mesh extraction failed: {meshResponse.Error}");
             }
 
@@ -67,20 +68,19 @@ public class FileExtractFunction(
             var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, message.FileId);
             if (!meshAcknowledgementResponse.IsSuccessful)
             {
-                // TODO - what to do if unsuccessful?
-                throw new InvalidOperationException($"Mesh acknowledgement failed: {meshResponse.Error}");
+                throw new InvalidOperationException($"Mesh acknowledgement failed: {meshAcknowledgementResponse.Error}");
             }
 
+            file.BlobPath = blobPath;
             file.Status = MeshFileStatus.Extracted;
             file.LastUpdatedUtc = DateTime.UtcNow;
-            file.BlobPath = blobPath;
             await serviceLayerDbContext.SaveChangesAsync();
 
             await fileTransformQueueClient.EnqueueFileTransformAsync(file);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "");
+            logger.LogError(ex, "An exception occurred during file extraction for fileId: {fileId}", message.FileId);
             file.Status = MeshFileStatus.FailedExtract;
             file.LastUpdatedUtc = DateTime.UtcNow;
             await serviceLayerDbContext.SaveChangesAsync();
