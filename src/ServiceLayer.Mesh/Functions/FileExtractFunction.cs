@@ -54,8 +54,8 @@ public class FileExtractFunction(
         // TODO - approx after this point we'll need to wrap everything in a try-catch. On failure we should
         //        update the meshfile to FailedExtract, and move the message to the poison queue
 
-        var mailboxId = Environment.GetEnvironmentVariable("MeshMailboxId")
-            ?? throw new InvalidOperationException($"Environment variable 'MeshMailboxId' is not set or is empty.");
+        var mailboxId = Environment.GetEnvironmentVariable("NBSSMailBoxId")
+            ?? throw new InvalidOperationException($"Environment variable 'NBSSMailBoxId' is not set or is empty.");
 
         var meshResponse = await meshInboxService.GetMessageByIdAsync(mailboxId, file.FileId);
         if (!meshResponse.IsSuccessful)
