@@ -9,12 +9,12 @@ ENV EVENT_GRID_TOPIC_URL=${EVENT_GRID_TOPIC_URL}
 ENV EVENT_GRID_TOPIC_KEY=${EVENT_GRID_TOPIC_KEY}
 
 # Copy csproj files first (for layer caching)
-COPY ./src/ServiceLayer.API/ServiceLayer.API.csproj ./ServiceLayer.API/
+COPY ./src/ServiceLayer.Mesh/ServiceLayer.Mesh.csproj ./ServiceLayer.Mesh/
 # Restore dependencies
-RUN dotnet restore ./ServiceLayer.API/ServiceLayer.API.csproj
+RUN dotnet restore ./ServiceLayer.Mesh/ServiceLayer.Mesh.csproj
 
 # Copy source files
-COPY ./src/ServiceLayer.API/ ./ServiceLayer.API/
+COPY ./src/ServiceLayer.Mesh/ ./ServiceLayer.Mesh/
 
 # Install dotnet-ef to a local tools directory
 RUN dotnet tool install dotnet-ef --tool-path /tools
@@ -25,16 +25,16 @@ ENV PATH="/tools:$PATH" \
     DOTNET_NOLOGO=true
 
 # Build the project
-RUN dotnet build ./ServiceLayer.API/ServiceLayer.API.csproj
+RUN dotnet build ./ServiceLayer.Mesh/ServiceLayer.Mesh.csproj
 
 # Create the initial migration
-RUN dotnet ef migrations add InitialMigration --project ./ServiceLayer.API/ --output-dir Data/Migrations
+RUN dotnet ef migrations add InitialMigration --project ./ServiceLayer.Mesh/ --output-dir Data/Migrations
 
 # Create directory for output SQL script
 RUN mkdir -p /database
 
 # Generate the SQL migration script
-RUN dotnet ef migrations script -o /database/migration.sql --project ./ServiceLayer.API/
+RUN dotnet ef migrations script -o /database/migration.sql --project ./ServiceLayer.Mesh/
 
 # Stage 2: Run migrations and seed data
 FROM mcr.microsoft.com/mssql-tools:latest AS migration-env
