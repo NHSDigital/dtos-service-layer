@@ -4,11 +4,12 @@ set -euo pipefail
 COVERAGE_DIR="coverage"
 TEST_PROJECTS=$(find tests -name '*.csproj')
 
-for proj in $TEST_PROJECTS; do
-  echo "🧪 Running tests for $proj..."
-  dotnet test "$proj" \
-    --collect:"XPlat Code Coverage" \
-    --results-directory "$COVERAGE_DIR/$(basename "$proj" .csproj)"
-done
+rm -rf "$COVERAGE_DIR"
+mkdir -p "$COVERAGE_DIR"
 
-echo "✅ All tests completed. Coverage reports in $COVERAGE_DIR/"
+for proj in $TEST_PROJECTS; do
+  proj_name=$(basename "$proj" .csproj)
+  out_file="$COVERAGE_DIR/$proj_name.coverage.xml"
+  echo "🧪 Running coverage for $proj -> $out_file"
+  dotnet-coverage collect -f xml -o "$out_file" dotnet test "$proj"
+done
