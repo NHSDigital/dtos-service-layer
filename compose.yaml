@@ -56,7 +56,6 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "${DATABASE_PASSWORD}"
-      MSSQL_PID: "Developer"
     ports:
       - "1433:1433"
     user: "root"
@@ -71,17 +70,20 @@ services:
     networks:
       - backend
 
-  db-setup:
-    container_name: "db-setup"
+  db-migrations:
+    container_name: db-migrations
     build:
-      context: ./database
-      dockerfile: Dockerfile
-    restart: "no"
-    environment:
-      DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
+      context: .
+      dockerfile: src/ServiceLayer.Mesh/Dockerfile.migrations
+      args:
+        DatabaseConnectionString: "${DatabaseConnectionString}"
     depends_on:
       db:
         condition: service_healthy
+    environment:
+      DATABASE_NAME: "${DATABASE_NAME}"
+      DATABASE_USER: "${DATABASE_USER}"
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
     networks:
       - backend
 
