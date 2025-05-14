@@ -30,13 +30,11 @@ public class FileExtractFunction(
         var file = await GetFileAsync(message.FileId);
         if (file == null)
         {
-            logger.LogWarning("Exiting function.");
             return;
         }
 
         if (!IsFileSuitableForExtraction(file))
         {
-            logger.LogWarning("Exiting function.");
             return;
         }
 

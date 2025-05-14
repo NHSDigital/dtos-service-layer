@@ -74,14 +74,6 @@ public class FileExtractFunctionTests
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ), Times.Once);
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == "Exiting function."),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
 
         Assert.Equal(0, _dbContext.MeshFiles.Count());
         _meshInboxServiceMock.Verify(x => x.GetHeadMessageByIdAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -119,14 +111,6 @@ public class FileExtractFunctionTests
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ), Times.Once);
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == "Exiting function."),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
 
         _meshInboxServiceMock.Verify(x => x.GetHeadMessageByIdAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _blobStoreMock.Verify(x => x.UploadAsync(It.IsAny<MeshFile>(), It.IsAny<byte[]>()), Times.Never);
@@ -160,14 +144,6 @@ public class FileExtractFunctionTests
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} found in MeshFiles table but is not suitable for extraction. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}."),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == "Exiting function."),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ), Times.Once);
