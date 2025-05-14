@@ -104,7 +104,7 @@ public class FileExtractFunction(
         var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, message.FileId);
         if (!meshAcknowledgementResponse.IsSuccessful)
         {
-            throw new InvalidOperationException($"Mesh acknowledgement failed: {meshAcknowledgementResponse.Error}");
+            logger.LogWarning("Mesh acknowledgement failed: {error}.\nThis is not a fatal error so processing will continue.", meshAcknowledgementResponse.Error);
         }
 
         file.BlobPath = blobPath;

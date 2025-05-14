@@ -276,7 +276,7 @@ public class FileExtractFunctionTests
     }
 
     [Fact]
-    public async Task Run_AcknowledgeMessageFails_ErrorLoggedAndFileSentToPoisonQueue()
+    public async Task Run_AcknowledgeMessageFails_WarningLoggedAndProcessingContinuesAsNormal()
     {
         // Arrange
         var fileId = "file-4";
@@ -293,6 +293,7 @@ public class FileExtractFunctionTests
         await _dbContext.SaveChangesAsync();
 
         var content = new byte[] { 1, 2, 3 };
+        const string blobPath = "directory/fileName";
 
         _meshInboxServiceMock.Setup(s => s.GetMessageByIdAsync(file.MailboxId, fileId))
             .ReturnsAsync(new MeshResponse<GetMessageResponse>
@@ -318,19 +319,21 @@ public class FileExtractFunctionTests
         // Assert
         _loggerMock.Verify(
             x => x.Log(
-                LogLevel.Error,
+                LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"An exception occurred during file extraction for fileId: {fileId}"),
-                It.Is<InvalidOperationException>(e => e.Message.StartsWith("Mesh acknowledgement failed: ")),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString().StartsWith("Mesh acknowledgement failed: ") &&
+                    v.ToString().EndsWith("This is not a fatal error so processing will continue.")),
+                null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ), Times.Once);
         _blobStoreMock.Verify(b => b.UploadAsync(file, content), Times.Once);
         _meshInboxServiceMock.Verify(m => m.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId), Times.Once);
-        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
-        _fileExtractQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
+        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(file), Times.Once);
+        _fileExtractQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Never);
         var updatedFile = _dbContext.MeshFiles.First();
-        Assert.Null(updatedFile.BlobPath);
-        Assert.Equal(MeshFileStatus.FailedExtract, updatedFile.Status);
+        Assert.Equal(blobPath, updatedFile.BlobPath);
+        Assert.Equal(MeshFileStatus.Extracted, updatedFile.Status);
         Assert.True(updatedFile.LastUpdatedUtc > originalLastUpdatedUtc);
     }
 }
