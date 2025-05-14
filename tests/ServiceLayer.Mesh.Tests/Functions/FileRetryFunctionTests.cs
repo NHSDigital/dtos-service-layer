@@ -6,6 +6,7 @@ using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Models;
+using ServiceLayer.Mesh.Configuration;
 using Xunit;
 
 namespace ServiceLayer.Mesh.Tests.Functions;
@@ -14,7 +15,9 @@ public class FileRetryFunctionTests
 {
     private readonly Mock<ILogger<FileRetryFunction>> _loggerMock;
     private readonly Mock<IMeshInboxService> _meshInboxServiceMock;
-    private readonly Mock<IFileExtractQueueClient> _queueClientMock;
+    private readonly Mock<IFileExtractQueueClient> _fileExtractQueueClientMock;
+    private readonly Mock<IFileTransformQueueClient> _fileTransformQueueClientMock;
+    private readonly Mock<IFileRetryFunctionConfiguration> _configuration;
     private readonly ServiceLayerDbContext _dbContext;
     private readonly FileRetryFunction _function;
 
@@ -22,7 +25,9 @@ public class FileRetryFunctionTests
     {
         _loggerMock = new Mock<ILogger<FileRetryFunction>>();
         _meshInboxServiceMock = new Mock<IMeshInboxService>();
-        _queueClientMock = new Mock<IFileExtractQueueClient>();
+        _fileExtractQueueClientMock = new Mock<IFileExtractQueueClient>();
+        _fileTransformQueueClientMock = new Mock<IFileTransformQueueClient>();
+        _configuration = new Mock<IFileRetryFunctionConfiguration>();
 
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -32,11 +37,15 @@ public class FileRetryFunctionTests
 
         _dbContext = new ServiceLayerDbContext(options);
 
+        _configuration.Setup(c => c.StaleHours).Returns("12");
+
         _function = new FileRetryFunction(
             _loggerMock.Object,
             _meshInboxServiceMock.Object,
             _dbContext,
-            _queueClientMock.Object
+            _fileExtractQueueClientMock.Object,
+            _fileTransformQueueClientMock.Object,
+            _configuration.Object
         );
     }
 
@@ -59,7 +68,7 @@ public class FileRetryFunctionTests
         await _function.Run(null);
 
         // Assert
-        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-1")), Times.Once);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-1")), Times.Once);
 
         var updatedFile = await _dbContext.MeshFiles.FindAsync("file-1");
         Assert.True(updatedFile!.LastUpdatedUtc > DateTime.UtcNow.AddMinutes(-1));
@@ -84,7 +93,7 @@ public class FileRetryFunctionTests
         await _function.Run(null);
 
         // Assert
-        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
     }
 
     [Fact]
@@ -106,7 +115,7 @@ public class FileRetryFunctionTests
         await _function.Run(null);
 
         // Assert
-        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-3")), Times.Once);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-3")), Times.Once);
     }
 
     [Fact]
@@ -128,7 +137,7 @@ public class FileRetryFunctionTests
         await _function.Run(null);
 
         // Assert
-        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
 
         var updated = await _dbContext.MeshFiles.FindAsync("file-4");
         Assert.True(updated!.LastUpdatedUtc > DateTime.UtcNow.AddMinutes(-1));
@@ -153,7 +162,7 @@ public class FileRetryFunctionTests
         await _function.Run(null);
 
         // Assert
-        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
     }
 
     [Fact]
@@ -195,8 +204,8 @@ public class FileRetryFunctionTests
         await _function.Run(null);
 
         // Assert
-        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-6")), Times.Once);
-        _queueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Once);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-6")), Times.Once);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Once);
 
         foreach (var fileId in new[] { "file-6", "file-7", "file-8" })
         {
