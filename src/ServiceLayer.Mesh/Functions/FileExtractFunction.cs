@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -77,7 +78,7 @@ public class FileExtractFunction(
                 "File with id: {fileId} found in MeshFiles table but is not suitable for extraction. Status: {status}, LastUpdatedUtc: {lastUpdatedUtc}.",
                 file.FileId,
                 file.Status,
-                file.LastUpdatedUtc);
+                file.LastUpdatedUtc.ToTimestamp());
             return false;
         }
         return true;
