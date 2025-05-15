@@ -9,6 +9,8 @@ using ServiceLayer.Mesh.Data;
 using Azure.Storage.Blobs;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
+using NHS.MESH.Client.Contracts.Services;
+using NHS.MESH.Client.Services;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -51,6 +53,7 @@ var host = new HostBuilder()
 
         services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();
         services.AddSingleton<IFileTransformQueueClient, FileTransformQueueClient>();
+        services.AddSingleton<IMeshOperationService, MeshOperationService>();
 
         services.AddSingleton(provider =>
         {
