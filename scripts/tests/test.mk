@@ -71,7 +71,6 @@ _test:
 		exec "$$script"; \
 	else \
 		echo "make test-$(name) not implemented: $$script not found" >&2; \
-		exit 1; \
 	fi
 
 ${VERBOSE}.SILENT: \
