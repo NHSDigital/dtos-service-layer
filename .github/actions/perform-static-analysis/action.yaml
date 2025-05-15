@@ -44,7 +44,8 @@ runs:
       run: |
         mkdir -p .sonar/scanner
         dotnet tool install dotnet-sonarscanner --tool-path ./.sonar/scanner
-        dotnet tool install dotnet-coverage --tool-path ./.sonar/scanner
+        dotnet tool install dotnet-reportgenerator-globaltool --tool-path ./.sonar/scanner
+
     - name: Build and analyze
       shell: bash
       run: |
