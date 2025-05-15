@@ -34,7 +34,6 @@ namespace ServiceLayer.Mesh.Functions
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred during mesh handshake for mailbox {MailboxId} at {Time}", configuration.NbssMeshMailboxId, DateTime.UtcNow);
-                return;
             }
         }
     }
