@@ -44,14 +44,12 @@ runs:
       run: |
         mkdir -p .sonar/scanner
         dotnet tool install dotnet-sonarscanner --tool-path ./.sonar/scanner
-        dotnet tool install dotnet-coverage --tool-path ./.sonar/scanner
+        dotnet tool install dotnet-reportgenerator-globaltool --tool-path ./.sonar/scanner
+
     - name: Build and analyze
       shell: bash
       run: |
-        echo "${{ inputs.sonar_project_key }}"
-        echo "${{ inputs.sonar_organisation_key }}"
-        echo "${{ inputs.sonar_token }}"
-        ./.sonar/scanner/dotnet-sonarscanner begin /k:"${{ inputs.sonar_project_key }}" /o:"${{ inputs.sonar_organisation_key }}" /d:sonar.token="${{ inputs.sonar_token }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vscoveragexml.reportsPaths="coverage.xml" /d:sonar.typescript.lcov.reportsPaths="src/web/coverage/lcov.info" /d:sonar.lang.patterns.ts=**/*.ts,**/*.tsx,**/*.cts,**/*.mts /d:sonar.lang.patterns.js=**/*.js,**/*.jsx,**/*.cjs,**/*.mjs,**/*.vue /d:sonar.javascript.enabled=false
-        dotnet build src/ServiceLayer.sln
-        ./.sonar/scanner/dotnet-coverage collect -f xml -o coverage.xml dotnet test src/ServiceLayer.sln
-        ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="${{ inputs.sonar_token }}"
+        export SONAR_PROJECT_KEY="${{ inputs.sonar_project_key }}"
+        export SONAR_ORGANISATION_KEY="${{ inputs.sonar_organisation_key }}"
+        export SONAR_TOKEN="${{ inputs.sonar_token }}"
+        make test-coverage

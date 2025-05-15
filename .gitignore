@@ -288,3 +288,7 @@ __queuestorage__
 
 # Gitleaks report
 gitleaks-report.json
+
+coverage/
+.sonar/
+.sonarqube/

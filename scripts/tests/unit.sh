@@ -1,29 +1,23 @@
 #!/bin/bash
-
 set -euo pipefail
 
-cd "$(git rev-parse --show-toplevel)"
+BUILD_ARGS=""
+if [[ "${1:-}" == "--no-build" ]]; then
+  BUILD_ARGS="--no-build"
+fi
 
-dir="$PWD"
-UnitDir="$dir/tests/"
-ResDir="$UnitDir"results-unit
-Format="trx"
+COVERAGE_DIR="coverage"
+TEST_PROJECTS=$(find tests -name '*.csproj')
 
-# Find all *.csproj files excluding the IntegrationTests folder and execute dotnet test, with build for now
-find "$UnitDir" -name '*.csproj' -not -path "$UnitDir/IntegrationTests/*" | while read -r file; do
-    echo -e "\nRunning unit tests for:\n$file"
-    dotnet test "$file" --filter "TestCategory!=Integration" --logger $Format --verbosity quiet
+rm -rf "$COVERAGE_DIR"
+mkdir -p "$COVERAGE_DIR"
+
+for proj in $TEST_PROJECTS; do
+  proj_name=$(basename "$proj" .csproj)
+  out_file="$COVERAGE_DIR/$proj_name.coverage.xml"
+  echo "🧪 Running coverage for $proj -> $out_file"
+  dotnet test "$proj" \
+    $BUILD_ARGS \
+  --collect:"XPlat Code Coverage" \
+  --results-directory coverage
 done
-
-
-# Move all trx result files into a separate folder, for easier reporting
-mkdir -p "$ResDir"
-find "$UnitDir" -name "*.$Format" -not -path "$ResDir/*" | while read -r resfile; do
-    mv "$resfile" "$ResDir"
-done
-
-# List created results
-echo -e "\nCreated result files:\n"
-find "$ResDir" -name "*.$Format"
-
-# echo "Test execution completed. See scripts/tests/unit.sh for more."
