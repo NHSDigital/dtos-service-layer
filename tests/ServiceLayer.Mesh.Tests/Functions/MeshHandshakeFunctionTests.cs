@@ -51,8 +51,7 @@ public class MeshHandshakeFunctionTests
         // Assert
         _meshOperationServiceMock.Verify(s => s.MeshHandshakeAsync(TestMailboxId), Times.Once());
         VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction started at");
-        VerifyLogMessage(LogLevel.Information, "Mesh handshake completed successfully");
-        VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction completed at");
+        VerifyLogMessage(LogLevel.Information, "Mesh handshake completed successfully for mailbox");
     }
 
     [Fact]
@@ -78,16 +77,12 @@ public class MeshHandshakeFunctionTests
         _meshOperationServiceMock.Verify(s => s.MeshHandshakeAsync(TestMailboxId), Times.Once());
         VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction started at");
         VerifyLogMessage(LogLevel.Warning, "Mesh handshake failed");
-        VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction completed at");
     }
 
     [Fact]
     public async Task Run_ExceptionThrown_LogsErrorAndCompletion()
     {
         // Arrange
-        _meshOperationServiceMock.Reset();
-        _loggerMock.Reset();
-
         var expectedException = new InvalidOperationException("Connection failed");
         _meshOperationServiceMock
             .Setup(s => s.MeshHandshakeAsync(TestMailboxId))

@@ -36,8 +36,6 @@ namespace ServiceLayer.Mesh.Functions
                 logger.LogError(ex, "An error occurred during mesh handshake for mailbox {MailboxId} at {Time}", configuration.NbssMeshMailboxId, DateTime.UtcNow);
                 return;
             }
-
-            logger.LogInformation("{FunctionName} completed at: {Time}", nameof(MeshHandshakeFunction), DateTime.UtcNow);
         }
     }
 }
