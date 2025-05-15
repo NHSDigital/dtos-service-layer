@@ -1,0 +1,41 @@
+# Stage 1: Build & Generate EF Migration Script
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
+
+WORKDIR /src
+
+RUN apt-get update && apt-get install -y git
+
+COPY . .
+
+RUN git submodule update --init --recursive
+
+ARG DatabaseConnectionString
+ENV DatabaseConnectionString=${DatabaseConnectionString}
+
+RUN dotnet restore ./src/ServiceLayer.Mesh/ServiceLayer.Mesh.csproj && \
+    dotnet build ./src/ServiceLayer.Mesh/ServiceLayer.Mesh.csproj && \
+    dotnet tool install dotnet-ef --tool-path /tools
+
+ENV PATH="/tools:$PATH" \
+    DOTNET_CLI_HOME=/tmp \
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true \
+    DOTNET_NOLOGO=true
+
+RUN mkdir -p /database && \
+    dotnet ef migrations script \
+    -o /database/migration.sql \
+    --project ./src/ServiceLayer.Mesh/
+
+# Stage 2: Runtime - Apply Migration and Seed Data
+FROM mcr.microsoft.com/mssql-tools:v1 AS migration-env
+
+COPY --from=build-env /database/migration.sql /database/migration.sql
+COPY scripts/database/migrate-and-seed.sh /scripts/database/migrate-and-seed.sh
+
+RUN addgroup --system appgroup && \
+    adduser --system --ingroup appgroup appuser && \
+    chmod +x /scripts/database/migrate-and-seed.sh
+
+USER appuser
+
+ENTRYPOINT ["/scripts/database/migrate-and-seed.sh"]

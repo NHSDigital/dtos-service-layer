@@ -9,6 +9,9 @@ using ServiceLayer.Mesh.Data;
 using Azure.Storage.Blobs;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
+using Azure.Storage.Blobs;
+using ServiceLayer.Mesh.Configuration;
+using ServiceLayer.Mesh.Messaging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -17,9 +20,13 @@ var host = new HostBuilder()
         var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
         var isLocalEnvironment = environment == "Development";
 
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        var isLocalEnvironment = environment == "Development";
+
         // MESH Client config
         services
             .AddMeshClient(_ => _.MeshApiBaseUrl = Environment.GetEnvironmentVariable("MeshApiBaseUrl"))
+            .AddMailbox(Environment.GetEnvironmentVariable("NbssMailboxId"), new NHS.MESH.Client.Configuration.MailboxConfiguration
             .AddMailbox(Environment.GetEnvironmentVariable("NbssMailboxId"), new NHS.MESH.Client.Configuration.MailboxConfiguration
             {
                 Password = Environment.GetEnvironmentVariable("MeshPassword"),
@@ -36,6 +43,7 @@ var host = new HostBuilder()
             options.UseSqlServer(connectionString);
         });
 
+        // Register QueueClients as singletons
         // Register QueueClients as singletons
         services.AddSingleton(provider =>
         {

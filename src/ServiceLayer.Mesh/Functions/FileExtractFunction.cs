@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -29,13 +30,11 @@ public class FileExtractFunction(
         var file = await GetFileAsync(message.FileId);
         if (file == null)
         {
-            logger.LogWarning("Exiting function.");
             return;
         }
 
         if (!IsFileSuitableForExtraction(file))
         {
-            logger.LogWarning("Exiting function.");
             return;
         }
 
@@ -77,7 +76,7 @@ public class FileExtractFunction(
                 "File with id: {fileId} found in MeshFiles table but is not suitable for extraction. Status: {status}, LastUpdatedUtc: {lastUpdatedUtc}.",
                 file.FileId,
                 file.Status,
-                file.LastUpdatedUtc);
+                file.LastUpdatedUtc.ToTimestamp());
             return false;
         }
         return true;
@@ -103,7 +102,7 @@ public class FileExtractFunction(
         var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, message.FileId);
         if (!meshAcknowledgementResponse.IsSuccessful)
         {
-            throw new InvalidOperationException($"Mesh acknowledgement failed: {meshAcknowledgementResponse.Error}");
+            logger.LogWarning("Mesh acknowledgement failed: {error}.\nThis is not a fatal error so processing will continue.", meshAcknowledgementResponse.Error);
         }
 
         file.BlobPath = blobPath;
