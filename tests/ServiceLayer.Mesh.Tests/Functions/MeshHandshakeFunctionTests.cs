@@ -101,7 +101,7 @@ public class MeshHandshakeFunctionTests
                 It.IsAny<EventId>(),
                 It.IsAny<It.IsAnyType>(),
                 expectedException,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -111,9 +111,9 @@ public class MeshHandshakeFunctionTests
             x => x.Log(
                 level,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedMessage)),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.Is<It.IsAnyType>((v, t) => (v.ToString() ?? string.Empty).Contains(expectedMessage)),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 }
