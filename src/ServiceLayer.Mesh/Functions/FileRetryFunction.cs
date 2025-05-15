@@ -27,9 +27,9 @@ namespace ServiceLayer.Mesh.Functions
             var files = await serviceLayerDbContext.MeshFiles
                 .Where(f =>
                     (f.Status == MeshFileStatus.Discovered ||
-                     f.Status == MeshFileStatus.Extracting ||
-                     f.Status == MeshFileStatus.Extracted ||
-                     f.Status == MeshFileStatus.Transforming) && f.LastUpdatedUtc <= overdueAnUpdateDateTime)
+                    f.Status == MeshFileStatus.Extracting ||
+                    f.Status == MeshFileStatus.Extracted ||
+                    f.Status == MeshFileStatus.Transforming) && f.LastUpdatedUtc <= overdueAnUpdateDateTime)
                 .ToListAsync();
 
             logger.LogInformation($"FileRetryFunction: {files.Count} stale files found");
