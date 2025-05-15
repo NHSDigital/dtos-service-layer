@@ -17,7 +17,7 @@ for proj in $TEST_PROJECTS; do
   out_file="$COVERAGE_DIR/$proj_name.coverage.xml"
   echo "🧪 Running coverage for $proj -> $out_file"
   dotnet test "$proj" \
-   $BUILD_ARGS \
+    $BUILD_ARGS \
   --collect:"XPlat Code Coverage" \
   --results-directory coverage
 done
