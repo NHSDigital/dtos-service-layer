@@ -53,7 +53,6 @@ var host = new HostBuilder()
 
         services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();
         services.AddSingleton<IFileTransformQueueClient, FileTransformQueueClient>();
-        services.AddSingleton<IMeshOperationService, MeshOperationService>();
 
         services.AddSingleton(provider =>
         {
