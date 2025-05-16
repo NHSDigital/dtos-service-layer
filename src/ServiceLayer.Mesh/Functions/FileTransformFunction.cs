@@ -18,8 +18,7 @@ public class FileTransformFunction(
     {
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
-        var file = await serviceLayerDbContext.MeshFiles
-            .FirstOrDefaultAsync(f => f.FileId == message.FileId);
+        var file = await serviceLayerDbContext.MeshFiles.FirstOrDefaultAsync(f => f.FileId == message.FileId);
 
         if (file == null)
         {
@@ -33,15 +32,19 @@ public class FileTransformFunction(
             return;
         }
 
-        file.Status = MeshFileStatus.Transforming;
-        file.LastUpdatedUtc = DateTime.UtcNow;
-        await serviceLayerDbContext.SaveChangesAsync();
-
+        await UpdateFileStatusForTransformation(file);
         await transaction.CommitAsync();
 
         var fileContent = await meshFileBlobStore.DownloadAsync(file);
 
         // TODO - take dependency on IEnumerable<IFileTransformer>.
         // After initial common checks against database, find the appropriate implementation of IFileTransformer to handle the functionality that differs between file type.
+    }
+
+    private async Task UpdateFileStatusForTransformation(MeshFile file)
+    {
+        file.Status = MeshFileStatus.Transforming;
+        file.LastUpdatedUtc = DateTime.UtcNow;
+        await serviceLayerDbContext.SaveChangesAsync();
     }
 }
