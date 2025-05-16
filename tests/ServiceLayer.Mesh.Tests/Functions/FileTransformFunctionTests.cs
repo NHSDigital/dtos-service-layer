@@ -1,6 +1,8 @@
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
@@ -11,16 +13,14 @@ namespace ServiceLayer.Mesh.Tests.Functions;
 
 public class FileTransformFunctionTests
 {
-    private readonly Mock<ILogger<FileTransformFunction>> _loggerMock;
-    private readonly Mock<IMeshFilesBlobStore> _blobStoreMock;
+    private readonly Mock<ILogger<FileTransformFunction>> _loggerMock = new();
+    private readonly Mock<IMeshFilesBlobStore> _blobStoreMock = new();
+    private readonly Mock<IFileTransformFunctionConfiguration> _configuration = new();
     private readonly ServiceLayerDbContext _dbContext;
     private readonly FileTransformFunction _function;
 
     public FileTransformFunctionTests()
     {
-        _loggerMock = new Mock<ILogger<FileTransformFunction>>();
-        _blobStoreMock = new Mock<IMeshFilesBlobStore>();
-
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .ConfigureWarnings(warnings =>
@@ -28,10 +28,13 @@ public class FileTransformFunctionTests
             .Options;
         _dbContext = new ServiceLayerDbContext(options);
 
+        _configuration.Setup(c => c.StaleHours).Returns(12);
+
         _function = new FileTransformFunction(
             _loggerMock.Object,
             _dbContext,
-            _blobStoreMock.Object
+            _blobStoreMock.Object,
+            _configuration.Object
         );
     }
 
@@ -83,12 +86,46 @@ public class FileTransformFunctionTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}"),
+                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}."),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ), Times.Once);
         var fileFromDb = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
         Assert.Equal(MeshFileStatus.FailedExtract, fileFromDb?.Status);
+        _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Run_FileStatusTransformingButNotTimedOut_ExitsSilently()
+    {
+        // Arrange
+        var file = new MeshFile
+        {
+            FileType = MeshFileType.NbssAppointmentEvents,
+            MailboxId = "test-mailbox",
+            FileId = "file-1",
+            Status = MeshFileStatus.Transforming,
+            LastUpdatedUtc = DateTime.UtcNow.AddHours(-11)  // Not timed out
+        };
+        _dbContext.MeshFiles.Add(file);
+        await _dbContext.SaveChangesAsync();
+
+        var message = new FileTransformQueueMessage { FileId = "file-1" };
+
+        // Act
+        await _function.Run(message);
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}."),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+            ), Times.Once);
+        var fileFromDb = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
+        Assert.Equal(MeshFileStatus.Transforming, fileFromDb?.Status);
         _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
     }
 

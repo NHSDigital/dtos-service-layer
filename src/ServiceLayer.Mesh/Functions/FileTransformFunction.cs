@@ -1,6 +1,8 @@
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Models;
@@ -11,7 +13,8 @@ namespace ServiceLayer.Mesh.Functions;
 public class FileTransformFunction(
     ILogger<FileTransformFunction> logger,
     ServiceLayerDbContext serviceLayerDbContext,
-    IMeshFilesBlobStore meshFileBlobStore)
+    IMeshFilesBlobStore meshFileBlobStore,
+    IFileTransformFunctionConfiguration configuration)
 {
     [Function("FileTransformFunction")]
     public async Task Run([QueueTrigger("%FileTransformQueueName%")] FileTransformQueueMessage message)
@@ -26,9 +29,8 @@ public class FileTransformFunction(
             return;
         }
 
-        if (file.Status != MeshFileStatus.Extracted)
+        if (!IsFileSuitableForTransformation(file))
         {
-            logger.LogWarning("File with id: {fileId} found in MeshFiles table but is not suitable for transformation. Status: {status}", message.FileId, file.Status);
             return;
         }
 
@@ -46,5 +48,23 @@ public class FileTransformFunction(
         file.Status = MeshFileStatus.Transforming;
         file.LastUpdatedUtc = DateTime.UtcNow;
         await serviceLayerDbContext.SaveChangesAsync();
+    }
+
+    private bool IsFileSuitableForTransformation(MeshFile file)
+    {
+        // We only want to transform files if they are in a Extracted state,
+        // or are in a Transforming state and were last touched over 12 hours ago.
+        var expectedStatuses = new[] { MeshFileStatus.Extracted, MeshFileStatus.Transforming };
+        if (!expectedStatuses.Contains(file.Status) ||
+            (file.Status == MeshFileStatus.Transforming && file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-configuration.StaleHours)))
+        {
+            logger.LogWarning(
+                "File with id: {fileId} found in MeshFiles table but is not suitable for transformation. Status: {status}, LastUpdatedUtc: {lastUpdatedUtc}.",
+                file.FileId,
+                file.Status,
+                file.LastUpdatedUtc.ToTimestamp());
+            return false;
+        }
+        return true;
     }
 }

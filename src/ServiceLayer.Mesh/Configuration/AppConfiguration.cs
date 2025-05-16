@@ -4,13 +4,16 @@ public class AppConfiguration :
     IFileDiscoveryFunctionConfiguration,
     IFileExtractFunctionConfiguration,
     IFileExtractQueueClientConfiguration,
-    IFileTransformQueueClientConfiguration
+    IFileTransformQueueClientConfiguration,
+    IFileTransformFunctionConfiguration
 {
     public string NbssMeshMailboxId => GetRequired("NbssMailboxId");
 
     public string FileExtractQueueName => GetRequired("FileExtractQueueName");
 
     public string FileTransformQueueName => GetRequired("FileTransformQueueName");
+
+    public int StaleHours => throw new NotImplementedException();
 
     private static string GetRequired(string key)
     {

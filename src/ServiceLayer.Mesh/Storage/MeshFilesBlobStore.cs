@@ -8,14 +8,7 @@ public class MeshFilesBlobStore(BlobContainerClient blobContainerClient) : IMesh
     public async Task<Stream> DownloadAsync(MeshFile file)
     {
         var blobClient = blobContainerClient.GetBlobClient(file.BlobPath);
-
-        var dataStream = new MemoryStream();
-
-        await blobClient.DownloadToAsync(dataStream);
-
-        dataStream.Close();
-
-        return dataStream;
+        return (await blobClient.DownloadAsync()).Value.Content;
     }
 
     public async Task<string> UploadAsync(MeshFile file, byte[] data)

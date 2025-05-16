@@ -63,6 +63,7 @@ var host = new HostBuilder()
         services.AddTransient<IFileExtractFunctionConfiguration, AppConfiguration>();
         services.AddTransient<IFileExtractQueueClientConfiguration, AppConfiguration>();
         services.AddTransient<IFileTransformQueueClientConfiguration, AppConfiguration>();
+        services.AddTransient<IFileTransformFunctionConfiguration, AppConfiguration>();
     });
 
 
