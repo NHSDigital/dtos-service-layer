@@ -30,22 +30,13 @@ public class AppConfiguration :
 
     private static int GetRequiredInt(string key)
     {
-        var value = Environment.GetEnvironmentVariable(key);
+        var value = GetRequired(key);
 
-        if (string.IsNullOrEmpty(value))
-        {
-            throw new InvalidOperationException($"Environment variable '{key}' is not set or is empty.");
-        }
-
-        int intValue;
-
-        if (int.TryParse(value, out intValue))
-        {
-            return intValue;
-        }
-        else
+        if (!int.TryParse(value, out var intValue))
         {
             throw new InvalidOperationException($"Environment variable '{key}' is not a valid integer");
         }
+
+        return intValue;
     }
 }

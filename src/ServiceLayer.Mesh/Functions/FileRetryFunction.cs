@@ -18,21 +18,21 @@ public class FileRetryFunction(
     [Function("FileRetryFunction")]
     public async Task Run([TimerTrigger("%FileRetryTimerExpression%")] TimerInfo myTimer)
     {
-        logger.LogInformation($"FileRetryFunction started");
+        logger.LogInformation("FileRetryFunction started");
 
         var staleDateTimeUtc = DateTime.UtcNow.AddHours(-configuration.StaleHours);
 
         await Task.WhenAll(
-        RetryStaleExtractions(staleDateTimeUtc),
-        RetryStaleTransformations(staleDateTimeUtc));
+            RetryStaleExtractions(staleDateTimeUtc),
+            RetryStaleTransformations(staleDateTimeUtc));
     }
 
-    public async Task RetryStaleExtractions(DateTime staleDateTimeUtc)
+    private async Task RetryStaleExtractions(DateTime staleDateTimeUtc)
     {
         var staleFiles = await serviceLayerDbContext.MeshFiles
             .Where(f =>
-                (f.Status == MeshFileStatus.Discovered ||
-                f.Status == MeshFileStatus.Extracting) && f.LastUpdatedUtc <= staleDateTimeUtc)
+                (f.Status == MeshFileStatus.Discovered || f.Status == MeshFileStatus.Extracting)
+                && f.LastUpdatedUtc <= staleDateTimeUtc)
             .ToListAsync();
 
         logger.LogInformation($"FileRetryFunction: {staleFiles.Count} stale files found for extraction retry");
@@ -46,12 +46,12 @@ public class FileRetryFunction(
         }
     }
 
-    public async Task RetryStaleTransformations(DateTime staleDateTimeUtc)
+    private async Task RetryStaleTransformations(DateTime staleDateTimeUtc)
     {
         var staleFiles = await serviceLayerDbContext.MeshFiles
             .Where(f =>
-                (f.Status == MeshFileStatus.Extracted ||
-                f.Status == MeshFileStatus.Transforming) && f.LastUpdatedUtc <= staleDateTimeUtc)
+                (f.Status == MeshFileStatus.Extracted || f.Status == MeshFileStatus.Transforming)
+                && f.LastUpdatedUtc <= staleDateTimeUtc)
             .ToListAsync();
 
         logger.LogInformation($"FileRetryFunction: {staleFiles.Count} stale files found for transforming retry");
