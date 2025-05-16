@@ -5,9 +5,10 @@ namespace ServiceLayer.Mesh.Storage;
 
 public class MeshFilesBlobStore(BlobContainerClient blobContainerClient) : IMeshFilesBlobStore
 {
-    public Task<Stream> DownloadAsync(MeshFile file)
+    public async Task<Stream> DownloadAsync(MeshFile file)
     {
-        throw new NotImplementedException();
+        var blobClient = blobContainerClient.GetBlobClient(file.BlobPath);
+        return (await blobClient.DownloadAsync()).Value.Content;
     }
 
     public async Task<string> UploadAsync(MeshFile file, byte[] data)

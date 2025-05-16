@@ -5,6 +5,7 @@ public class AppConfiguration :
     IFileExtractFunctionConfiguration,
     IFileExtractQueueClientConfiguration,
     IFileTransformQueueClientConfiguration,
+    IFileTransformFunctionConfiguration,
     IFileRetryFunctionConfiguration,
     IMeshHandshakeFunctionConfiguration
 {
