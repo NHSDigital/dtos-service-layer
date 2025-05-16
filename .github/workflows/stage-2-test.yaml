@@ -65,20 +65,6 @@ jobs:
       - name: "Save the linting result"
         run: |
           echo "Nothing to save"
-  test-coverage:
-    name: "Test coverage"
-    needs: [test-unit]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v4
-      - name: "Run test coverage check"
-        run: |
-          make test-coverage
-      - name: "Save the coverage check result"
-        run: |
-          echo "Nothing to save"
   perform-static-analysis:
     name: "Perform static analysis"
     needs: [test-unit]

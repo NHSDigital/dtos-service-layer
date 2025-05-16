@@ -9,6 +9,8 @@ using ServiceLayer.Mesh.Data;
 using Azure.Storage.Blobs;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
+using NHS.MESH.Client.Contracts.Services;
+using NHS.MESH.Client.Services;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -63,6 +65,8 @@ var host = new HostBuilder()
         services.AddTransient<IFileExtractFunctionConfiguration, AppConfiguration>();
         services.AddTransient<IFileExtractQueueClientConfiguration, AppConfiguration>();
         services.AddTransient<IFileTransformQueueClientConfiguration, AppConfiguration>();
+        services.AddTransient<IMeshHandshakeFunctionConfiguration, AppConfiguration>();
+        services.AddTransient<IFileRetryFunctionConfiguration, AppConfiguration>();
         services.AddTransient<IFileTransformFunctionConfiguration, AppConfiguration>();
     });
 
