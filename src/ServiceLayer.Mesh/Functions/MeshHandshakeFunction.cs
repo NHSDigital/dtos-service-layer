@@ -14,7 +14,7 @@ namespace ServiceLayer.Mesh.Functions
         [Function("MeshHandshakeFunction")]
         public async Task Run([TimerTrigger("%MeshHandshakeTimerExpression%")] TimerInfo myTimer)
         {
-            logger.LogInformation("{FunctionName} started at: {Time}", nameof(MeshHandshakeFunction), DateTime.UtcNow);
+            logger.LogInformation("{FunctionName} started", nameof(MeshHandshakeFunction));
 
             try
             {
@@ -22,18 +22,18 @@ namespace ServiceLayer.Mesh.Functions
 
                 if (response.IsSuccessful)
                 {
-                    logger.LogInformation("Mesh handshake completed successfully for mailbox {MailboxId} at {Time}. Status: {Status}",
-                    response.Response.MailboxId, DateTime.UtcNow, response.IsSuccessful);
+                    logger.LogInformation("Mesh handshake completed successfully for mailbox {MailboxId}. Status: {Status}",
+                    response.Response.MailboxId, response.IsSuccessful);
                 }
                 else
                 {
-                    logger.LogWarning("Mesh handshake failed for mailbox {MailboxId} at {Time}. Error: {Error}",
-                    configuration.NbssMeshMailboxId, DateTime.UtcNow, response.Error);
+                    logger.LogWarning("Mesh handshake failed for mailbox {MailboxId}. Error: {Error}",
+                    configuration.NbssMeshMailboxId, response.Error);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An error occurred during mesh handshake for mailbox {MailboxId} at {Time}", configuration.NbssMeshMailboxId, DateTime.UtcNow);
+                logger.LogError(ex, "An error occurred during mesh handshake for mailbox {MailboxId}.", configuration.NbssMeshMailboxId);
             }
         }
     }

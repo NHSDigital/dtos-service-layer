@@ -50,7 +50,7 @@ public class MeshHandshakeFunctionTests
 
         // Assert
         _meshOperationServiceMock.Verify(s => s.MeshHandshakeAsync(TestMailboxId), Times.Once());
-        VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction started at");
+        VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction started");
         VerifyLogMessage(LogLevel.Information, "Mesh handshake completed successfully for mailbox");
     }
 
@@ -75,7 +75,7 @@ public class MeshHandshakeFunctionTests
 
         // Assert
         _meshOperationServiceMock.Verify(s => s.MeshHandshakeAsync(TestMailboxId), Times.Once());
-        VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction started at");
+        VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction started");
         VerifyLogMessage(LogLevel.Warning, "Mesh handshake failed");
     }
 
@@ -93,7 +93,7 @@ public class MeshHandshakeFunctionTests
 
         // Assert
         _meshOperationServiceMock.Verify(s => s.MeshHandshakeAsync(TestMailboxId), Times.Once());
-        VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction started at");
+        VerifyLogMessage(LogLevel.Information, "MeshHandshakeFunction started");
         VerifyLogMessage(LogLevel.Error, "An error occurred during mesh handshake");
         _loggerMock.Verify(
             x => x.Log(
