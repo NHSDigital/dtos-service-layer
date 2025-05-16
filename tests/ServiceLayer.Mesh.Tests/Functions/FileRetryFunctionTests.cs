@@ -133,6 +133,17 @@ public class FileRetryFunctionTests
     }
 
     [Fact]
+    public async Task Run_IfNoFilesFoundDoNothing()
+    {
+        // Act
+        await _function.Run(null);
+
+        // Assert
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
+        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
+    }
+
+    [Fact]
     public async Task Run_ProcessesMultipleEligibleFiles()
     {
         // Arrange
