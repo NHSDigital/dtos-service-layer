@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
-namespace ServiceLayer.Mesh.Models;
+namespace ServiceLayer.Data.Models;
 
 public class MeshFile
 {

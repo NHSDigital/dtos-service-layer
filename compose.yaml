@@ -74,7 +74,7 @@ services:
     container_name: db-migrations
     build:
       context: .
-      dockerfile: src/ServiceLayer.Mesh/Dockerfile.migrations
+      dockerfile: src/ServiceLayer.Common/Dockerfile.migrations
       args:
         DatabaseConnectionString: "${DatabaseConnectionString}"
     depends_on:

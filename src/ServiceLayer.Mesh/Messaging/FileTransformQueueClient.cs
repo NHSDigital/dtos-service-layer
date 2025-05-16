@@ -1,7 +1,7 @@
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Logging;
+using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
-using ServiceLayer.Mesh.Models;
 
 namespace ServiceLayer.Mesh.Messaging;
 
