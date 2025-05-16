@@ -1,5 +1,5 @@
 using Azure.Storage.Blobs;
-using ServiceLayer.Mesh.Models;
+using ServiceLayer.Data.Models;
 
 namespace ServiceLayer.Mesh.Storage;
 

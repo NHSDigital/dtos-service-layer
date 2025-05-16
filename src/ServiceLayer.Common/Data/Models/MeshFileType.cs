@@ -1,4 +1,4 @@
-namespace ServiceLayer.Mesh.Models;
+namespace ServiceLayer.Data.Models;
 
 public enum MeshFileType
 {
