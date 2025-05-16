@@ -13,7 +13,7 @@ public class AppConfiguration :
 
     public string FileTransformQueueName => GetRequired("FileTransformQueueName");
 
-    public string StaleHours => GetRequired("StaleHours");
+    public int StaleHours => GetRequiredInt("StaleHours");
 
     private static string GetRequired(string key)
     {
@@ -25,5 +25,26 @@ public class AppConfiguration :
         }
 
         return value;
+    }
+
+    private static int GetRequiredInt(string key)
+    {
+        var value = Environment.GetEnvironmentVariable(key);
+
+        if (string.IsNullOrEmpty(value))
+        {
+            throw new InvalidOperationException($"Environment variable '{key}' is not set or is empty.");
+        }
+
+        int intValue;
+
+        if (int.TryParse(value, out intValue))
+        {
+            return intValue;
+        }
+        else
+        {
+            throw new InvalidOperationException($"Environment variable '{key}' is not a valid integer");
+        }
     }
 }

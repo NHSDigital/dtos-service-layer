@@ -1,7 +1,6 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NHS.MESH.Client.Contracts.Services;
 using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Models;
@@ -11,7 +10,6 @@ namespace ServiceLayer.Mesh.Functions
 {
     public class FileRetryFunction(
         ILogger<FileRetryFunction> logger,
-        IMeshInboxService meshInboxService,
         ServiceLayerDbContext serviceLayerDbContext,
         IFileExtractQueueClient fileExtractQueueClient,
         IFileTransformQueueClient fileTransformQueueClient,
@@ -20,36 +18,50 @@ namespace ServiceLayer.Mesh.Functions
         [Function("FileRetryFunction")]
         public async Task Run([TimerTrigger("%FileRetryTimerExpression%")] TimerInfo myTimer)
         {
-            logger.LogInformation($"FileRetryFunction started at: {DateTime.Now}");
+            logger.LogInformation($"FileRetryFunction started");
 
-            var overdueAnUpdateDateTime = DateTime.UtcNow.AddHours(-Convert.ToInt32(configuration.StaleHours));
+            var staleDateTimeUtc = DateTime.UtcNow.AddHours(-configuration.StaleHours);
 
-            var files = await serviceLayerDbContext.MeshFiles
+            await Task.WhenAll(
+            RetryStaleExtractions(staleDateTimeUtc),
+            RetryStaleTransformations(staleDateTimeUtc));
+        }
+
+        public async Task RetryStaleExtractions(DateTime staleDateTimeUtc)
+        {
+            var staleFiles = await serviceLayerDbContext.MeshFiles
                 .Where(f =>
                     (f.Status == MeshFileStatus.Discovered ||
-                    f.Status == MeshFileStatus.Extracting ||
-                    f.Status == MeshFileStatus.Extracted ||
-                    f.Status == MeshFileStatus.Transforming) && f.LastUpdatedUtc <= overdueAnUpdateDateTime)
+                    f.Status == MeshFileStatus.Extracting) && f.LastUpdatedUtc <= staleDateTimeUtc)
                 .ToListAsync();
 
-            logger.LogInformation($"FileRetryFunction: {files.Count} stale files found");
+            logger.LogInformation($"FileRetryFunction: {staleFiles.Count} stale files found for extraction retry");
 
-            foreach (var file in files)
+            foreach (var file in staleFiles)
             {
-                if (file.Status == MeshFileStatus.Discovered || file.Status == MeshFileStatus.Extracting)
-                {
-                    await fileExtractQueueClient.EnqueueFileExtractAsync(file);
-                    file.LastUpdatedUtc = DateTime.UtcNow;
-                    await serviceLayerDbContext.SaveChangesAsync();
-                    logger.LogInformation($"FileRetryFunction: File {file.FileId} enqueued to Extract queue");
-                }
-                else if (file.Status == MeshFileStatus.Extracted || file.Status == MeshFileStatus.Transforming)
-                {
-                    await fileTransformQueueClient.EnqueueFileTransformAsync(file);
-                    file.LastUpdatedUtc = DateTime.UtcNow;
-                    await serviceLayerDbContext.SaveChangesAsync();
-                    logger.LogInformation($"FileRetryFunction: File {file.FileId} enqueued to Transform queue");
-                }
+                await fileExtractQueueClient.EnqueueFileExtractAsync(file);
+                file.LastUpdatedUtc = DateTime.UtcNow;
+                await serviceLayerDbContext.SaveChangesAsync();
+                logger.LogInformation($"FileRetryFunction: File {file.FileId} enqueued to Extract queue");
+            }
+        }
+
+        public async Task RetryStaleTransformations(DateTime staleDateTimeUtc)
+        {
+            var staleFiles = await serviceLayerDbContext.MeshFiles
+                .Where(f =>
+                    (f.Status == MeshFileStatus.Extracted ||
+                    f.Status == MeshFileStatus.Transforming) && f.LastUpdatedUtc <= staleDateTimeUtc)
+                .ToListAsync();
+
+            logger.LogInformation($"FileRetryFunction: {staleFiles.Count} stale files found for transforming retry");
+
+            foreach (var file in staleFiles)
+            {
+                await fileTransformQueueClient.EnqueueFileTransformAsync(file);
+                file.LastUpdatedUtc = DateTime.UtcNow;
+                await serviceLayerDbContext.SaveChangesAsync();
+                logger.LogInformation($"FileRetryFunction: File {file.FileId} enqueued to Transform queue");
             }
         }
     }

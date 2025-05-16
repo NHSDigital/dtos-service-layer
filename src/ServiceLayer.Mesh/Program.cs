@@ -9,9 +9,6 @@ using ServiceLayer.Mesh.Data;
 using Azure.Storage.Blobs;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
-using Azure.Storage.Blobs;
-using ServiceLayer.Mesh.Configuration;
-using ServiceLayer.Mesh.Messaging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -39,7 +36,6 @@ var host = new HostBuilder()
             options.UseSqlServer(connectionString);
         });
 
-        // Register QueueClients as singletons
         // Register QueueClients as singletons
         services.AddSingleton(provider =>
         {
