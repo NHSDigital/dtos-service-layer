@@ -5,6 +5,7 @@ public class AppConfiguration :
     IFileExtractFunctionConfiguration,
     IFileExtractQueueClientConfiguration,
     IFileTransformQueueClientConfiguration,
+    IFileRetryFunctionConfiguration,
     IMeshHandshakeFunctionConfiguration
 {
     public string NbssMeshMailboxId => GetRequired("NbssMailboxId");
@@ -12,6 +13,8 @@ public class AppConfiguration :
     public string FileExtractQueueName => GetRequired("FileExtractQueueName");
 
     public string FileTransformQueueName => GetRequired("FileTransformQueueName");
+
+    public int StaleHours => GetRequiredInt("StaleHours");
 
     private static string GetRequired(string key)
     {
@@ -23,5 +26,17 @@ public class AppConfiguration :
         }
 
         return value;
+    }
+
+    private static int GetRequiredInt(string key)
+    {
+        var value = GetRequired(key);
+
+        if (!int.TryParse(value, out var intValue))
+        {
+            throw new InvalidOperationException($"Environment variable '{key}' is not a valid integer");
+        }
+
+        return intValue;
     }
 }
