@@ -73,6 +73,7 @@ public class FileRetryFunctionTests
         Assert.True(updatedFile!.LastUpdatedUtc > DateTime.UtcNow.AddMinutes(-1));
     }
 
+    [Theory]
     [InlineData(MeshFileStatus.Extracted)]
     [InlineData(MeshFileStatus.Transforming)]
     public async Task Run_EnqueuesExtractedOrTransformingFilesOlderThan12Hours(MeshFileStatus testStatus)
