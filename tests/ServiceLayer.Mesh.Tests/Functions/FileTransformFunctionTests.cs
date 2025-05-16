@@ -89,6 +89,38 @@ public class FileTransformFunctionTests
             ), Times.Once);
         var fileFromDb = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
         Assert.Equal(MeshFileStatus.FailedExtract, fileFromDb?.Status);
-        _blobStoreMock.Verify(x => x.UploadAsync(It.IsAny<MeshFile>(), It.IsAny<byte[]>()), Times.Never);
+        _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Run_FileValid_DownloadsBlob()
+    {
+        // Arrange
+        var file = new MeshFile
+        {
+            FileType = MeshFileType.NbssAppointmentEvents,
+            MailboxId = "test-mailbox",
+            FileId = "file-1",
+            Status = MeshFileStatus.Extracted,
+            LastUpdatedUtc = DateTime.UtcNow
+        };
+        _dbContext.MeshFiles.Add(file);
+        await _dbContext.SaveChangesAsync();
+
+        var message = new FileTransformQueueMessage { FileId = "file-1" };
+
+        // Act
+        await _function.Run(message);
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+            ), Times.Never);
+        _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
     }
 }
