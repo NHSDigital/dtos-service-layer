@@ -4,7 +4,8 @@ public class AppConfiguration :
     IFileDiscoveryFunctionConfiguration,
     IFileExtractFunctionConfiguration,
     IFileExtractQueueClientConfiguration,
-    IFileTransformQueueClientConfiguration
+    IFileTransformQueueClientConfiguration,
+    IMeshHandshakeFunctionConfiguration
 {
     public string NbssMeshMailboxId => GetRequired("NbssMailboxId");
 
