@@ -8,8 +8,6 @@ using ServiceLayer.Mesh.Storage;
 
 namespace ServiceLayer.Mesh.Functions;
 
-// TODO - take dependency on IEnumerable<IFileTransformer>.
-// After initial common checks against database, find the appropriate implementation of IFileTransformer to handle the functionality that differs between file type.
 public class FileTransformFunction(
     ILogger<FileTransformFunction> logger,
     ServiceLayerDbContext serviceLayerDbContext,
@@ -35,10 +33,15 @@ public class FileTransformFunction(
             return;
         }
 
-        file.Status = MeshFileStatus.Extracting;
+        file.Status = MeshFileStatus.Transforming;
         file.LastUpdatedUtc = DateTime.UtcNow;
         await serviceLayerDbContext.SaveChangesAsync();
 
         await transaction.CommitAsync();
+
+        var fileContent = await meshFileBlobStore.DownloadAsync(file);
+
+        // TODO - take dependency on IEnumerable<IFileTransformer>.
+        // After initial common checks against database, find the appropriate implementation of IFileTransformer to handle the functionality that differs between file type.
     }
 }
