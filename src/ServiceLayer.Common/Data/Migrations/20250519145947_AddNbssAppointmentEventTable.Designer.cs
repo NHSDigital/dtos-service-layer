@@ -12,7 +12,7 @@ using ServiceLayer.Data;
 namespace ServiceLayer.Mesh.Migrations
 {
     [DbContext(typeof(ServiceLayerDbContext))]
-    [Migration("20250519134431_AddNbssAppointmentEventTable")]
+    [Migration("20250519145947_AddNbssAppointmentEventTable")]
     partial class AddNbssAppointmentEventTable
     {
         /// <inheritdoc />
@@ -108,7 +108,6 @@ namespace ServiceLayer.Mesh.Migrations
                         .HasColumnType("char(1)");
 
                     b.Property<string>("CancelledBy")
-                        .IsRequired()
                         .HasMaxLength(1)
                         .HasColumnType("char(1)");
 

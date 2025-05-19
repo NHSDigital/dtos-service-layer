@@ -105,7 +105,6 @@ namespace ServiceLayer.Mesh.Migrations
                         .HasColumnType("char(1)");
 
                     b.Property<string>("CancelledBy")
-                        .IsRequired()
                         .HasMaxLength(1)
                         .HasColumnType("char(1)");
 

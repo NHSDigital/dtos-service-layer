@@ -51,7 +51,7 @@ public class NbssAppointmentEvent
     public required string BookedBy { get; set; }
     [StringLength(1, MinimumLength = 1)]
     [Column(TypeName = "char(1)")]
-    public required string CancelledBy { get; set; }
+    public string? CancelledBy { get; set; }
     public required DateTime AppointmentDateTime { get; set; }
     [StringLength(5)]
     public required string Location { get; set; }
