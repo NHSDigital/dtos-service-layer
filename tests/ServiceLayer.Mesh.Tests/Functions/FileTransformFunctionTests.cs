@@ -224,11 +224,11 @@ namespace ServiceLayer.Mesh.Tests.Functions
             // Assert
             Assert.NotNull(result);
 
-            VerifyFileControlRecord(result.FileHeader, "NBSSAPPT_HDR", "00000054", "20250204", "161846", "000002");
+            VerifyFileHeaderRecord(result.FileHeader, "NBSSAPPT_HDR", "00000054", "20250204", "161846", "000002");
             Assert.Equal(5, result.ColumnHeadings.Count);
             Assert.Equal(new[] { "Sequence", "BSO", "Action", "Clinic Code", "Status" }, result.ColumnHeadings);
             Assert.Equal(2, result.DataRecords.Count);
-            VerifyFileControlRecord(result.FileTrailer, "NBSSAPPT_END", "00000054", "20250204", "161846", "000002");
+            VerifyFileTrailerRecord(result.FileTrailer, "NBSSAPPT_END", "00000054", "20250204", "161846", "000002");
 
             var expectedFirstRecord = new Dictionary<string, string>
             {
@@ -436,8 +436,8 @@ namespace ServiceLayer.Mesh.Tests.Functions
 
             // Assert
             Assert.NotNull(result);
-            VerifyFileControlRecord(result.FileHeader, "NBSSAPPT_HDR", "00000054", null, null, null);
-            VerifyFileControlRecord(result.FileTrailer, "NBSSAPPT_END", "00000054", null, null, null);
+            VerifyFileHeaderRecord(result.FileHeader, "NBSSAPPT_HDR", "00000054", null, null, null);
+            VerifyFileTrailerRecord(result.FileTrailer, "NBSSAPPT_END", "00000054", null, null, null);
         }
 
         [Fact]
@@ -502,8 +502,8 @@ namespace ServiceLayer.Mesh.Tests.Functions
             return new MemoryStream(bytes);
         }
 
-        private static void VerifyFileControlRecord(
-            FileControlRecord record,
+        private static void VerifyFileHeaderRecord(
+            FileHeaderRecord record,
             string recordType,
             string extractId,
             string date,
@@ -515,6 +515,22 @@ namespace ServiceLayer.Mesh.Tests.Functions
             Assert.Equal(extractId, record.ExtractId);
             Assert.Equal(date, record.TransferStartDate);
             Assert.Equal(time, record.TransferStartTime);
+            Assert.Equal(count, record.RecordCount);
+        }
+
+        private static void VerifyFileTrailerRecord(
+            FileTrailerRecord record,
+            string recordType,
+            string extractId,
+            string date,
+            string time,
+            string count)
+        {
+            Assert.NotNull(record);
+            Assert.Equal(recordType, record.RecordTypeIdentifier);
+            Assert.Equal(extractId, record.ExtractId);
+            Assert.Equal(date, record.TransferEndDate ?? date); // Use the provided date as fallback
+            Assert.Equal(time, record.TransferEndTime ?? time); // Use the provided time as fallback
             Assert.Equal(count, record.RecordCount);
         }
 

@@ -15,7 +15,7 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
         private const string FOOTER_IDENTIFIER = "NBSSAPPT_END";
 
         /// <summary>
-        /// Internal method to parse a stream of appointment data
+        /// Parse a stream of appointment data
         /// </summary>
         public ParsedFile Parse(Stream stream)
         {
@@ -48,19 +48,27 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                 {
                     int rowNumber = 0;
 
-                    // You need to call Read() before accessing data
+                    // Read through the CSV file
                     while (csv.Read())
                     {
                         rowNumber++;
 
                         // Get the record identifier from the first field
-                        string recordIdentifier = csv.GetField(0)?.Trim('"');
+                        string recordIdentifier = GetFieldValue(csv, (int)(int)FileRecordTypeEnum.RecordTypeIdentifier) ?? string.Empty;
 
                         switch (recordIdentifier)
                         {
                             case HEADER_IDENTIFIER:
                                 // Process file header (first line)
-                                result.FileHeader = ParseFileControlRecord(csv);
+                                result.FileHeader = ParseRecordAsType<FileHeaderRecord>(csv,
+                                    (rec, values) =>
+                                    {
+                                        rec.RecordTypeIdentifier = values[(int)FileRecordTypeEnum.RecordTypeIdentifier];
+                                        rec.ExtractId = values[(int)FileRecordTypeEnum.ExtractId];
+                                        rec.TransferStartDate = values[(int)FileRecordTypeEnum.Date];
+                                        rec.TransferStartTime = values[(int)FileRecordTypeEnum.Time];
+                                        rec.RecordCount = values[(int)FileRecordTypeEnum.RecordCount];
+                                    });
                                 break;
 
                             case FIELDS_IDENTIFIER:
@@ -79,7 +87,15 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
 
                             case FOOTER_IDENTIFIER:
                                 // Process file trailer (last line)
-                                result.FileTrailer = ParseFileControlRecord(csv);
+                                result.FileTrailer = ParseRecordAsType<FileTrailerRecord>(csv,
+                                    (rec, values) =>
+                                    {
+                                        rec.RecordTypeIdentifier = values[(int)FileRecordTypeEnum.RecordTypeIdentifier];
+                                        rec.ExtractId = values[(int)FileRecordTypeEnum.ExtractId];
+                                        rec.TransferEndDate = values[(int)FileRecordTypeEnum.Date];
+                                        rec.TransferEndTime = values[(int)FileRecordTypeEnum.Time];
+                                        rec.RecordCount = values[(int)FileRecordTypeEnum.RecordCount];
+                                    });
                                 break;
 
                             default:
@@ -95,12 +111,13 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
         private static List<string> ParseColumnHeadings(CsvReader csv)
         {
             var headings = new List<string>();
+            int dataFieldStartIndex = (int)FileRecordTypeEnum.RecordTypeIdentifier + 1;
 
-            // Start at index 1 to skip the record type identifier (NBSSAPPT_FLDS)
-            for (int i = 1; i < csv.Parser.Count; i++)
+            // Start at index 1 to skip the record type identifier
+            for (int i = dataFieldStartIndex; i < csv.Parser.Count; i++)
             {
                 // Remove quotes if present
-                string heading = csv.GetField(i)?.Trim('"');
+                string heading = GetFieldValue(csv, i) ?? string.Empty;
                 if (!string.IsNullOrEmpty(heading))
                 {
                     headings.Add(heading);
@@ -110,19 +127,27 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
             return headings;
         }
 
-        private static FileControlRecord ParseFileControlRecord(CsvReader csv)
+        private static T ParseRecordAsType<T>(CsvReader csv, Action<T, Dictionary<int, string?>> populateAction) where T : new()
         {
-            var record = new FileControlRecord
-            {
-                // Remove quotes if present
-                RecordTypeIdentifier = csv.GetField(0)?.Trim('"'),
-                ExtractId = csv.Parser.Count > 1 ? csv.GetField(1)?.Trim('"') : null,
-                TransferStartDate = csv.Parser.Count > 2 ? csv.GetField(2)?.Trim('"') : null,
-                TransferStartTime = csv.Parser.Count > 3 ? csv.GetField(3)?.Trim('"') : null,
-                RecordCount = csv.Parser.Count > 4 ? csv.GetField(4)?.Trim('"') : null
-            };
-
+            var record = new T();
+            var values = ExtractFieldValues(csv);
+            populateAction(record, values);
             return record;
+        }
+
+        private static Dictionary<int, string?> ExtractFieldValues(CsvReader csv)
+        {
+            var values = new Dictionary<int, string?>();
+            for (int i = 0; i < csv.Parser.Count; i++)
+            {
+                values[i] = GetFieldValue(csv, i);
+            }
+            return values;
+        }
+
+        private static string? GetFieldValue(CsvReader csv, int index)
+        {
+            return index < csv.Parser.Count ? csv.GetField(index)?.Trim('"') : null;
         }
 
         private static FileDataRecord ParseDataRecord(CsvReader csv, List<string> columnHeadings, int rowNumber)
@@ -132,14 +157,16 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                 RowNumber = rowNumber
             };
 
-            // Start at index 1 to skip the record type identifier (NBSSAPPT_DATA)
-            for (int i = 1; i < csv.Parser.Count && (i - 1) < columnHeadings.Count; i++)
+            int dataFieldStartIndex = (int)FileRecordTypeEnum.RecordTypeIdentifier + 1;
+
+            // Start at index 1 to skip the record type identifier
+            for (int i = dataFieldStartIndex; i < csv.Parser.Count && (i - dataFieldStartIndex) < columnHeadings.Count; i++)
             {
                 // Get the column name from the headings
-                string columnName = columnHeadings[i - 1];
+                string columnName = columnHeadings[i - dataFieldStartIndex];
 
                 // Get the field value and remove quotes if present
-                string value = csv.GetField(i)?.Trim('"');
+                string? value = GetFieldValue(csv, i);
 
                 // Add to the fields dictionary
                 record.Fields[columnName] = value;
