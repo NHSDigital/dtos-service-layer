@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using ServiceLayer.Data;
 using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
+using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Storage;
 
@@ -14,7 +15,8 @@ public class FileTransformFunction(
     ILogger<FileTransformFunction> logger,
     ServiceLayerDbContext serviceLayerDbContext,
     IMeshFilesBlobStore meshFileBlobStore,
-    IFileTransformFunctionConfiguration configuration)
+    IFileTransformFunctionConfiguration configuration,
+    IFileParser fileParser)
 {
     [Function("FileTransformFunction")]
     public async Task Run([QueueTrigger("%FileTransformQueueName%")] FileTransformQueueMessage message)
@@ -38,6 +40,8 @@ public class FileTransformFunction(
         await transaction.CommitAsync();
 
         var fileContent = await meshFileBlobStore.DownloadAsync(file);
+
+        var parsedfile = fileParser.Parse(fileContent);
 
         // TODO - take dependency on IEnumerable<IFileTransformer>.
         // After initial common checks against database, find the appropriate implementation of IFileTransformer to handle the functionality that differs between file type.
