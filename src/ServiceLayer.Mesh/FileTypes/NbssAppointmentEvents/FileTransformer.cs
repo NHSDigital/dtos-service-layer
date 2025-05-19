@@ -1,5 +1,5 @@
+using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
-using ServiceLayer.Mesh.Models;
 
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 
