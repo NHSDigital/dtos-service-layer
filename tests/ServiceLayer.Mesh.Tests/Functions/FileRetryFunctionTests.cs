@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NHS.MESH.Client.Contracts.Services;
-using ServiceLayer.Mesh.Data;
+using ServiceLayer.Data;
+using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
-using ServiceLayer.Mesh.Models;
 using ServiceLayer.Mesh.Configuration;
 
 namespace ServiceLayer.Mesh.Tests.Functions;
