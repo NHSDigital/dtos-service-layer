@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServiceLayer.Data;
 
@@ -11,9 +12,11 @@ using ServiceLayer.Data;
 namespace ServiceLayer.Mesh.Migrations
 {
     [DbContext(typeof(ServiceLayerDbContext))]
-    partial class ServiceLayerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250519134431_AddNbssAppointmentEventTable")]
+    partial class AddNbssAppointmentEventTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
