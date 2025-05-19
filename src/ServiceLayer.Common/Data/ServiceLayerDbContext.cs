@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ServiceLayer.Mesh.Models;
+using ServiceLayer.Data.Models;
 
-namespace ServiceLayer.Mesh.Data;
+namespace ServiceLayer.Data;
 
 public class ServiceLayerDbContext(DbContextOptions<ServiceLayerDbContext> options) : DbContext(options)
 {
