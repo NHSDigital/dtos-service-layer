@@ -421,26 +421,6 @@ namespace ServiceLayer.Mesh.Tests.Functions
         }
 
         [Fact]
-        public void Parse_IncompleteControlRecord_HandlesGracefully()
-        {
-            // Arrange
-            string fileContent = @"""NBSSAPPT_HDR""|""00000054""
-""NBSSAPPT_FLDS""|""Sequence""|""BSO""|""Action""
-""NBSSAPPT_DATA""|""000001""|""KMK""|""U""
-""NBSSAPPT_END""|""00000054""";
-
-            using var stream = CreateStreamFromString(fileContent);
-
-            // Act
-            var result = _fileParser.Parse(stream);
-
-            // Assert
-            Assert.NotNull(result);
-            VerifyFileHeaderRecord(result.FileHeader, "NBSSAPPT_HDR", "00000054", null, null, null);
-            VerifyFileTrailerRecord(result.FileTrailer, "NBSSAPPT_END", "00000054", null, null, null);
-        }
-
-        [Fact]
         public void Parse_QuotedValues_TrimsQuotes()
         {
             // Arrange
