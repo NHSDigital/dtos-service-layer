@@ -64,6 +64,7 @@ var host = new HostBuilder()
         services.AddTransient<IFileTransformQueueClientConfiguration, AppConfiguration>();
         services.AddTransient<IMeshHandshakeFunctionConfiguration, AppConfiguration>();
         services.AddTransient<IFileRetryFunctionConfiguration, AppConfiguration>();
+        services.AddTransient<IFileTransformFunctionConfiguration, AppConfiguration>();
     });
 
 
