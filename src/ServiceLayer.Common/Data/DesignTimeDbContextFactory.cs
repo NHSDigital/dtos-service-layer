@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace ServiceLayer.Mesh.Data;
+namespace ServiceLayer.Data;
 
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ServiceLayerDbContext>
 {

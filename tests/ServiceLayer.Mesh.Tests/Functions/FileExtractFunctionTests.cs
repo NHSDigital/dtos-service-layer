@@ -1,15 +1,14 @@
-using System.Globalization;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NHS.MESH.Client.Contracts.Services;
 using NHS.MESH.Client.Models;
+using ServiceLayer.Data;
+using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
-using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
-using ServiceLayer.Mesh.Models;
 using ServiceLayer.Mesh.Storage;
 
 namespace ServiceLayer.Mesh.Tests.Functions;
@@ -20,7 +19,6 @@ public class FileExtractFunctionTests
     private readonly Mock<IMeshInboxService> _meshInboxServiceMock;
     private readonly Mock<IFileTransformQueueClient> _fileTransformQueueClientMock;
     private readonly Mock<IFileExtractQueueClient> _fileExtractQueueClientMock;
-    private readonly Mock<IFileExtractFunctionConfiguration> _configurationMock;
     private readonly Mock<IMeshFilesBlobStore> _blobStoreMock;
     private readonly ServiceLayerDbContext _dbContext;
     private readonly FileExtractFunction _function;
@@ -32,7 +30,6 @@ public class FileExtractFunctionTests
         _fileExtractQueueClientMock = new Mock<IFileExtractQueueClient>();
         _fileTransformQueueClientMock = new Mock<IFileTransformQueueClient>();
         _blobStoreMock = new Mock<IMeshFilesBlobStore>();
-        _configurationMock = new Mock<IFileExtractFunctionConfiguration>();
 
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())

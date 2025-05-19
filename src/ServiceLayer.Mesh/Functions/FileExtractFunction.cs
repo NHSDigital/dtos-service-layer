@@ -3,10 +3,10 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
+using ServiceLayer.Data;
+using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
-using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Messaging;
-using ServiceLayer.Mesh.Models;
 using ServiceLayer.Mesh.Storage;
 
 namespace ServiceLayer.Mesh.Functions;
