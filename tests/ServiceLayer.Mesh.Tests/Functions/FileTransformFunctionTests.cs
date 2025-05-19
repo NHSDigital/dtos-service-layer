@@ -2,11 +2,11 @@ using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using ServiceLayer.Data;
+using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
-using ServiceLayer.Mesh.Data;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
-using ServiceLayer.Mesh.Models;
 using ServiceLayer.Mesh.Storage;
 
 namespace ServiceLayer.Mesh.Tests.Functions;

@@ -12,8 +12,8 @@ RUN git submodule update --init --recursive
 ARG DatabaseConnectionString
 ENV DatabaseConnectionString=${DatabaseConnectionString}
 
-RUN dotnet restore ./src/ServiceLayer.Mesh/ServiceLayer.Mesh.csproj && \
-    dotnet build ./src/ServiceLayer.Mesh/ServiceLayer.Mesh.csproj && \
+RUN dotnet restore ./src/ServiceLayer.Common/ServiceLayer.Common.csproj && \
+    dotnet build ./src/ServiceLayer.Common/ServiceLayer.Common.csproj && \
     dotnet tool install dotnet-ef --tool-path /tools
 
 ENV PATH="/tools:$PATH" \
@@ -24,7 +24,7 @@ ENV PATH="/tools:$PATH" \
 RUN mkdir -p /database && \
     dotnet ef migrations script \
     -o /database/migration.sql \
-    --project ./src/ServiceLayer.Mesh/
+    --project ./src/ServiceLayer.Common/
 
 # Stage 2: Runtime - Apply Migration and Seed Data
 FROM mcr.microsoft.com/mssql-tools:v1 AS migration-env

@@ -1,5 +1,5 @@
+using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
-using ServiceLayer.Mesh.Models;
 
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 
@@ -21,7 +21,7 @@ public class FileTransformer : IFileTransformer
 
     public async Task<IList<ValidationError>> TransformFileAsync(Stream stream, MeshFile metaData)
     {
-        // TODO - consider whether we should wrap this parsing in a try-catch and return a List<ValidationError> in case of any unforeseen parsing issues (file is totally unlike anything we expect)
+        // TODO - wrap this parsing in a try-catch and return a List<ValidationError> in case of any unforeseen parsing issues (file is totally unlike anything we expect)
         var parsed = _fileParser.Parse(stream);
 
         var validationErrors = _validationRunner.Validate(parsed);
