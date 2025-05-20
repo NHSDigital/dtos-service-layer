@@ -94,18 +94,16 @@ public class FileParser : IFileParser
 
     private static FileDataRecord ParseDataRecord(CsvReader csv, List<string> columnHeadings, int rowNumber)
     {
-        var record = new FileDataRecord
-        {
-            RowNumber = rowNumber
-        };
+        const int dataFieldStartIndex = 1;
 
-        int dataFieldStartIndex = RecordTypeIdentifier + 1;
+        var record = new FileDataRecord { RowNumber = rowNumber };
 
-        for (int i = dataFieldStartIndex; i < csv.Parser.Count && (i - dataFieldStartIndex) < columnHeadings.Count; i++)
+        foreach (var (heading, index) in columnHeadings.Select((header, index) => (header, index + dataFieldStartIndex)))
         {
-            string columnName = columnHeadings[i - dataFieldStartIndex];
-            string? value = GetFieldValue(csv, i);
-            record.Fields[columnName] = value ?? string.Empty;
+            if (index < csv.Parser.Count)
+            {
+                record.Fields[heading] = GetFieldValue(csv, index) ?? string.Empty;
+            }
         }
 
         return record;
