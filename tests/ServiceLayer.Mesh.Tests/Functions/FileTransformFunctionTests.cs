@@ -17,9 +17,9 @@ public class FileTransformFunctionTests
     private readonly Mock<ILogger<FileTransformFunction>> _loggerMock = new();
     private readonly Mock<IMeshFilesBlobStore> _blobStoreMock = new();
     private readonly Mock<IFileTransformFunctionConfiguration> _configuration = new();
+    private readonly Mock<IFileParser> _fileParser = new();
     private readonly ServiceLayerDbContext _dbContext;
     private readonly FileTransformFunction _function;
-    private readonly Mock<IFileParser> _fileParser;
 
     public FileTransformFunctionTests()
     {
