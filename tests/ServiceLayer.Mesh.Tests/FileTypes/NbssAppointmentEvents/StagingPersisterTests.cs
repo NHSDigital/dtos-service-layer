@@ -13,9 +13,7 @@ public class NbssAppointmentEventsTests
     public NbssAppointmentEventsTests()
     {
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(warnings =>
-                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
         _dbContext = new ServiceLayerDbContext(options);
@@ -24,7 +22,7 @@ public class NbssAppointmentEventsTests
     }
 
     [Fact]
-    public async Task WriteStagedData_WhenMappingSuceeds_SavesToDb()
+    public async Task WriteStagedData_WhenFileValid_SavesToDb()
     {
         // Arrange
         var parsedFile = TestDataBuilder.BuildValidParsedFile();
@@ -44,6 +42,7 @@ public class NbssAppointmentEventsTests
 
         var nbssAppointmentEvent = await _dbContext.NbssAppointmentEvents.FirstAsync();
         var dataRecord = parsedFile.DataRecords.First();
+        Assert.NotEqual(Guid.Empty, nbssAppointmentEvent.Id);
         Assert.Equal(meshFile.FileId, nbssAppointmentEvent.MeshFileId);
         Assert.Equal(dataRecord["BSO"], nbssAppointmentEvent.BSO);
         Assert.Equal(parsedFile.FileTrailer!.ExtractId, nbssAppointmentEvent.ExtractId);
@@ -73,5 +72,77 @@ public class NbssAppointmentEventsTests
         Assert.Equal(dataRecord["Clinic Address 5"], nbssAppointmentEvent.ClinicAddressLine5);
         Assert.Equal(dataRecord["Postcode"], nbssAppointmentEvent.ClinicPostcode);
         Assert.Equal(DateTime.ParseExact(dataRecord.Fields["Action Timestamp"], "yyyyMMdd-HHmmss", null), nbssAppointmentEvent.ActionTimestamp);
+    }
+
+    [Theory]
+    [InlineData("BSO")]
+    [InlineData("Sequence")]
+    [InlineData("Action")]
+    [InlineData("Clinic Code")]
+    [InlineData("Holding Clinic")]
+    [InlineData("Status")]
+    [InlineData("Attended Not Scr")]
+    [InlineData("Appointment ID")]
+    [InlineData("NHS Num")]
+    [InlineData("Episode Type")]
+    [InlineData("Episode Start")]
+    [InlineData("Batch ID")]
+    [InlineData("Screen or Asses")]
+    [InlineData("Screen Appt num")]
+    [InlineData("Booked By")]
+    [InlineData("Cancelled By")]
+    [InlineData("Appt Date")]
+    [InlineData("Appt Time")]
+    [InlineData("Location")]
+    [InlineData("Clinic Name")]
+    [InlineData("Clinic Name (Let)")]
+    [InlineData("Clinic Address 1")]
+    [InlineData("Clinic Address 2")]
+    [InlineData("Clinic Address 3")]
+    [InlineData("Clinic Address 4")]
+    [InlineData("Clinic Address 5")]
+    [InlineData("Postcode")]
+    [InlineData("Action Timestamp")]
+    public async Task WriteStagedData_WhenFieldMissing_DoesNotSaveToDb(string fieldName)
+    {
+        // Arrange
+        var parsedFile = TestDataBuilder.BuildValidParsedFile();
+        var recordWithoutBSO = TestDataBuilder.BuildFileDataRecordWithField(fieldName, null, 1);
+        parsedFile.DataRecords.Add(recordWithoutBSO);
+        var meshFile = new MeshFile()
+        {
+            FileId = "1",
+            FileType = MeshFileType.NbssAppointmentEvents,
+            MailboxId = "ABC",
+            Status = MeshFileStatus.Transforming
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(async () => await _stagingPersister.WriteStagedData(parsedFile, meshFile));
+        Assert.Equal(0, await _dbContext.NbssAppointmentEvents.CountAsync());
+    }
+
+    [Theory]
+    [InlineData("Episode Start")]
+    [InlineData("Screen Appt num")]
+    [InlineData("Appt Date")]
+    [InlineData("Appt Time")]
+    public async Task WriteStagedData_WhenFieldHoldsInvalidValue_DoesNotSaveToDb(string fieldName)
+    {
+        // Arrange
+        var parsedFile = TestDataBuilder.BuildValidParsedFile();
+        var recordWithoutBSO = TestDataBuilder.BuildFileDataRecordWithField(fieldName, "Invalid value", 1);
+        parsedFile.DataRecords.Add(recordWithoutBSO);
+        var meshFile = new MeshFile()
+        {
+            FileId = "1",
+            FileType = MeshFileType.NbssAppointmentEvents,
+            MailboxId = "ABC",
+            Status = MeshFileStatus.Transforming
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<FormatException>(async () => await _stagingPersister.WriteStagedData(parsedFile, meshFile));
+        Assert.Equal(0, await _dbContext.NbssAppointmentEvents.CountAsync());
     }
 }
