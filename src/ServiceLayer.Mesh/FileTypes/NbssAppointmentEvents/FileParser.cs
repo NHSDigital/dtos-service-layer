@@ -50,7 +50,7 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                     while (csv.Read())
                     {
                         rowNumber++;
-                        string? recordIdentifier = GetFieldValue(csv, (int)FileRecordTypeEnum.RecordTypeIdentifier);
+                        string? recordIdentifier = GetFieldValue(csv, (int)FileRecordType.RecordTypeIdentifier);
 
                         if (string.IsNullOrWhiteSpace(recordIdentifier))
                         {
@@ -64,11 +64,11 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                                 result.FileHeader = ParseRecordAsType<FileHeaderRecord>(csv,
                                     (rec, values) =>
                                     {
-                                        rec.RecordTypeIdentifier = values[(int)FileRecordTypeEnum.RecordTypeIdentifier];
-                                        rec.ExtractId = values[(int)FileRecordTypeEnum.ExtractId];
-                                        rec.TransferStartDate = values[(int)FileRecordTypeEnum.Date];
-                                        rec.TransferStartTime = values[(int)FileRecordTypeEnum.Time];
-                                        rec.RecordCount = values[(int)FileRecordTypeEnum.RecordCount];
+                                        rec.RecordTypeIdentifier = values[(int)FileRecordType.RecordTypeIdentifier];
+                                        rec.ExtractId = values[(int)FileRecordType.ExtractId];
+                                        rec.TransferStartDate = values[(int)FileRecordType.Date];
+                                        rec.TransferStartTime = values[(int)FileRecordType.Time];
+                                        rec.RecordCount = values[(int)FileRecordType.RecordCount];
                                     });
                                 break;
 
@@ -90,11 +90,11 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                                 result.FileTrailer = ParseRecordAsType<FileTrailerRecord>(csv,
                                     (rec, values) =>
                                     {
-                                        rec.RecordTypeIdentifier = values[(int)FileRecordTypeEnum.RecordTypeIdentifier];
-                                        rec.ExtractId = values[(int)FileRecordTypeEnum.ExtractId];
-                                        rec.TransferEndDate = values[(int)FileRecordTypeEnum.Date];
-                                        rec.TransferEndTime = values[(int)FileRecordTypeEnum.Time];
-                                        rec.RecordCount = values[(int)FileRecordTypeEnum.RecordCount];
+                                        rec.RecordTypeIdentifier = values[(int)FileRecordType.RecordTypeIdentifier];
+                                        rec.ExtractId = values[(int)FileRecordType.ExtractId];
+                                        rec.TransferEndDate = values[(int)FileRecordType.Date];
+                                        rec.TransferEndTime = values[(int)FileRecordType.Time];
+                                        rec.RecordCount = values[(int)FileRecordType.RecordCount];
                                     });
                                 break;
 
@@ -111,7 +111,7 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
         private static List<string> ParseColumnHeadings(CsvReader csv)
         {
             var headings = new List<string>();
-            int dataFieldStartIndex = (int)FileRecordTypeEnum.RecordTypeIdentifier + 1;
+            int dataFieldStartIndex = (int)FileRecordType.RecordTypeIdentifier + 1;
 
             // Start at index 1 to skip the record type identifier
             for (int i = dataFieldStartIndex; i < csv.Parser.Count; i++)
@@ -157,7 +157,7 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                 RowNumber = rowNumber
             };
 
-            int dataFieldStartIndex = (int)FileRecordTypeEnum.RecordTypeIdentifier + 1;
+            int dataFieldStartIndex = (int)FileRecordType.RecordTypeIdentifier + 1;
 
             for (int i = dataFieldStartIndex; i < csv.Parser.Count && (i - dataFieldStartIndex) < columnHeadings.Count; i++)
             {

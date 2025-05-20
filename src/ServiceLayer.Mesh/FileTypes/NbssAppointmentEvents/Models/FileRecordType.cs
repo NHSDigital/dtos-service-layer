@@ -1,4 +1,6 @@
-public enum FileRecordTypeEnum
+namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
+
+enum FileRecordType
 {
     RecordTypeIdentifier = 0,
     ExtractId = 1,
