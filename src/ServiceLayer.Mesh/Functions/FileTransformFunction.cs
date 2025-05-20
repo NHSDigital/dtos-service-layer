@@ -27,7 +27,7 @@ public class FileTransformFunction(
 
         if (file == null)
         {
-            logger.LogWarning("File with id: {fileId} not found in MeshFiles table.", message.FileId);
+            logger.LogWarning("File with id: {FileId} not found in MeshFiles table.", message.FileId);
             return;
         }
 
@@ -63,7 +63,7 @@ public class FileTransformFunction(
             (file.Status == MeshFileStatus.Transforming && file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-configuration.StaleHours)))
         {
             logger.LogWarning(
-                "File with id: {fileId} found in MeshFiles table but is not suitable for transformation. Status: {status}, LastUpdatedUtc: {lastUpdatedUtc}.",
+                "File with id: {FileId} found in MeshFiles table but is not suitable for transformation. Status: {Status}, LastUpdatedUtc: {LastUpdatedUtc}.",
                 file.FileId,
                 file.Status,
                 file.LastUpdatedUtc.ToTimestamp());

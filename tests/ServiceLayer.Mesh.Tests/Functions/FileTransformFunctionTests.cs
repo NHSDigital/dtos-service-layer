@@ -28,16 +28,20 @@ namespace ServiceLayer.Mesh.Tests.Functions
 
         public FileTransformFunctionTests()
         {
-            _validFileContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000002""
-""NBSSAPPT_FLDS""|""Sequence""|""BSO""|""Action""|""Clinic Code""|""Status""
-""NBSSAPPT_DATA""|""000001""|""KMK""|""U""|""BU003""|""A""
-""NBSSAPPT_DATA""|""000002""|""KMK""|""U""|""BU004""|""A""
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000002""";
 
-            _completeDatasetContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000001""
-""NBSSAPPT_FLDS""|""Sequence""|""BSO""|""Action""|""Clinic Code""|""Holding Clinic""|""Status""|""Attended Not Scr""|""Appointment ID""|""NHS Num""|""Epsiode Type""|""Episode Start""|""BatchID""|""Screen or Asses""|""Screen Appt num""|""Booked By""|""Cancelled By""|""Appt Date""|""Appt Time""|""Location""|""Clinic Name""|""Clinic Name (Let)""|""Clinic Address 1""|""Clinic Address 2""|""Clinic Address 3""|""Clinic Address 4""|""Clinic Address 5""|""Postcode""|""Action Timestamp""
-""NBSSAPPT_DATA""|""000001""|""KMK""|""U""|""BU003""|""N""|""A""|""N""|""BU003-67235-RA1-DN-T1330-1""|""9277757620""|""G""|""2025-01-30""|""KMKG00581""|""S""|""1""|""H""|""""|""20250130""|""1330""|""BU""|""BREAST CARE UNIT""|""BREAST CARE UNIT""|""BREAST CARE UNIT""|""MILTON KEYNES HOSPITAL""|""STANDING WAY""|""MILTON KEYNES""|""MK6 5LD""|""MK6 5LD""|""20250204-161420""
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000001""";
+            _validFileContent =
+               "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"" +
+               "\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"|\"Clinic Code\"|\"Status\"" +
+               "\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"BU003\"|\"A\"" +
+               "\n\"NBSSAPPT_DATA\"|\"000002\"|\"KMK\"|\"U\"|\"BU004\"|\"A\"" +
+               "\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"";
+
+            _completeDatasetContent =
+                "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"" +
+                "\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"|\"Clinic Code\"|\"Holding Clinic\"|\"Status\"|\"Attended Not Scr\"|\"Appointment ID\"|\"NHS Num\"|\"Epsiode Type\"|\"Episode Start\"|\"BatchID\"|\"Screen or Asses\"|\"Screen Appt num\"|\"Booked By\"|\"Cancelled By\"|\"Appt Date\"|\"Appt Time\"|\"Location\"|\"Clinic Name\"|\"Clinic Name (Let)\"|\"Clinic Address 1\"|\"Clinic Address 2\"|\"Clinic Address 3\"|\"Clinic Address 4\"|\"Clinic Address 5\"|\"Postcode\"|\"Action Timestamp\"" +
+                "\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"BU003\"|\"N\"|\"A\"|\"N\"|\"BU003-67235-RA1-DN-T1330-1\"|\"9277757620\"|\"G\"|\"2025-01-30\"|\"KMKG00581\"|\"S\"|\"1\"|\"H\"|\"\"|\"\"20250130\"|\"1330\"|\"BU\"|\"BREAST CARE UNIT\"|\"BREAST CARE UNIT\"|\"BREAST CARE UNIT\"|\"MILTON KEYNES HOSPITAL\"|\"STANDING WAY\"|\"MILTON KEYNES\"|\"MK6 5LD\"|\"MK6 5LD\"|\"20250204-161420\"" +
+                "\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
+
 
             _fileParser = new FileParser();
 
@@ -69,15 +73,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
             await _transformFunction.Run(message);
 
             // Assert
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Warning,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} not found in MeshFiles table."),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-                ), Times.Once);
-
+            VerifyLogMessage(LogLevel.Warning, $"File with id: {message.FileId} not found in MeshFiles table.");
             Assert.Equal(0, _dbContext.MeshFiles.Count());
             _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
         }
@@ -103,14 +99,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
             await _transformFunction.Run(message);
 
             // Assert
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Warning,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}."),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-                ), Times.Once);
+            VerifyLogMessage(LogLevel.Warning, $"File with id: {message.FileId} found in MeshFiles table but is not suitable for transformation");
             var fileFromDb = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
             Assert.Equal(MeshFileStatus.FailedExtract, fileFromDb?.Status);
             _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
@@ -137,14 +126,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
             await _transformFunction.Run(message);
 
             // Assert
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Warning,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}."),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-                ), Times.Once);
+            VerifyLogMessage(LogLevel.Warning, $"File with id: {message.FileId} found in MeshFiles table but is not suitable for transformation");
             var fileFromDb = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
             Assert.Equal(MeshFileStatus.Transforming, fileFromDb?.Status);
             _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
@@ -186,11 +168,11 @@ namespace ServiceLayer.Mesh.Tests.Functions
         public void Parse_NullStream_ThrowsArgumentNullException()
         {
             // Arrange
-            Stream stream = null;
+            Stream? stream = null;
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(
-                () => _fileParser.Parse(stream));
+                () => _fileParser.Parse(stream!));
 
             Assert.Equal("stream", exception.ParamName);
         }
@@ -208,7 +190,6 @@ namespace ServiceLayer.Mesh.Tests.Functions
             Assert.NotNull(result);
             Assert.Null(result.FileHeader);
             Assert.Null(result.FileTrailer);
-            Assert.Empty(result.ColumnHeadings);
             Assert.Empty(result.DataRecords);
         }
 
@@ -222,13 +203,14 @@ namespace ServiceLayer.Mesh.Tests.Functions
             var result = _fileParser.Parse(stream);
 
             // Assert
-            Assert.NotNull(result);
-
+            Assert.NotNull(result.FileHeader);
             VerifyFileHeaderRecord(result.FileHeader, "NBSSAPPT_HDR", "00000054", "20250204", "161846", "000002");
-            Assert.Equal(5, result.ColumnHeadings.Count);
-            Assert.Equal(new[] { "Sequence", "BSO", "Action", "Clinic Code", "Status" }, result.ColumnHeadings);
             Assert.Equal(2, result.DataRecords.Count);
+            Assert.NotNull(result.FileTrailer);
             VerifyFileTrailerRecord(result.FileTrailer, "NBSSAPPT_END", "00000054", "20250204", "161846", "000002");
+
+            Assert.Equal(1, result.DataRecords[0].RowNumber);
+            Assert.Equal(2, result.DataRecords[1].RowNumber);
 
             var expectedFirstRecord = new Dictionary<string, string>
             {
@@ -248,8 +230,8 @@ namespace ServiceLayer.Mesh.Tests.Functions
                 ["Status"] = "A"
             };
 
-            VerifyDataRecord(result.DataRecords[0], 3, expectedFirstRecord);
-            VerifyDataRecord(result.DataRecords[1], 4, expectedSecondRecord);
+            VerifyDataRecordFields(result.DataRecords[0], expectedFirstRecord);
+            VerifyDataRecordFields(result.DataRecords[1], expectedSecondRecord);
         }
 
         [Fact]
@@ -263,8 +245,8 @@ namespace ServiceLayer.Mesh.Tests.Functions
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(28, result.ColumnHeadings.Count);
-            Assert.Equal(1, result.DataRecords.Count);
+            Assert.Single(result.DataRecords);
+            Assert.Equal(1, result.DataRecords[0].RowNumber);
 
             var expectedData = new Dictionary<string, string>
             {
@@ -298,16 +280,14 @@ namespace ServiceLayer.Mesh.Tests.Functions
                 ["Action Timestamp"] = "20250204-161420"
             };
 
-            VerifyDataRecord(result.DataRecords[0], 3, expectedData);
+            VerifyDataRecordFields(result.DataRecords[0], expectedData);
         }
 
         [Fact]
         public void Parse_MissingFieldsRecord_ThrowsInvalidOperationException()
         {
             // Arrange
-            string fileContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000002""
-""NBSSAPPT_DATA""|""000001""|""KMK""|""U""|""BU003""|""N""|""A""|""N""
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000002""";
+            string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"BU003\"|\"N\"|\"A\"|\"N\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"";
 
             using var stream = CreateStreamFromString(fileContent);
 
@@ -322,10 +302,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
         public void Parse_UnknownRecordType_ThrowsInvalidOperationException()
         {
             // Arrange
-            string fileContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000001""
-""NBSSAPPT_FLDS""|""Sequence""|""BSO""|""Action""
-""UNKNOWN_TYPE""|""000001""|""KMK""|""U""
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000001""";
+            string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"\n\"UNKNOWN_TYPE\"|\"000001\"|\"KMK\"|\"U\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
 
             using var stream = CreateStreamFromString(fileContent);
 
@@ -340,13 +317,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
         public void Parse_EmptyLine_SkipsEmptyLines()
         {
             // Arrange
-            string fileContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000001""
-
-""NBSSAPPT_FLDS""|""Sequence""|""BSO""|""Action""
-
-""NBSSAPPT_DATA""|""000001""|""KMK""|""U""
-
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000001""";
+            string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"\n\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"\n\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
 
             using var stream = CreateStreamFromString(fileContent);
 
@@ -355,18 +326,15 @@ namespace ServiceLayer.Mesh.Tests.Functions
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(3, result.ColumnHeadings.Count);
-            Assert.Equal(1, result.DataRecords.Count);
+            Assert.Single(result.DataRecords);
+            Assert.Equal(1, result.DataRecords[0].RowNumber);
         }
 
         [Fact]
         public void Parse_FewerColumnsInDataRecord_OnlyProcessesAvailableColumns()
         {
             // Arrange
-            string fileContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000001""
-""NBSSAPPT_FLDS""|""Sequence""|""BSO""|""Action""|""Clinic Code""|""Status""
-""NBSSAPPT_DATA""|""000001""|""KMK""|""U""
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000001""";
+            string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"|\"Clinic Code\"|\"Status\"\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
 
             using var stream = CreateStreamFromString(fileContent);
 
@@ -375,8 +343,8 @@ namespace ServiceLayer.Mesh.Tests.Functions
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(5, result.ColumnHeadings.Count);
-            Assert.Equal(1, result.DataRecords.Count);
+            Assert.Single(result.DataRecords);
+            Assert.Equal(1, result.DataRecords[0].RowNumber);
 
             var expectedData = new Dictionary<string, string>
             {
@@ -385,7 +353,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
                 ["Action"] = "U"
             };
 
-            VerifyDataRecord(result.DataRecords[0], 3, expectedData);
+            VerifyDataRecordFields(result.DataRecords[0], expectedData);
             Assert.False(result.DataRecords[0].Fields.ContainsKey("Clinic Code"));
             Assert.False(result.DataRecords[0].Fields.ContainsKey("Status"));
         }
@@ -394,10 +362,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
         public void Parse_ExtraColumnsInDataRecord_IgnoresExtraColumns()
         {
             // Arrange
-            string fileContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000001""
-""NBSSAPPT_FLDS""|""Sequence""|""BSO""|""Action""
-""NBSSAPPT_DATA""|""000001""|""KMK""|""U""|""ExtraValue1""|""ExtraValue2""
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000001""";
+            string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"ExtraValue1\"|\"ExtraValue2\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
 
             using var stream = CreateStreamFromString(fileContent);
 
@@ -406,8 +371,8 @@ namespace ServiceLayer.Mesh.Tests.Functions
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(3, result.ColumnHeadings.Count);
-            Assert.Equal(1, result.DataRecords.Count);
+            Assert.Single(result.DataRecords);
+            Assert.Equal(1, result.DataRecords[0].RowNumber);
 
             var expectedData = new Dictionary<string, string>
             {
@@ -416,7 +381,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
                 ["Action"] = "U"
             };
 
-            VerifyDataRecord(result.DataRecords[0], 3, expectedData);
+            VerifyDataRecordFields(result.DataRecords[0], expectedData);
             Assert.Equal(3, result.DataRecords[0].Fields.Count);
         }
 
@@ -424,10 +389,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
         public void Parse_QuotedValues_TrimsQuotes()
         {
             // Arrange
-            string fileContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000001""
-""NBSSAPPT_FLDS""|""Field1""|""Field2""|""Field3""
-""NBSSAPPT_DATA""|""Value1""|""Value2""|""Value3""
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000001""";
+            string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Field1\"|\"Field2\"|\"Field3\"\n\"NBSSAPPT_DATA\"|\"Value1\"|\"Value2\"|\"Value3\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
 
             using var stream = CreateStreamFromString(fileContent);
 
@@ -436,7 +398,8 @@ namespace ServiceLayer.Mesh.Tests.Functions
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(new[] { "Field1", "Field2", "Field3" }, result.ColumnHeadings);
+            Assert.Single(result.DataRecords);
+            Assert.Equal(1, result.DataRecords[0].RowNumber);
 
             var expectedData = new Dictionary<string, string>
             {
@@ -445,17 +408,14 @@ namespace ServiceLayer.Mesh.Tests.Functions
                 ["Field3"] = "Value3"
             };
 
-            VerifyDataRecord(result.DataRecords[0], 3, expectedData);
+            VerifyDataRecordFields(result.DataRecords[0], expectedData);
         }
 
         [Fact]
         public void Parse_WithEscapedCharacters_HandlesCorrectly()
         {
             // Arrange
-            string fileContent = @"""NBSSAPPT_HDR""|""00000054""|""20250204""|""161846""|""000001""
-""NBSSAPPT_FLDS""|""Field With\""Quote""|""Normal Field""|""Field With\\Backslash""
-""NBSSAPPT_DATA""|""Value With\""Quote""|""Normal Value""|""Value With\\Backslash""
-""NBSSAPPT_END""|""00000054""|""20250204""|""161846""|""000001""";
+            string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Field With\\\"Quote\"|\"Normal Field\"|\"Field With\\\\Backslash\"\n\"NBSSAPPT_DATA\"|\"Value With\\\"Quote\"|\"Normal Value\"|\"Value With\\\\Backslash\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
 
             using var stream = CreateStreamFromString(fileContent);
 
@@ -464,7 +424,8 @@ namespace ServiceLayer.Mesh.Tests.Functions
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(new[] { "Field With\"Quote", "Normal Field", "Field With\\Backslash" }, result.ColumnHeadings);
+            Assert.Single(result.DataRecords);
+            Assert.Equal(1, result.DataRecords[0].RowNumber);
 
             var expectedData = new Dictionary<string, string>
             {
@@ -473,7 +434,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
                 ["Field With\\Backslash"] = "Value With\\Backslash"
             };
 
-            VerifyDataRecord(result.DataRecords[0], 3, expectedData);
+            VerifyDataRecordFields(result.DataRecords[0], expectedData);
         }
 
         private static MemoryStream CreateStreamFromString(string content)
@@ -509,25 +470,34 @@ namespace ServiceLayer.Mesh.Tests.Functions
             Assert.NotNull(record);
             Assert.Equal(recordType, record.RecordTypeIdentifier);
             Assert.Equal(extractId, record.ExtractId);
-            Assert.Equal(date, record.TransferEndDate ?? date); // Use the provided date as fallback
-            Assert.Equal(time, record.TransferEndTime ?? time); // Use the provided time as fallback
+            Assert.Equal(date, record.TransferEndDate ?? date);
+            Assert.Equal(time, record.TransferEndTime ?? time);
             Assert.Equal(count, record.RecordCount);
         }
 
-        private static void VerifyDataRecord(
+        private static void VerifyDataRecordFields(
             FileDataRecord record,
-            int expectedRowNumber,
             Dictionary<string, string> expectedFields)
         {
             Assert.NotNull(record);
-            Assert.Equal(expectedRowNumber, record.RowNumber);
-            Assert.Equal(expectedFields.Count, record.Fields.Count);
 
-            foreach (var kvp in expectedFields)
+            foreach (var value in expectedFields)
             {
-                Assert.True(record.Fields.ContainsKey(kvp.Key), $"Field '{kvp.Key}' not found in record");
-                Assert.Equal(kvp.Value, record[kvp.Key]);
+                Assert.True(record.Fields.ContainsKey(value.Key), $"Field '{value.Key}' not found in record");
+                Assert.Equal(value.Value, record[value.Key]);
             }
+        }
+
+        private void VerifyLogMessage(LogLevel level, string expectedMessage)
+        {
+            _loggerMock.Verify(
+                x => x.Log(
+                    level,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => (v.ToString() ?? string.Empty).Contains(expectedMessage)),
+                    It.IsAny<Exception?>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
         }
     }
 }

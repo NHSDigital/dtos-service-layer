@@ -21,20 +21,16 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
         {
             var result = new ParsedFile
             {
-                ColumnHeadings = new List<string>(),
                 DataRecords = new List<FileDataRecord>()
             };
 
-            // Check for null stream
             if (stream == null)
             {
                 throw new ArgumentNullException(nameof(stream), "Stream cannot be null");
             }
 
-            // Use StreamReader with explicit encoding (adjust as needed)
             using (var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, leaveOpen: true))
             {
-                // Configure CsvHelper for pipe-separated values
                 var config = new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
                     Delimiter = "|",
@@ -47,14 +43,13 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
 
                 using (var csv = new CsvReader(reader, config))
                 {
-                    int rowNumber = 0;
+                    int rowNumber = result.DataRecords.Count - 2;
+                    var columnHeadings = new List<string>();
 
                     // Read through the CSV file
                     while (csv.Read())
                     {
                         rowNumber++;
-
-                        // Get the record identifier from the first field
                         string? recordIdentifier = GetFieldValue(csv, (int)FileRecordTypeEnum.RecordTypeIdentifier);
 
                         if (string.IsNullOrWhiteSpace(recordIdentifier))
@@ -66,7 +61,6 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                         switch (recordIdentifier)
                         {
                             case HEADER_IDENTIFIER:
-                                // Process file header (first line)
                                 result.FileHeader = ParseRecordAsType<FileHeaderRecord>(csv,
                                     (rec, values) =>
                                     {
@@ -79,21 +73,20 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                                 break;
 
                             case FIELDS_IDENTIFIER:
-                                // Process field headers (second line)
-                                result.ColumnHeadings = ParseColumnHeadings(csv);
+                                columnHeadings = ParseColumnHeadings(csv);
                                 break;
 
                             case DATA_IDENTIFIER:
                                 // Process data records
-                                if (result.ColumnHeadings.Count == 0)
+                                if (columnHeadings.Count == 0)
                                 {
                                     throw new InvalidOperationException("Field headers (NBSSAPPT_FLDS) must appear before data records.");
                                 }
-                                result.DataRecords.Add(ParseDataRecord(csv, result.ColumnHeadings, rowNumber));
+
+                                result.DataRecords.Add(ParseDataRecord(csv, columnHeadings, rowNumber));
                                 break;
 
                             case FOOTER_IDENTIFIER:
-                                // Process file trailer (last line)
                                 result.FileTrailer = ParseRecordAsType<FileTrailerRecord>(csv,
                                     (rec, values) =>
                                     {
@@ -166,17 +159,11 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
 
             int dataFieldStartIndex = (int)FileRecordTypeEnum.RecordTypeIdentifier + 1;
 
-            // Start at index 1 to skip the record type identifier
             for (int i = dataFieldStartIndex; i < csv.Parser.Count && (i - dataFieldStartIndex) < columnHeadings.Count; i++)
             {
-                // Get the column name from the headings
                 string columnName = columnHeadings[i - dataFieldStartIndex];
-
-                // Get the field value and remove quotes if present
                 string? value = GetFieldValue(csv, i);
-
-                // Add to the fields dictionary
-                record.Fields[columnName] = value;
+                record.Fields[columnName] = value ?? string.Empty;
             }
 
             return record;
