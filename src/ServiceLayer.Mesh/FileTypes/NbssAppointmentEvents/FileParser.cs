@@ -52,12 +52,6 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                         rowNumber++;
                         string? recordIdentifier = GetFieldValue(csv, (int)FileRecordType.RecordTypeIdentifier);
 
-                        if (string.IsNullOrWhiteSpace(recordIdentifier))
-                        {
-                            Console.WriteLine($"Empty record identifier found at row {rowNumber}, skipping this record");
-                            continue;
-                        }
-
                         switch (recordIdentifier)
                         {
                             case HEADER_IDENTIFIER:
