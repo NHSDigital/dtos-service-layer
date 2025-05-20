@@ -30,11 +30,11 @@ namespace ServiceLayer.Mesh.Tests.Functions
         {
 
             _validFileContent =
-               "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"" +
-               "\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"|\"Clinic Code\"|\"Status\"" +
-               "\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"BU003\"|\"A\"" +
-               "\n\"NBSSAPPT_DATA\"|\"000002\"|\"KMK\"|\"U\"|\"BU004\"|\"A\"" +
-               "\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"";
+                "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"" +
+                "\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"|\"Clinic Code\"|\"Status\"" +
+                "\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"BU003\"|\"A\"" +
+                "\n\"NBSSAPPT_DATA\"|\"000002\"|\"KMK\"|\"U\"|\"BU004\"|\"A\"" +
+                "\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"";
 
             _completeDatasetContent =
                 "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"" +
