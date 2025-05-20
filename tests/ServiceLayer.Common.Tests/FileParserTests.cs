@@ -5,7 +5,7 @@ using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
 using System.Globalization;
 using System.Text;
 
-namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents;
+namespace ServiceLayer.Common.Tests;
 
 public class FileParserTests
 {
