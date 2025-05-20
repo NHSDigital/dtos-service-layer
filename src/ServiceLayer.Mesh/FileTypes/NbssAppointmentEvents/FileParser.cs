@@ -12,12 +12,7 @@ public class FileParser : IFileParser
     private const string FieldsIdentifier = "NBSSAPPT_FLDS";
     private const string DataIdentifier = "NBSSAPPT_DATA";
     private const string FooterIdentifier = "NBSSAPPT_END";
-
     private const int RecordTypeIdentifier = 0;
-    private const int ExtractId = 1;
-    private const int Date = 2;
-    private const int Time = 3;
-    private const int RecordCount = 4;
 
     /// <summary>
     /// Parse a stream of appointment data
@@ -43,6 +38,8 @@ public class FileParser : IFileParser
         };
 
         using var csv = new CsvReader(reader, config);
+        csv.Context.RegisterClassMap<FileHeaderRecordMap>();
+        csv.Context.RegisterClassMap<FileTrailerRecordMap>();
         var rowNumber = 0;
         var columnHeadings = new List<string>();
 
@@ -53,15 +50,7 @@ public class FileParser : IFileParser
             switch (recordIdentifier)
             {
                 case HeaderIdentifier:
-                    result.FileHeader = ParseRecordAsType<FileHeaderRecord>(csv,
-                        (rec, values) =>
-                        {
-                            rec.RecordTypeIdentifier = values[RecordTypeIdentifier];
-                            rec.ExtractId = values[ExtractId];
-                            rec.TransferStartDate = values[Date];
-                            rec.TransferStartTime = values[Time];
-                            rec.RecordCount = values[RecordCount];
-                        });
+                    result.FileHeader = csv.GetRecord<FileHeaderRecord>();
                     break;
 
                 case FieldsIdentifier:
@@ -79,15 +68,7 @@ public class FileParser : IFileParser
                     break;
 
                 case FooterIdentifier:
-                    result.FileTrailer = ParseRecordAsType<FileTrailerRecord>(csv,
-                        (rec, values) =>
-                        {
-                            rec.RecordTypeIdentifier = values[RecordTypeIdentifier];
-                            rec.ExtractId = values[ExtractId];
-                            rec.TransferEndDate = values[Date];
-                            rec.TransferEndTime = values[Time];
-                            rec.RecordCount = values[RecordCount];
-                        });
+                    result.FileTrailer = csv.GetRecord<FileTrailerRecord>();
                     break;
 
                 default:
@@ -104,24 +85,6 @@ public class FileParser : IFileParser
         .Select(i => GetFieldValue(csv, i))
         .Where(x => !string.IsNullOrEmpty(x))
         .ToList()!;
-    }
-
-    private static T ParseRecordAsType<T>(CsvReader csv, Action<T, Dictionary<int, string?>> populateAction) where T : new()
-    {
-        var record = new T();
-        var values = ExtractFieldValues(csv);
-        populateAction(record, values);
-        return record;
-    }
-
-    private static Dictionary<int, string?> ExtractFieldValues(CsvReader csv)
-    {
-        var values = new Dictionary<int, string?>();
-        for (int i = 0; i < csv.Parser.Count; i++)
-        {
-            values[i] = GetFieldValue(csv, i);
-        }
-        return values;
     }
 
     private static string? GetFieldValue(CsvReader csv, int index)
