@@ -24,15 +24,6 @@ public static class TestDataBuilder
             RecordCount = numberOfRecords.ToString()
         };
 
-        var columnHeadings = new List<string>
-        {
-            "NBSSAPPT_FLDS", "Sequence", "BSO", "Action", "Clinic Code", "Holding Clinic", "Status",
-            "Attended Not Scr", "Appointment ID", "NHS Num", "Episode Type", "Episode Start", "Batch ID",
-            "Screen or Asses", "Screen Appt num", "Booked By", "Cancelled By", "Appt Date", "Appt Time", "Location",
-            "Clinic Name", "Clinic Name (Let)", "Clinic Address 1", "Clinic Address 2", "Clinic Address 3",
-            "Clinic Address 4", "Clinic Address 5", "Postcode", "Action Timestamp"
-        };
-
         var dataRecords = Enumerable.Range(1, numberOfRecords)
             .Select(BuildValidFileDataRecord)
             .ToList();
@@ -41,7 +32,6 @@ public static class TestDataBuilder
         {
             FileHeader = header,
             FileTrailer = trailer,
-            ColumnHeadings = columnHeadings,
             DataRecords = dataRecords
         };
     }
