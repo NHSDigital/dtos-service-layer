@@ -24,7 +24,7 @@ namespace ServiceLayer.Mesh.Tests.Functions
         private readonly Mock<IFileParser> _fileParserMock = new();
         private readonly ServiceLayerDbContext _dbContext;
         private readonly FileTransformFunction _transformFunction;
-        private readonly IFileParser _fileParser;
+        private readonly FileParser _fileParser;
 
         public FileTransformFunctionTests()
         {
