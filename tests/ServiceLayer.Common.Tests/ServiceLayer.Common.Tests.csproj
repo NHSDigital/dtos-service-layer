@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\ServiceLayer.Common\ServiceLayer.Common.csproj" />
+      <ProjectReference Include="../../src/ServiceLayer.Mesh/ServiceLayer.Mesh.csproj" />
     </ItemGroup>
 
 </Project>
