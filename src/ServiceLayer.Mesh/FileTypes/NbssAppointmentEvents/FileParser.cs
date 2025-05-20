@@ -41,7 +41,8 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                     Quote = '"',
                     Escape = '\\',
                     HasHeaderRecord = false,
-                    Mode = CsvMode.RFC4180
+                    Mode = CsvMode.RFC4180,
+                    BadDataFound = null
                 };
 
                 using (var csv = new CsvReader(reader, config))
@@ -54,7 +55,13 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents
                         rowNumber++;
 
                         // Get the record identifier from the first field
-                        string recordIdentifier = GetFieldValue(csv, (int)(int)FileRecordTypeEnum.RecordTypeIdentifier) ?? string.Empty;
+                        string? recordIdentifier = GetFieldValue(csv, (int)FileRecordTypeEnum.RecordTypeIdentifier);
+
+                        if (string.IsNullOrWhiteSpace(recordIdentifier))
+                        {
+                            Console.WriteLine($"Empty record identifier found at row {rowNumber}, skipping this record");
+                            continue;
+                        }
 
                         switch (recordIdentifier)
                         {
