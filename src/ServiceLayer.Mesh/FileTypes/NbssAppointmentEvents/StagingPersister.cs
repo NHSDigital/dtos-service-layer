@@ -6,15 +6,15 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 
 public class StagingPersister(ServiceLayerDbContext dbContext) : IStagingPersister
 {
-    public async Task WriteStagedData(ParsedFile parsedFile)
+    public async Task WriteStagedData(ParsedFile parsedFile, MeshFile meshFile)
     {
-        var nbssAppointmentEvents = MapFileDataRecordsToNbssAppointmentEvents(parsedFile);
+        var nbssAppointmentEvents = MapFileDataRecordsToNbssAppointmentEvents(parsedFile, meshFile.FileId);
 
         await dbContext.NbssAppointmentEvents.AddRangeAsync(nbssAppointmentEvents);
         await dbContext.SaveChangesAsync();
     }
 
-    private static List<NbssAppointmentEvent> MapFileDataRecordsToNbssAppointmentEvents(ParsedFile parsedFile)
+    private static List<NbssAppointmentEvent> MapFileDataRecordsToNbssAppointmentEvents(ParsedFile parsedFile, string fileId)
     {
         var events = new List<NbssAppointmentEvent>();
 
@@ -22,9 +22,9 @@ public class StagingPersister(ServiceLayerDbContext dbContext) : IStagingPersist
         {
             events.Add(new NbssAppointmentEvent
             {
-                MeshFileId = "", // TODO - Get this from somewhere
+                MeshFileId = fileId,
                 BSO = record.Fields["BSO"],
-                ExtractId = parsedFile.FileHeader.ExtractId,
+                ExtractId = parsedFile.FileHeader!.ExtractId!,
                 Sequence = record.Fields["Sequence"],
                 Action = record.Fields["Action"],
                 ClinicCode = record.Fields["Clinic Code"],

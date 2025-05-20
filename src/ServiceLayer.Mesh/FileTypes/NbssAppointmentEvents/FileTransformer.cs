@@ -27,7 +27,7 @@ public class FileTransformer : IFileTransformer
         var validationErrors = _validationRunner.Validate(parsed);
         if (!validationErrors.Any())
         {
-            await _stagingPersister.WriteStagedData(parsed);
+            await _stagingPersister.WriteStagedData(parsed, metaData);
         }
 
         return validationErrors;
