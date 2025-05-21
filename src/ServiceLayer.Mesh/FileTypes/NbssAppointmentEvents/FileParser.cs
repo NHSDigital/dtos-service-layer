@@ -26,20 +26,9 @@ public class FileParser : IFileParser
             throw new ArgumentNullException(nameof(stream), "Stream cannot be null");
         }
 
-        using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, leaveOpen: true);
-        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            Delimiter = "|",
-            Quote = '"',
-            Escape = '\\',
-            HasHeaderRecord = false,
-            Mode = CsvMode.RFC4180,
-            BadDataFound = null
-        };
+        using var reader = CreateStreamReader(stream);
+        using var csv = CreateCsvReader(reader);
 
-        using var csv = new CsvReader(reader, config);
-        csv.Context.RegisterClassMap<FileHeaderRecordMap>();
-        csv.Context.RegisterClassMap<FileTrailerRecordMap>();
         var rowNumber = 0;
         var fields = new List<string>();
 
@@ -50,7 +39,7 @@ public class FileParser : IFileParser
             switch (recordIdentifier)
             {
                 case HeaderIdentifier:
-                    result.FileHeader = csv.GetRecord<FileHeaderRecord>();
+                    result.FileHeader = ParseHeader(csv);
                     break;
 
                 case FieldsIdentifier:
@@ -59,16 +48,11 @@ public class FileParser : IFileParser
 
                 case DataIdentifier:
                     rowNumber++;
-                    if (fields.Count == 0)
-                    {
-                        throw new InvalidOperationException("Field headers (NBSSAPPT_FLDS) must appear before data records.");
-                    }
-
                     result.DataRecords.Add(ParseDataRecord(csv, fields, rowNumber));
                     break;
 
                 case TrailerIdentifier:
-                    result.FileTrailer = csv.GetRecord<FileTrailerRecord>();
+                    result.FileTrailer = ParseTrailer(csv);
                     break;
 
                 default:
@@ -87,13 +71,36 @@ public class FileParser : IFileParser
         .ToList()!;
     }
 
-    private static string? GetFieldValue(CsvReader csv, int index)
+    private static string? GetFieldValue(CsvReader csv, int index) => index < csv.Parser.Count ? csv.GetField(index)?.Trim('"') : null;
+    private static StreamReader CreateStreamReader(Stream stream) => new(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+    private static FileHeaderRecord ParseHeader(CsvReader csv) => csv.GetRecord<FileHeaderRecord>();
+    private static FileTrailerRecord ParseTrailer(CsvReader csv) => csv.GetRecord<FileTrailerRecord>();
+    private static CsvReader CreateCsvReader(StreamReader reader)
     {
-        return index < csv.Parser.Count ? csv.GetField(index)?.Trim('"') : null;
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            Delimiter = "|",
+            Quote = '"',
+            Escape = '\\',
+            HasHeaderRecord = false,
+            Mode = CsvMode.RFC4180,
+            BadDataFound = null
+        };
+
+        var csv = new CsvReader(reader, config);
+        csv.Context.RegisterClassMap<FileHeaderRecordMap>();
+        csv.Context.RegisterClassMap<FileTrailerRecordMap>();
+
+        return csv;
     }
 
     private static FileDataRecord ParseDataRecord(CsvReader csv, List<string> columnHeadings, int rowNumber)
     {
+        if (columnHeadings.Count == 0)
+        {
+            throw new InvalidOperationException("Field headers (NBSSAPPT_FLDS) must appear before data records.");
+        }
+
         const int dataFieldStartIndex = 1;
 
         var record = new FileDataRecord { RowNumber = rowNumber };
