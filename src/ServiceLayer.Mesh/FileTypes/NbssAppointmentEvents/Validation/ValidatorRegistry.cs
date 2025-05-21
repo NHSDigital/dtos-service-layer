@@ -14,10 +14,14 @@ public static partial class ValidatorRegistry
                 ErrorCodes.InvalidBso),
             new InlineRegexValidator("Action", ActionRegex(), ErrorCodes.MissingAction,
                 ErrorCodes.InvalidAction),
-            new InlineRegexValidator("Holding Clinic", YesNoBlankRegex(), ErrorCodes.MissingHoldingClinic,
-                ErrorCodes.InvalidHoldingClinic),
             new InlineMaxLengthValidator("Clinic Code", 5, ErrorCodes.MissingClinicCode,
                 ErrorCodes.InvalidClinicCode),
+            new InlineRegexValidator("Holding Clinic", YesNoBlankRegex(), ErrorCodes.MissingHoldingClinic,
+                ErrorCodes.InvalidHoldingClinic),
+            new InlineRegexValidator("Status", StatusRegex(), ErrorCodes.MissingStatus,
+                ErrorCodes.InvalidStatus),
+            new InlineRegexValidator("Attended Not Scr", YesNoBlankRegex(), ErrorCodes.MissingAttendedNotScr,
+                ErrorCodes.InvalidAttendedNotScr),
             new InlineMaxLengthValidator("Appointment ID", 27, ErrorCodes.MissingAppointmentId,
                 ErrorCodes.InvalidAppointmentId),
             new InlineMaxLengthValidator("Clinic Name", 40, ErrorCodes.MissingClinicName,
@@ -46,6 +50,9 @@ public static partial class ValidatorRegistry
 
     [GeneratedRegex(@"^[BCU]$", RegexOptions.Compiled)]
     private static partial Regex ActionRegex();
+
+    [GeneratedRegex(@"^[ABCD]$", RegexOptions.Compiled)]
+    private static partial Regex StatusRegex();
 
     [GeneratedRegex(@"^(?!000000)\d{6}$", RegexOptions.Compiled)]
     private static partial Regex SequenceRegex();
