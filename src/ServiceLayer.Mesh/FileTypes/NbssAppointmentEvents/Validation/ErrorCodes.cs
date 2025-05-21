@@ -1,4 +1,4 @@
-namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents.Validation;
+namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 
 public static class ErrorCodes
 {

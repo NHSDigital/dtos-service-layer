@@ -1,3 +1,5 @@
+using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
+
 namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents.Validation;
 
 public class SequenceValidatorTests : ValidationTestBase
@@ -15,7 +17,7 @@ public class SequenceValidatorTests : ValidationTestBase
         validationErrors.ShouldBeSingleValidationError(
             "Sequence",
             "Sequence is missing",
-            "NBSSAPPT012"
+            ErrorCodes.MissingSequence
         );
     }
 
@@ -37,7 +39,7 @@ public class SequenceValidatorTests : ValidationTestBase
         validationErrors.ShouldBeSingleValidationError(
             "Sequence",
             "Sequence is in an invalid format",
-            "NBSSAPPT013"
+            ErrorCodes.InvalidSequence
             );
     }
 

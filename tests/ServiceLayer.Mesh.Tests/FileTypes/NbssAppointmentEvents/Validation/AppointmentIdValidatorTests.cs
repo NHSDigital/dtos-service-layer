@@ -1,3 +1,5 @@
+using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
+
 namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents.Validation;
 
 public class AppointmentIdValidationTests : ValidationTestBase
@@ -15,7 +17,7 @@ public class AppointmentIdValidationTests : ValidationTestBase
         validationErrors.ShouldBeSingleValidationError(
             "Appointment ID",
             "Appointment ID is missing or empty",
-            "NBSSAPPT026"
+            ErrorCodes.MissingAppointmentId
         );
     }
 
@@ -34,7 +36,7 @@ public class AppointmentIdValidationTests : ValidationTestBase
         validationErrors.ShouldBeSingleValidationError(
             "Appointment ID",
             "Appointment ID is missing or empty",
-            "NBSSAPPT026"
+            ErrorCodes.MissingAppointmentId
         );
     }
 
@@ -53,7 +55,7 @@ public class AppointmentIdValidationTests : ValidationTestBase
         validationErrors.ShouldBeSingleValidationError(
             "Appointment ID",
             "Appointment ID exceeds maximum length of 27",
-            "NBSSAPPT027"
+            ErrorCodes.InvalidAppointmentId
         );
     }
 
