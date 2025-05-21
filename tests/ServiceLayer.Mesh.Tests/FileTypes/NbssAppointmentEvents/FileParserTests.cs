@@ -1,11 +1,12 @@
+using System.Globalization;
+using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
-using System.Globalization;
-using System.Text;
+using static ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.FileParser;
 
-namespace ServiceLayer.Common.Tests;
+namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents;
 
 public class FileParserTests
 {
