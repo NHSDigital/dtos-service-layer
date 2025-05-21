@@ -21,8 +21,8 @@ public static class ErrorCodes
     public const string InvalidAction = "NBSSAPPT017";
     public const string MissingClinicCode = "NBSSAPPT018";
     public const string InvalidClinicCode = "NBSSAPPT019";
-    public const string MissingHoldingClinicCode = "NBSSAPPT020";
-    public const string InvalidHoldingClinicCode = "NBSSAPPT021";
+    public const string MissingHoldingClinic = "NBSSAPPT020";
+    public const string InvalidHoldingClinic = "NBSSAPPT021";
     public const string MissingStatus = "NBSSAPPT022";
     public const string InvalidStatus = "NBSSAPPT023";
     public const string MissingAttendedNotScr = "NBSSAPPT024";

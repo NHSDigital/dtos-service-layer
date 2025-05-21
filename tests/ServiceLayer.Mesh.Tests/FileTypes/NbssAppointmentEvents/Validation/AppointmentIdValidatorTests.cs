@@ -2,7 +2,7 @@ using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 
 namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents.Validation;
 
-public class AppointmentIdValidationTests : ValidationTestBase
+public class AppointmentIdValidatorTests : ValidationTestBase
 {
     [Fact]
     public void Validate_AppointmentIdMissing_ReturnsValidationError()

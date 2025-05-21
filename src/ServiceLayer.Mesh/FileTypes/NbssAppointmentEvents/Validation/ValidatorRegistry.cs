@@ -10,10 +10,18 @@ public static partial class ValidatorRegistry
         [
             new InlineRegexValidator("Sequence", SequenceRegex(), ErrorCodes.MissingSequence,
                 ErrorCodes.InvalidSequence),
+            new InlineMaxLengthValidator("BSO", 3, ErrorCodes.MissingBso,
+                ErrorCodes.InvalidBso),
+            new InlineRegexValidator("Action", ActionRegex(), ErrorCodes.MissingAction,
+                ErrorCodes.InvalidAction),
+            new InlineRegexValidator("Holding Clinic", YesNoBlankRegex(), ErrorCodes.MissingHoldingClinic,
+                ErrorCodes.InvalidHoldingClinic),
+            new InlineMaxLengthValidator("Clinic Code", 5, ErrorCodes.MissingClinicCode,
+                ErrorCodes.InvalidClinicCode),
             new InlineMaxLengthValidator("Appointment ID", 27, ErrorCodes.MissingAppointmentId,
                 ErrorCodes.InvalidAppointmentId),
-            new InlineMaxLengthValidator("Clinic Name", 40, ErrorCodes.MissingClinicName, ErrorCodes.InvalidClinicName,
-                true),
+            new InlineMaxLengthValidator("Clinic Name", 40, ErrorCodes.MissingClinicName,
+                ErrorCodes.InvalidClinicName, true),
             new InlineMaxLengthValidator("Clinic Name (Let)", 50, ErrorCodes.MissingClinicNameLet,
                 ErrorCodes.InvalidClinicNameLet, true),
             new InlineMaxLengthValidator("Clinic Address 1", 30, ErrorCodes.MissingClinicAddress1,
@@ -26,7 +34,8 @@ public static partial class ValidatorRegistry
                 ErrorCodes.InvalidClinicAddress4, true),
             new InlineMaxLengthValidator("Clinic Address 5", 30, ErrorCodes.MissingClinicAddress5,
                 ErrorCodes.InvalidClinicAddress5, true),
-            new InlineMaxLengthValidator("Postcode", 8, ErrorCodes.MissingPostcode, ErrorCodes.InvalidPostcode, true),
+            new InlineMaxLengthValidator("Postcode", 8, ErrorCodes.MissingPostcode,
+                ErrorCodes.InvalidPostcode, true),
         ];
     }
 
@@ -35,6 +44,12 @@ public static partial class ValidatorRegistry
         return [];
     }
 
+    [GeneratedRegex(@"^[BCU]$", RegexOptions.Compiled)]
+    private static partial Regex ActionRegex();
+
     [GeneratedRegex(@"^(?!000000)\d{6}$", RegexOptions.Compiled)]
     private static partial Regex SequenceRegex();
+
+    [GeneratedRegex(@"^$|^[ YN]$", RegexOptions.Compiled)]
+    private static partial Regex YesNoBlankRegex();
 }
