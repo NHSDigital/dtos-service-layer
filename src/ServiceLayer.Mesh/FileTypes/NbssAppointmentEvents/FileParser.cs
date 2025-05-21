@@ -19,12 +19,12 @@ public class FileParser : IFileParser
     /// </summary>
     public ParsedFile Parse(Stream stream)
     {
-        var result = new ParsedFile();
-
         if (stream == null)
         {
             throw new ArgumentNullException(nameof(stream), "Stream cannot be null");
         }
+
+        var result = new ParsedFile();
 
         using var reader = CreateStreamReader(stream);
         using var csv = CreateCsvReader(reader);
