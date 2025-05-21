@@ -12,7 +12,7 @@ using ServiceLayer.Data;
 namespace ServiceLayer.Mesh.Migrations
 {
     [DbContext(typeof(ServiceLayerDbContext))]
-    [Migration("20250519145947_AddNbssAppointmentEventTable")]
+    [Migration("20250521094738_AddNbssAppointmentEventTable")]
     partial class AddNbssAppointmentEventTable
     {
         /// <inheritdoc />
@@ -73,15 +73,15 @@ namespace ServiceLayer.Mesh.Migrations
                         .HasColumnType("char(1)");
 
                     b.Property<DateTime>("ActionTimestamp")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2(0)");
 
                     b.Property<string>("AppointmenId")
                         .IsRequired()
                         .HasMaxLength(27)
-                        .HasColumnType("nvarchar(27)");
+                        .HasColumnType("varchar(27)");
 
                     b.Property<DateTime>("AppointmentDateTime")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2(0)");
 
                     b.Property<string>("AppointmentType")
                         .IsRequired()
@@ -100,7 +100,7 @@ namespace ServiceLayer.Mesh.Migrations
                     b.Property<string>("BatchId")
                         .IsRequired()
                         .HasMaxLength(9)
-                        .HasColumnType("nvarchar(9)");
+                        .HasColumnType("varchar(9)");
 
                     b.Property<string>("BookedBy")
                         .IsRequired()
@@ -114,47 +114,47 @@ namespace ServiceLayer.Mesh.Migrations
                     b.Property<string>("ClinicAddressLine1")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("ClinicAddressLine2")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("ClinicAddressLine3")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("ClinicAddressLine4")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("ClinicAddressLine5")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("ClinicCode")
                         .IsRequired()
                         .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
+                        .HasColumnType("varchar(5)");
 
                     b.Property<string>("ClinicName")
                         .IsRequired()
                         .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("ClinicNameOnLetters")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("ClinicPostcode")
                         .IsRequired()
                         .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasColumnType("varchar(8)");
 
                     b.Property<DateOnly>("EpisodeStart")
                         .HasColumnType("date");
@@ -176,7 +176,7 @@ namespace ServiceLayer.Mesh.Migrations
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
+                        .HasColumnType("varchar(5)");
 
                     b.Property<string>("MeshFileId")
                         .IsRequired()

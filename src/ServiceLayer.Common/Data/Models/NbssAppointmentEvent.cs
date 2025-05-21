@@ -20,7 +20,8 @@ public class NbssAppointmentEvent
     [StringLength(1, MinimumLength = 1)]
     [Column(TypeName = "char(1)")]
     public required string Action { get; set; }
-    [MaxLength(5)]
+    [StringLength(5)]
+    [Column(TypeName = "varchar(5)")]
     public required string ClinicCode { get; set; }
     [StringLength(1, MinimumLength = 1)]
     [Column(TypeName = "char(1)")]
@@ -32,6 +33,7 @@ public class NbssAppointmentEvent
     [Column(TypeName = "char(1)")]
     public string? AttendedNotScreened { get; set; }
     [StringLength(27)]
+    [Column(TypeName = "varchar(27)")]
     public required string AppointmenId { get; set; }
     [StringLength(10, MinimumLength = 10)]
     [Column(TypeName = "char(10)")]
@@ -41,6 +43,7 @@ public class NbssAppointmentEvent
     public required string EpisodeType { get; set; }
     public required DateOnly EpisodeStart { get; set; }
     [StringLength(9)]
+    [Column(TypeName = "varchar(9)")]
     public required string BatchId { get; set; }
     [StringLength(1, MinimumLength = 1)]
     [Column(TypeName = "char(1)")]
@@ -52,24 +55,35 @@ public class NbssAppointmentEvent
     [StringLength(1, MinimumLength = 1)]
     [Column(TypeName = "char(1)")]
     public string? CancelledBy { get; set; }
+    [Column(TypeName = "datetime2(0)")]
     public required DateTime AppointmentDateTime { get; set; }
     [StringLength(5)]
+    [Column(TypeName = "varchar(5)")]
     public required string Location { get; set; }
     [StringLength(40)]
+    [Column(TypeName = "varchar(40)")]
     public required string ClinicName { get; set; }
     [StringLength(50)]
+    [Column(TypeName = "varchar(50)")]
     public required string ClinicNameOnLetters { get; set; }
     [StringLength(30)]
+    [Column(TypeName = "varchar(30)")]
     public required string ClinicAddressLine1 { get; set; }
     [StringLength(30)]
+    [Column(TypeName = "varchar(30)")]
     public required string ClinicAddressLine2 { get; set; }
     [StringLength(30)]
+    [Column(TypeName = "varchar(30)")]
     public required string ClinicAddressLine3 { get; set; }
     [StringLength(30)]
+    [Column(TypeName = "varchar(30)")]
     public required string ClinicAddressLine4 { get; set; }
     [StringLength(30)]
+    [Column(TypeName = "varchar(30)")]
     public required string ClinicAddressLine5 { get; set; }
     [StringLength(8)]
+    [Column(TypeName = "varchar(8)")]
     public required string ClinicPostcode { get; set; }
+    [Column(TypeName = "datetime2(0)")]
     public required DateTime ActionTimestamp { get; set; }
 }
