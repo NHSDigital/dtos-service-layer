@@ -132,3 +132,5 @@ public class FileParser : IFileParser
             Map(m => m.RecordCount).Index(4);
         }
     }
+}
+
