@@ -39,8 +39,7 @@ public class FileParserTests
         Stream? stream = null;
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(
-            () => _fileParser.Parse(stream!));
+        var exception = Assert.Throws<ArgumentNullException>(() => _fileParser.Parse(stream!));
 
         Assert.Equal("stream", exception.ParamName);
     }
@@ -160,8 +159,7 @@ public class FileParserTests
         using var stream = CreateStreamFromString(fileContent);
 
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(
-            () => _fileParser.Parse(stream));
+        var exception = Assert.Throws<InvalidOperationException>(() => _fileParser.Parse(stream));
 
         Assert.Equal("Field headers (NBSSAPPT_FLDS) must appear before data records.", exception.Message);
     }
