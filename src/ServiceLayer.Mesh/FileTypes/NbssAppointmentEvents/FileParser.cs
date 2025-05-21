@@ -71,7 +71,7 @@ public class FileParser : IFileParser
         .ToList()!;
     }
 
-    private static string? GetFieldValue(CsvReader csv, int index) => index < csv.Parser.Count ? csv.GetField(index)?.Trim('"') : null;
+    private static string? GetFieldValue(CsvReader csv, int index) => index < csv.Parser.Count ? csv.GetField(index) : null;
     private static StreamReader CreateStreamReader(Stream stream) => new(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
     private static FileHeaderRecord ParseHeader(CsvReader csv) => csv.GetRecord<FileHeaderRecord>();
     private static FileTrailerRecord ParseTrailer(CsvReader csv) => csv.GetRecord<FileTrailerRecord>();
