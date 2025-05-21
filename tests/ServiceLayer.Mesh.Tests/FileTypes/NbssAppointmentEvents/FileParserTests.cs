@@ -57,7 +57,7 @@ public class FileParserTests
     public void Parse_ValidFile_ReturnsParsedFileWithCorrectStructure()
     {
         // Arrange
-        using var fileStream = GetTestFileStream("TestFile1.csv");
+        using var fileStream = GetTestFileStream("ValidFile.csv");
 
         // Act
         var result = _fileParser.Parse(fileStream);
