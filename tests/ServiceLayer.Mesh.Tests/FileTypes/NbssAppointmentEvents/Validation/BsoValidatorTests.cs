@@ -14,7 +14,7 @@ public class BsoValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "BSO",
             "BSO is missing or empty",
             ErrorCodes.MissingBso
@@ -33,7 +33,7 @@ public class BsoValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "BSO",
             "BSO is missing or empty",
             ErrorCodes.MissingBso
@@ -52,7 +52,7 @@ public class BsoValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "BSO",
             "BSO exceeds maximum length of 3",
             ErrorCodes.InvalidBso

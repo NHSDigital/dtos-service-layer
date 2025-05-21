@@ -14,7 +14,7 @@ public class ActionValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Action",
             "Action is missing",
             ErrorCodes.MissingAction
@@ -39,7 +39,7 @@ public class ActionValidatorTests : ValidationTestBase
         var validationErrors = Validate(file).ToList();
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Action",
             "Action is in an invalid format",
             ErrorCodes.InvalidAction

@@ -24,6 +24,14 @@ public static partial class ValidatorRegistry
                 ErrorCodes.InvalidAttendedNotScr),
             new InlineMaxLengthValidator("Appointment ID", 27, ErrorCodes.MissingAppointmentId,
                 ErrorCodes.InvalidAppointmentId),
+            new InlineRegexValidator("Episode Type", EpisodeTypeRegex(), ErrorCodes.MissingEpisodeType,
+                ErrorCodes.InvalidEpisodeType),
+            new InlineMaxLengthValidator("Batch ID", 9, ErrorCodes.MissingBatchId,
+                ErrorCodes.InvalidBatchId),
+            new InlineRegexValidator("Screen or Asses", ScreenOrAssesRegex(), ErrorCodes.MissingScreenOrAsses,
+                ErrorCodes.InvalidScreenOrAsses),
+            new InlineRegexValidator("Screen Appt num", ScreenApptNumRegex(), ErrorCodes.MissingScreenApptNum,
+                ErrorCodes.InvalidScreenApptNum),
             new InlineMaxLengthValidator("Clinic Name", 40, ErrorCodes.MissingClinicName,
                 ErrorCodes.InvalidClinicName, true),
             new InlineMaxLengthValidator("Clinic Name (Let)", 50, ErrorCodes.MissingClinicNameLet,
@@ -51,11 +59,20 @@ public static partial class ValidatorRegistry
     [GeneratedRegex(@"^[BCU]$", RegexOptions.Compiled)]
     private static partial Regex ActionRegex();
 
-    [GeneratedRegex(@"^[ABCD]$", RegexOptions.Compiled)]
-    private static partial Regex StatusRegex();
+    [GeneratedRegex(@"^[FGHNRST]$", RegexOptions.Compiled)]
+    private static partial Regex EpisodeTypeRegex();
+
+    [GeneratedRegex(@"^[AS]$", RegexOptions.Compiled)]
+    private static partial Regex ScreenOrAssesRegex();
+
+    [GeneratedRegex(@"^$|^[1-9]$", RegexOptions.Compiled)]
+    private static partial Regex ScreenApptNumRegex();
 
     [GeneratedRegex(@"^(?!000000)\d{6}$", RegexOptions.Compiled)]
     private static partial Regex SequenceRegex();
+
+    [GeneratedRegex(@"^[ABCD]$", RegexOptions.Compiled)]
+    private static partial Regex StatusRegex();
 
     [GeneratedRegex(@"^$|^[ YN]$", RegexOptions.Compiled)]
     private static partial Regex YesNoBlankRegex();

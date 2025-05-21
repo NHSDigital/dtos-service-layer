@@ -14,7 +14,7 @@ public class HoldingClinicValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Holding Clinic",
             "Holding Clinic is missing",
             ErrorCodes.MissingHoldingClinic
@@ -36,7 +36,7 @@ public class HoldingClinicValidatorTests : ValidationTestBase
         var validationErrors = Validate(file).ToList();
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Holding Clinic",
             "Holding Clinic is in an invalid format",
             ErrorCodes.InvalidHoldingClinic

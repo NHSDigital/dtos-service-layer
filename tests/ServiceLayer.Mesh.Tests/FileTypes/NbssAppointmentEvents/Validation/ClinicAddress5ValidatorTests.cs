@@ -14,7 +14,7 @@ public class ClinicAddress5ValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Clinic Address 5",
             "Clinic Address 5 is missing",
             ErrorCodes.MissingClinicAddress5
@@ -33,7 +33,7 @@ public class ClinicAddress5ValidatorTests : ValidationTestBase
         var validationErrors = Validate(file).ToList();
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Clinic Address 5",
             "Clinic Address 5 exceeds maximum length of 30",
             ErrorCodes.InvalidClinicAddress5

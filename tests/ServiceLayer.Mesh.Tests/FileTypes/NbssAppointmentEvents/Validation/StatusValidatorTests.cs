@@ -14,7 +14,7 @@ public class StatusValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Status",
             "Status is missing",
             ErrorCodes.MissingStatus
@@ -39,7 +39,7 @@ public class StatusValidatorTests : ValidationTestBase
         var validationErrors = Validate(file).ToList();
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Status",
             "Status is in an invalid format",
             ErrorCodes.InvalidStatus

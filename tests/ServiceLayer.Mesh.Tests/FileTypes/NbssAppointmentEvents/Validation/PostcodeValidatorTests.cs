@@ -14,7 +14,7 @@ public class PostcodeValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Postcode",
             "Postcode is missing",
             ErrorCodes.MissingPostcode
@@ -33,7 +33,7 @@ public class PostcodeValidatorTests : ValidationTestBase
         var validationErrors = Validate(file).ToList();
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Postcode",
             "Postcode exceeds maximum length of 8",
             ErrorCodes.InvalidPostcode

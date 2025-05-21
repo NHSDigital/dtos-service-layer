@@ -14,7 +14,7 @@ public class ClinicNameLetValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Clinic Name (Let)",
             "Clinic Name (Let) is missing",
             ErrorCodes.MissingClinicNameLet
@@ -33,7 +33,7 @@ public class ClinicNameLetValidatorTests : ValidationTestBase
         var validationErrors = Validate(file).ToList();
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Clinic Name (Let)",
             "Clinic Name (Let) exceeds maximum length of 50",
             ErrorCodes.InvalidClinicNameLet

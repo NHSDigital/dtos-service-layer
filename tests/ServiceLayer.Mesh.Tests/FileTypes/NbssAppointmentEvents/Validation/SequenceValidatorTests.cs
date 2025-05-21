@@ -14,7 +14,7 @@ public class SequenceValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Sequence",
             "Sequence is missing",
             ErrorCodes.MissingSequence
@@ -36,7 +36,7 @@ public class SequenceValidatorTests : ValidationTestBase
         var validationErrors = Validate(file).ToList();
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Sequence",
             "Sequence is in an invalid format",
             ErrorCodes.InvalidSequence

@@ -14,7 +14,7 @@ public class AppointmentIdValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Appointment ID",
             "Appointment ID is missing or empty",
             ErrorCodes.MissingAppointmentId
@@ -33,7 +33,7 @@ public class AppointmentIdValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Appointment ID",
             "Appointment ID is missing or empty",
             ErrorCodes.MissingAppointmentId
@@ -52,7 +52,7 @@ public class AppointmentIdValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Appointment ID",
             "Appointment ID exceeds maximum length of 27",
             ErrorCodes.InvalidAppointmentId

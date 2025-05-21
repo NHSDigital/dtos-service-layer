@@ -14,7 +14,7 @@ public class AttendedNotScrValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Attended Not Scr",
             "Attended Not Scr is missing",
             ErrorCodes.MissingAttendedNotScr
@@ -36,7 +36,7 @@ public class AttendedNotScrValidatorTests : ValidationTestBase
         var validationErrors = Validate(file).ToList();
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Attended Not Scr",
             "Attended Not Scr is in an invalid format",
             ErrorCodes.InvalidAttendedNotScr

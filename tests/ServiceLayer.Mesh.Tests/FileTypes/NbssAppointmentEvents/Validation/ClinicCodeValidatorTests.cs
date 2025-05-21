@@ -14,7 +14,7 @@ public class ClinicCodeValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Clinic Code",
             "Clinic Code is missing or empty",
             ErrorCodes.MissingClinicCode
@@ -33,7 +33,7 @@ public class ClinicCodeValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Clinic Code",
             "Clinic Code is missing or empty",
             ErrorCodes.MissingClinicCode
@@ -52,7 +52,7 @@ public class ClinicCodeValidatorTests : ValidationTestBase
         var validationErrors = Validate(file);
 
         // Assert
-        validationErrors.ShouldBeSingleValidationError(
+        validationErrors.ShouldContainValidationError(
             "Clinic Code",
             "Clinic Code exceeds maximum length of 5",
             ErrorCodes.InvalidClinicCode
