@@ -11,7 +11,7 @@ public class FileParser : IFileParser
     private const string HeaderIdentifier = "NBSSAPPT_HDR";
     private const string FieldsIdentifier = "NBSSAPPT_FLDS";
     private const string DataIdentifier = "NBSSAPPT_DATA";
-    private const string FooterIdentifier = "NBSSAPPT_END";
+    private const string TrailerIdentifier = "NBSSAPPT_END";
     private const int RecordTypeIdentifier = 0;
 
     /// <summary>
@@ -41,7 +41,7 @@ public class FileParser : IFileParser
         csv.Context.RegisterClassMap<FileHeaderRecordMap>();
         csv.Context.RegisterClassMap<FileTrailerRecordMap>();
         var rowNumber = 0;
-        var columnHeadings = new List<string>();
+        var fields = new List<string>();
 
         while (csv.Read())
         {
@@ -54,20 +54,20 @@ public class FileParser : IFileParser
                     break;
 
                 case FieldsIdentifier:
-                    columnHeadings = ParseColumnHeadings(csv);
+                    fields = ParseFields(csv);
                     break;
 
                 case DataIdentifier:
                     rowNumber++;
-                    if (columnHeadings.Count == 0)
+                    if (fields.Count == 0)
                     {
                         throw new InvalidOperationException("Field headers (NBSSAPPT_FLDS) must appear before data records.");
                     }
 
-                    result.DataRecords.Add(ParseDataRecord(csv, columnHeadings, rowNumber));
+                    result.DataRecords.Add(ParseDataRecord(csv, fields, rowNumber));
                     break;
 
-                case FooterIdentifier:
+                case TrailerIdentifier:
                     result.FileTrailer = csv.GetRecord<FileTrailerRecord>();
                     break;
 
@@ -79,7 +79,7 @@ public class FileParser : IFileParser
         return result;
     }
 
-    private static List<string> ParseColumnHeadings(CsvReader csv)
+    private static List<string> ParseFields(CsvReader csv)
     {
         return Enumerable.Range(1, csv.Parser.Count - 1)
         .Select(i => GetFieldValue(csv, i))
