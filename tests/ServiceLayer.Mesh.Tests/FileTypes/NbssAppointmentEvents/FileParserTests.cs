@@ -11,10 +11,18 @@ namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents;
 public class FileParserTests
 {
     private readonly FileParser _fileParser;
+    private readonly string _testDataPath;
 
     public FileParserTests()
     {
         _fileParser = new FileParser();
+        _testDataPath = Path.Combine(AppContext.BaseDirectory, "TestData");
+    }
+
+    private FileStream GetTestFileStream(string fileName)
+    {
+        string filePath = Path.Combine(_testDataPath, fileName);
+        return File.OpenRead(filePath);
     }
 
     [Fact]
@@ -49,13 +57,7 @@ public class FileParserTests
     public void Parse_ValidFile_ReturnsParsedFileWithCorrectStructure()
     {
         // Arrange
-
-        var testFile = Path.Combine(
-        AppContext.BaseDirectory,
-        "TestData",
-        "TestFile1.csv");
-
-        using var fileStream = File.OpenRead(testFile);
+        using var fileStream = GetTestFileStream("TestFile1.csv");
 
         // Act
         var result = _fileParser.Parse(fileStream);
@@ -96,12 +98,7 @@ public class FileParserTests
     public void Parse_CompleteDataset_ParsesAllFieldsCorrectly()
     {
         // Arrange
-        var completeDatasetPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "CompleteDataset.csv");
-
-        using var fileStream = File.OpenRead(completeDatasetPath);
+        using var fileStream = GetTestFileStream("CompleteDataset.csv");
 
         // Act
         var result = _fileParser.Parse(fileStream);
@@ -150,12 +147,7 @@ public class FileParserTests
     public void Parse_MissingFieldsRecord_ThrowsInvalidOperationException()
     {
         // Arrange
-        var missingFieldsPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "MissingFields.csv");
-
-        using var fileStream = File.OpenRead(missingFieldsPath);
+        using var fileStream = GetTestFileStream("MissingFields.csv");
 
         // Act & Assert
         var exception = Assert.Throws<InvalidOperationException>(() => _fileParser.Parse(fileStream));
@@ -167,16 +159,10 @@ public class FileParserTests
     public void Parse_UnknownRecordType_ThrowsInvalidOperationException()
     {
         // Arrange
-        var unknownRecordPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "UnknownRecord.csv");
-
-        using var fileStream = File.OpenRead(unknownRecordPath);
+        using var fileStream = GetTestFileStream("UnknownRecord.csv");
 
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(
-            () => _fileParser.Parse(fileStream));
+        var exception = Assert.Throws<InvalidOperationException>(() => _fileParser.Parse(fileStream));
 
         Assert.Equal("Unknown record identifier: UNKNOWN_TYPE", exception.Message);
     }
@@ -185,12 +171,7 @@ public class FileParserTests
     public void Parse_EmptyLine_SkipsEmptyLines()
     {
         // Arrange
-        var emptyLinesPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "EmptyLines.csv");
-
-        using var fileStream = File.OpenRead(emptyLinesPath);
+        using var fileStream = GetTestFileStream("EmptyLines.csv");
 
         // Act
         var result = _fileParser.Parse(fileStream);
@@ -205,12 +186,7 @@ public class FileParserTests
     public void Parse_FewerColumnsInDataRecord_OnlyProcessesAvailableColumns()
     {
         // Arrange
-        var fewerColumnsPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "FewerColumns.csv");
-
-        using var fileStream = File.OpenRead(fewerColumnsPath);
+        using var fileStream = GetTestFileStream("FewerColumns.csv");
 
         // Act
         var result = _fileParser.Parse(fileStream);
@@ -236,12 +212,7 @@ public class FileParserTests
     public void Parse_ExtraColumnsInDataRecord_IgnoresExtraColumns()
     {
         // Arrange
-        var extraColumnsPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "ExtraColumns.csv");
-
-        using var fileStream = File.OpenRead(extraColumnsPath);
+        using var fileStream = GetTestFileStream("ExtraColumns.csv");
 
         // Act
         var result = _fileParser.Parse(fileStream);
@@ -266,12 +237,7 @@ public class FileParserTests
     public void Parse_QuotedValues_TrimsQuotes()
     {
         // Arrange
-        var quotedValuesPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "QuotedValues.csv");
-
-        using var fileStream = File.OpenRead(quotedValuesPath);
+        using var fileStream = GetTestFileStream("QuotedValues.csv");
 
         // Act
         var result = _fileParser.Parse(fileStream);
@@ -295,12 +261,7 @@ public class FileParserTests
     public void Parse_WithEscapedCharacters_HandlesCorrectly()
     {
         // Arrange
-        var escapedCharsPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "EscapedChars.csv");
-
-        using var fileStream = File.OpenRead(escapedCharsPath);
+        using var fileStream = GetTestFileStream("EscapedChars.csv");
 
         // Act
         var result = _fileParser.Parse(fileStream);
@@ -324,30 +285,14 @@ public class FileParserTests
     public void VerifyFileHeaderRecordMap_MapsCorrectly()
     {
         // Arrange
-        var headerMappingPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "HeaderMapping.csv");
+        using var reader = CreateConfiguredCsvReader("HeaderMapping.csv");
+        reader.Context.RegisterClassMap<FileHeaderRecordMap>();
 
-        using var fileStream = File.OpenRead(headerMappingPath);
+        // Act
+        reader.Read();
+        var result = reader.GetRecord<FileHeaderRecord>();
 
-        // Act & Assert - setup a CSV reader with proper configuration to verify the class map works
-        using var reader = new StreamReader(fileStream);
-        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            Delimiter = "|",
-            Quote = '"',
-            Escape = '\\',
-            HasHeaderRecord = false,
-            Mode = CsvMode.RFC4180
-        };
-
-        using var csv = new CsvHelper.CsvReader(reader, config);
-        csv.Context.RegisterClassMap<FileHeaderRecordMap>();
-        csv.Read();
-        var result = csv.GetRecord<FileHeaderRecord>();
-
-        // Verify mapping worked correctly
+        // Assert
         Assert.Equal("NBSSAPPT_HDR", result.RecordTypeIdentifier);
         Assert.Equal("00000054", result.ExtractId);
         Assert.Equal("20250204", result.TransferStartDate);
@@ -359,15 +304,25 @@ public class FileParserTests
     public void VerifyFileTrailerRecordMap_MapsCorrectly()
     {
         // Arrange
-        var trailerMappingPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestData",
-            "TrailerMapping.csv");
+        using var reader = CreateConfiguredCsvReader("TrailerMapping.csv");
+        reader.Context.RegisterClassMap<FileTrailerRecordMap>();
 
-        using var fileStream = File.OpenRead(trailerMappingPath);
+        // Act
+        reader.Read();
+        var result = reader.GetRecord<FileTrailerRecord>();
 
-        // Act & Assert - setup a CSV reader with proper configuration to verify the class map works
-        using var reader = new StreamReader(fileStream);
+        // Assert
+        Assert.Equal("NBSSAPPT_END", result.RecordTypeIdentifier);
+        Assert.Equal("00000054", result.ExtractId);
+        Assert.Equal("20250204", result.TransferEndDate);
+        Assert.Equal("161846", result.TransferEndTime);
+        Assert.Equal("000002", result.RecordCount);
+    }
+
+    // Helper methods
+    private CsvReader CreateConfiguredCsvReader(string fileName)
+    {
+        var streamReader = new StreamReader(GetTestFileStream(fileName));
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = "|",
@@ -377,17 +332,7 @@ public class FileParserTests
             Mode = CsvMode.RFC4180
         };
 
-        using var csv = new CsvHelper.CsvReader(reader, config);
-        csv.Context.RegisterClassMap<FileTrailerRecordMap>();
-        csv.Read();
-        var result = csv.GetRecord<FileTrailerRecord>();
-
-        // Verify mapping worked correctly
-        Assert.Equal("NBSSAPPT_END", result.RecordTypeIdentifier);
-        Assert.Equal("00000054", result.ExtractId);
-        Assert.Equal("20250204", result.TransferEndDate);
-        Assert.Equal("161846", result.TransferEndTime);
-        Assert.Equal("000002", result.RecordCount);
+        return new CsvReader(streamReader, config);
     }
 
     private static MemoryStream CreateStreamFromString(string content)
@@ -423,8 +368,8 @@ public class FileParserTests
         Assert.NotNull(record);
         Assert.Equal(recordType, record.RecordTypeIdentifier);
         Assert.Equal(extractId, record.ExtractId);
-        Assert.Equal(date, record.TransferEndDate ?? date);
-        Assert.Equal(time, record.TransferEndTime ?? time);
+        Assert.Equal(date, record.TransferEndDate);
+        Assert.Equal(time, record.TransferEndTime);
         Assert.Equal(count, record.RecordCount);
     }
 
