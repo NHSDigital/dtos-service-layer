@@ -22,8 +22,8 @@ public class ClinicNameValidatorTests : ValidationTestBase
     }
 
     [Theory]
-    [InlineData("1234567890123456789012345678901")]             // 31 characters
-    [InlineData("1234567890123456789012345678901234567890")]    // 40 characters
+    [InlineData("12345678901234567890123456789012345678901")]             // 41 characters
+    [InlineData("12345678901234567890123456789012345678901234567890")]    // 50 characters
     public void Validate_ClinicNameTooLong_ReturnsValidationError(string value)
     {
         // Arrange
@@ -35,14 +35,14 @@ public class ClinicNameValidatorTests : ValidationTestBase
         // Assert
         validationErrors.ShouldBeSingleValidationError(
             "Clinic Name",
-            "Clinic Name exceeds maximum length of 30",
+            "Clinic Name exceeds maximum length of 40",
             ErrorCodes.InvalidClinicName
         );
     }
 
     [Theory]
     [InlineData("")]
-    [InlineData("123456789012345678901234567890")]
+    [InlineData("1234567890123456789012345678901234567890")]
     [InlineData("Breast Care Unit")]
     public void Validate_ClinicNameValid_NoValidationErrorsReturned(string value)
     {

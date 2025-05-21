@@ -8,16 +8,25 @@ public static partial class ValidatorRegistry
     {
         return
         [
-            new InlineRegexValidator("Sequence", SequenceRegex(), ErrorCodes.MissingSequence, ErrorCodes.InvalidSequence),
-            new InlineMaxLengthValidator("Appointment ID", 27, "NBSSAPPT026", "NBSSAPPT027"),
-            new InlineMaxLengthValidator("Clinic Name", 40, "NBSSAPPT059", "NBSSAPPT060", true),
-            new InlineMaxLengthValidator("Clinic Name (Let)", 50, "NBSSAPPT059", "NBSSAPPT060", true),
-            new InlineMaxLengthValidator("Clinic Address 1", 30, "NBSSAPPT059", "NBSSAPPT060", true),
-            new InlineMaxLengthValidator("Clinic Address 2", 30, "NBSSAPPT059", "NBSSAPPT060", true),
-            new InlineMaxLengthValidator("Clinic Address 3", 30, "NBSSAPPT059", "NBSSAPPT060", true),
-            new InlineMaxLengthValidator("Clinic Address 4", 30, "NBSSAPPT059", "NBSSAPPT060", true),
-            new InlineMaxLengthValidator("Clinic Address 5", 30, "NBSSAPPT059", "NBSSAPPT060", true),
-
+            new InlineRegexValidator("Sequence", SequenceRegex(), ErrorCodes.MissingSequence,
+                ErrorCodes.InvalidSequence),
+            new InlineMaxLengthValidator("Appointment ID", 27, ErrorCodes.MissingAppointmentId,
+                ErrorCodes.InvalidAppointmentId),
+            new InlineMaxLengthValidator("Clinic Name", 40, ErrorCodes.MissingClinicName, ErrorCodes.InvalidClinicName,
+                true),
+            new InlineMaxLengthValidator("Clinic Name (Let)", 50, ErrorCodes.MissingClinicNameLet,
+                ErrorCodes.InvalidClinicNameLet, true),
+            new InlineMaxLengthValidator("Clinic Address 1", 30, ErrorCodes.MissingClinicAddress1,
+                ErrorCodes.InvalidClinicAddress1, true),
+            new InlineMaxLengthValidator("Clinic Address 2", 30, ErrorCodes.MissingClinicAddress2,
+                ErrorCodes.InvalidClinicAddress2, true),
+            new InlineMaxLengthValidator("Clinic Address 3", 30, ErrorCodes.MissingClinicAddress3,
+                ErrorCodes.InvalidClinicAddress3, true),
+            new InlineMaxLengthValidator("Clinic Address 4", 30, ErrorCodes.MissingClinicAddress4,
+                ErrorCodes.InvalidClinicAddress4, true),
+            new InlineMaxLengthValidator("Clinic Address 5", 30, ErrorCodes.MissingClinicAddress5,
+                ErrorCodes.InvalidClinicAddress5, true),
+            new InlineMaxLengthValidator("Postcode", 8, ErrorCodes.MissingPostcode, ErrorCodes.InvalidPostcode, true),
         ];
     }
 
