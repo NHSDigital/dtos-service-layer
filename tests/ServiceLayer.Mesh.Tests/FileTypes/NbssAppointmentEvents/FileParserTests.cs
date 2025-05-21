@@ -10,25 +10,10 @@ namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents;
 
 public class FileParserTests
 {
-    private readonly string _validFileContent;
-    private readonly string _completeDatasetContent;
     private readonly FileParser _fileParser;
 
     public FileParserTests()
     {
-        _validFileContent =
-            "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"" +
-            "\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"|\"Clinic Code\"|\"Status\"" +
-            "\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"BU003\"|\"A\"" +
-            "\n\"NBSSAPPT_DATA\"|\"000002\"|\"KMK\"|\"U\"|\"BU004\"|\"A\"" +
-            "\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"";
-
-        _completeDatasetContent =
-            "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"" +
-            "\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"|\"Clinic Code\"|\"Holding Clinic\"|\"Status\"|\"Attended Not Scr\"|\"Appointment ID\"|\"NHS Num\"|\"Epsiode Type\"|\"Episode Start\"|\"BatchID\"|\"Screen or Asses\"|\"Screen Appt num\"|\"Booked By\"|\"Cancelled By\"|\"Appt Date\"|\"Appt Time\"|\"Location\"|\"Clinic Name\"|\"Clinic Name (Let)\"|\"Clinic Address 1\"|\"Clinic Address 2\"|\"Clinic Address 3\"|\"Clinic Address 4\"|\"Clinic Address 5\"|\"Postcode\"|\"Action Timestamp\"" +
-            "\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"BU003\"|\"N\"|\"A\"|\"N\"|\"BU003-67235-RA1-DN-T1330-1\"|\"9277757620\"|\"G\"|\"2025-01-30\"|\"KMKG00581\"|\"S\"|\"1\"|\"H\"|\"\"|\"\"20250130\"|\"1330\"|\"BU\"|\"BREAST CARE UNIT\"|\"BREAST CARE UNIT\"|\"BREAST CARE UNIT\"|\"MILTON KEYNES HOSPITAL\"|\"STANDING WAY\"|\"MILTON KEYNES\"|\"MK6 5LD\"|\"MK6 5LD\"|\"20250204-161420\"" +
-            "\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
-
         _fileParser = new FileParser();
     }
 
@@ -64,17 +49,23 @@ public class FileParserTests
     public void Parse_ValidFile_ReturnsParsedFileWithCorrectStructure()
     {
         // Arrange
-        using var stream = CreateStreamFromString(_validFileContent);
+
+        var testFile = Path.Combine(
+        AppContext.BaseDirectory,
+        "TestData",
+        "TestFile1.csv");
+
+        using var fileStream = File.OpenRead(testFile);
 
         // Act
-        var result = _fileParser.Parse(stream);
+        var result = _fileParser.Parse(fileStream);
 
         // Assert
         Assert.NotNull(result.FileHeader);
-        VerifyFileHeaderRecord(result.FileHeader, "NBSSAPPT_HDR", "00000054", "20250204", "161846", "000002");
+        VerifyFileHeaderRecord(result.FileHeader, "NBSSAPPT_HDR", "00000107", "20250317", "133128", "000002");
         Assert.Equal(2, result.DataRecords.Count);
         Assert.NotNull(result.FileTrailer);
-        VerifyFileTrailerRecord(result.FileTrailer, "NBSSAPPT_END", "00000054", "20250204", "161846", "000002");
+        VerifyFileTrailerRecord(result.FileTrailer, "NBSSAPPT_END", "00000107", "20250317", "133129", "000002");
 
         Assert.Equal(1, result.DataRecords[0].RowNumber);
         Assert.Equal(2, result.DataRecords[1].RowNumber);
@@ -83,18 +74,18 @@ public class FileParserTests
         {
             ["Sequence"] = "000001",
             ["BSO"] = "KMK",
-            ["Action"] = "U",
+            ["Action"] = "B",
             ["Clinic Code"] = "BU003",
-            ["Status"] = "A"
+            ["Status"] = "B"
         };
 
         var expectedSecondRecord = new Dictionary<string, string>
         {
             ["Sequence"] = "000002",
             ["BSO"] = "KMK",
-            ["Action"] = "U",
+            ["Action"] = "B",
             ["Clinic Code"] = "BU004",
-            ["Status"] = "A"
+            ["Status"] = "B"
         };
 
         VerifyDataRecordFields(result.DataRecords[0], expectedFirstRecord);
@@ -105,10 +96,15 @@ public class FileParserTests
     public void Parse_CompleteDataset_ParsesAllFieldsCorrectly()
     {
         // Arrange
-        using var stream = CreateStreamFromString(_completeDatasetContent);
+        var completeDatasetPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "CompleteDataset.csv");
+
+        using var fileStream = File.OpenRead(completeDatasetPath);
 
         // Act
-        var result = _fileParser.Parse(stream);
+        var result = _fileParser.Parse(fileStream);
 
         // Assert
         Assert.NotNull(result);
@@ -154,12 +150,15 @@ public class FileParserTests
     public void Parse_MissingFieldsRecord_ThrowsInvalidOperationException()
     {
         // Arrange
-        string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"BU003\"|\"N\"|\"A\"|\"N\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"";
+        var missingFieldsPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "MissingFields.csv");
 
-        using var stream = CreateStreamFromString(fileContent);
+        using var fileStream = File.OpenRead(missingFieldsPath);
 
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => _fileParser.Parse(stream));
+        var exception = Assert.Throws<InvalidOperationException>(() => _fileParser.Parse(fileStream));
 
         Assert.Equal("Field headers (NBSSAPPT_FLDS) must appear before data records.", exception.Message);
     }
@@ -168,13 +167,16 @@ public class FileParserTests
     public void Parse_UnknownRecordType_ThrowsInvalidOperationException()
     {
         // Arrange
-        string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"\n\"UNKNOWN_TYPE\"|\"000001\"|\"KMK\"|\"U\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
+        var unknownRecordPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "UnknownRecord.csv");
 
-        using var stream = CreateStreamFromString(fileContent);
+        using var fileStream = File.OpenRead(unknownRecordPath);
 
         // Act & Assert
         var exception = Assert.Throws<InvalidOperationException>(
-            () => _fileParser.Parse(stream));
+            () => _fileParser.Parse(fileStream));
 
         Assert.Equal("Unknown record identifier: UNKNOWN_TYPE", exception.Message);
     }
@@ -183,12 +185,15 @@ public class FileParserTests
     public void Parse_EmptyLine_SkipsEmptyLines()
     {
         // Arrange
-        string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"\n\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"\n\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
+        var emptyLinesPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "EmptyLines.csv");
 
-        using var stream = CreateStreamFromString(fileContent);
+        using var fileStream = File.OpenRead(emptyLinesPath);
 
         // Act
-        var result = _fileParser.Parse(stream);
+        var result = _fileParser.Parse(fileStream);
 
         // Assert
         Assert.NotNull(result);
@@ -200,12 +205,15 @@ public class FileParserTests
     public void Parse_FewerColumnsInDataRecord_OnlyProcessesAvailableColumns()
     {
         // Arrange
-        string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"|\"Clinic Code\"|\"Status\"\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
+        var fewerColumnsPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "FewerColumns.csv");
 
-        using var stream = CreateStreamFromString(fileContent);
+        using var fileStream = File.OpenRead(fewerColumnsPath);
 
         // Act
-        var result = _fileParser.Parse(stream);
+        var result = _fileParser.Parse(fileStream);
 
         // Assert
         Assert.NotNull(result);
@@ -228,12 +236,15 @@ public class FileParserTests
     public void Parse_ExtraColumnsInDataRecord_IgnoresExtraColumns()
     {
         // Arrange
-        string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Sequence\"|\"BSO\"|\"Action\"\n\"NBSSAPPT_DATA\"|\"000001\"|\"KMK\"|\"U\"|\"ExtraValue1\"|\"ExtraValue2\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
+        var extraColumnsPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "ExtraColumns.csv");
 
-        using var stream = CreateStreamFromString(fileContent);
+        using var fileStream = File.OpenRead(extraColumnsPath);
 
         // Act
-        var result = _fileParser.Parse(stream);
+        var result = _fileParser.Parse(fileStream);
 
         // Assert
         Assert.NotNull(result);
@@ -255,12 +266,15 @@ public class FileParserTests
     public void Parse_QuotedValues_TrimsQuotes()
     {
         // Arrange
-        string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Field1\"|\"Field2\"|\"Field3\"\n\"NBSSAPPT_DATA\"|\"Value1\"|\"Value2\"|\"Value3\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
+        var quotedValuesPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "QuotedValues.csv");
 
-        using var stream = CreateStreamFromString(fileContent);
+        using var fileStream = File.OpenRead(quotedValuesPath);
 
         // Act
-        var result = _fileParser.Parse(stream);
+        var result = _fileParser.Parse(fileStream);
 
         // Assert
         Assert.NotNull(result);
@@ -281,12 +295,15 @@ public class FileParserTests
     public void Parse_WithEscapedCharacters_HandlesCorrectly()
     {
         // Arrange
-        string fileContent = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"\n\"NBSSAPPT_FLDS\"|\"Field With\\\"Quote\"|\"Normal Field\"|\"Field With\\\\Backslash\"\n\"NBSSAPPT_DATA\"|\"Value With\\\"Quote\"|\"Normal Value\"|\"Value With\\\\Backslash\"\n\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000001\"";
+        var escapedCharsPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "EscapedChars.csv");
 
-        using var stream = CreateStreamFromString(fileContent);
+        using var fileStream = File.OpenRead(escapedCharsPath);
 
         // Act
-        var result = _fileParser.Parse(stream);
+        var result = _fileParser.Parse(fileStream);
 
         // Assert
         Assert.NotNull(result);
@@ -307,11 +324,15 @@ public class FileParserTests
     public void VerifyFileHeaderRecordMap_MapsCorrectly()
     {
         // Arrange
-        string headerLine = "\"NBSSAPPT_HDR\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"";
-        using var stream = CreateStreamFromString(headerLine);
+        var headerMappingPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "HeaderMapping.csv");
+
+        using var fileStream = File.OpenRead(headerMappingPath);
 
         // Act & Assert - setup a CSV reader with proper configuration to verify the class map works
-        using var reader = new StreamReader(stream);
+        using var reader = new StreamReader(fileStream);
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = "|",
@@ -338,11 +359,15 @@ public class FileParserTests
     public void VerifyFileTrailerRecordMap_MapsCorrectly()
     {
         // Arrange
-        string trailerLine = "\"NBSSAPPT_END\"|\"00000054\"|\"20250204\"|\"161846\"|\"000002\"";
-        using var stream = CreateStreamFromString(trailerLine);
+        var trailerMappingPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "TrailerMapping.csv");
+
+        using var fileStream = File.OpenRead(trailerMappingPath);
 
         // Act & Assert - setup a CSV reader with proper configuration to verify the class map works
-        using var reader = new StreamReader(stream);
+        using var reader = new StreamReader(fileStream);
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = "|",
