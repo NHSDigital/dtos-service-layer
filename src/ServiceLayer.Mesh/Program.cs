@@ -8,6 +8,7 @@ using Azure.Storage.Blobs;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Data;
+using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -50,6 +51,7 @@ var host = new HostBuilder()
 
         services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();
         services.AddSingleton<IFileTransformQueueClient, FileTransformQueueClient>();
+        services.AddSingleton<IFileParser, FileParser>();
 
         services.AddSingleton(provider =>
         {

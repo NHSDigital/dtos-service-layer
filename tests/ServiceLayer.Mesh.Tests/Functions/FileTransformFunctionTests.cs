@@ -5,6 +5,7 @@ using Moq;
 using ServiceLayer.Data;
 using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
+using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Storage;
@@ -16,6 +17,7 @@ public class FileTransformFunctionTests
     private readonly Mock<ILogger<FileTransformFunction>> _loggerMock = new();
     private readonly Mock<IMeshFilesBlobStore> _blobStoreMock = new();
     private readonly Mock<IFileTransformFunctionConfiguration> _configuration = new();
+    private readonly Mock<IFileParser> _fileParser = new();
     private readonly ServiceLayerDbContext _dbContext;
     private readonly FileTransformFunction _function;
 
@@ -34,7 +36,8 @@ public class FileTransformFunctionTests
             _loggerMock.Object,
             _dbContext,
             _blobStoreMock.Object,
-            _configuration.Object
+            _configuration.Object,
+            _fileParser.Object
         );
     }
 
