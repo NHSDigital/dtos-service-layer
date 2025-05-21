@@ -25,18 +25,18 @@ public class StagingPersister(ServiceLayerDbContext dbContext) : IStagingPersist
             Sequence = record.Fields["Sequence"],
             Action = record.Fields["Action"],
             ClinicCode = record.Fields["Clinic Code"],
-            HoldingClinic = record.Fields["Holding Clinic"],
+            HoldingClinic = NullIfWhiteSpace(record.Fields["Holding Clinic"]),
             Status = record.Fields["Status"],
-            AttendedNotScreened = record.Fields["Attended Not Scr"],
+            AttendedNotScreened = NullIfWhiteSpace(record.Fields["Attended Not Scr"]),
             AppointmenId = record.Fields["Appointment ID"],
             NhsNumber = record.Fields["NHS Num"],
             EpisodeType = record.Fields["Episode Type"],
             EpisodeStart = DateOnly.ParseExact(record.Fields["Episode Start"], "yyyyMMdd", CultureInfo.InvariantCulture),
             BatchId = record.Fields["Batch ID"],
             AppointmentType = record.Fields["Screen or Asses"],
-            ScreeningAppointmentNumber = byte.Parse(record.Fields["Screen Appt num"]),
+            ScreeningAppointmentNumber = NullByteIfWhiteSpace(record.Fields["Screen Appt num"]),
             BookedBy = record.Fields["Booked By"],
-            CancelledBy = record.Fields["Cancelled By"],
+            CancelledBy = NullIfWhiteSpace(record.Fields["Cancelled By"]),
             AppointmentDateTime = DateTime.ParseExact(record.Fields["Appt Date"] + record.Fields["Appt Time"], "yyyyMMddHHmm", CultureInfo.InvariantCulture),
             Location = record.Fields["Location"],
             ClinicName = record.Fields["Clinic Name"],
@@ -50,4 +50,8 @@ public class StagingPersister(ServiceLayerDbContext dbContext) : IStagingPersist
             ActionTimestamp = DateTime.ParseExact(record.Fields["Action Timestamp"], "yyyyMMdd-HHmmss", CultureInfo.InvariantCulture)
         })];
     }
+
+    private static string? NullIfWhiteSpace(string input) => string.IsNullOrWhiteSpace(input) ? null : input;
+
+    private static byte? NullByteIfWhiteSpace(string input) => string.IsNullOrWhiteSpace(input) ? null : byte.Parse(input);
 }

@@ -22,10 +22,13 @@ public class NbssAppointmentEventsTests
     }
 
     [Fact]
-    public async Task WriteStagedData_WhenFileValid_SavesToDb()
+    public async Task WriteStagedData_WhenFileValid_MapsFieldsAndSavesToDb()
     {
         // Arrange
-        var parsedFile = TestDataBuilder.BuildValidParsedFile();
+        var parsedFile = TestDataBuilder.BuildValidParsedFile(3);
+        var firstRecord = parsedFile.DataRecords[0];
+        firstRecord.Fields["Attended Not Scr"] = "Y";
+        firstRecord.Fields["Cancelled By"] = "C";
         var meshFile = new MeshFile()
         {
             FileId = "1",
@@ -41,37 +44,66 @@ public class NbssAppointmentEventsTests
         Assert.Equal(3, await _dbContext.NbssAppointmentEvents.CountAsync());
 
         var nbssAppointmentEvent = await _dbContext.NbssAppointmentEvents.FirstAsync();
-        var dataRecord = parsedFile.DataRecords.First();
         Assert.NotEqual(Guid.Empty, nbssAppointmentEvent.Id);
         Assert.Equal(meshFile.FileId, nbssAppointmentEvent.MeshFileId);
-        Assert.Equal(dataRecord["BSO"], nbssAppointmentEvent.BSO);
+        Assert.Equal(firstRecord["BSO"], nbssAppointmentEvent.BSO);
         Assert.Equal(parsedFile.FileTrailer!.ExtractId, nbssAppointmentEvent.ExtractId);
-        Assert.Equal(dataRecord["Sequence"], nbssAppointmentEvent.Sequence);
-        Assert.Equal(dataRecord["Action"], nbssAppointmentEvent.Action);
-        Assert.Equal(dataRecord["Clinic Code"], nbssAppointmentEvent.ClinicCode);
-        Assert.Equal(dataRecord["Holding Clinic"], nbssAppointmentEvent.HoldingClinic);
-        Assert.Equal(dataRecord["Status"], nbssAppointmentEvent.Status);
-        Assert.Equal(dataRecord["Attended Not Scr"], nbssAppointmentEvent.AttendedNotScreened);
-        Assert.Equal(dataRecord["Appointment ID"], nbssAppointmentEvent.AppointmenId);
-        Assert.Equal(dataRecord["NHS Num"], nbssAppointmentEvent.NhsNumber);
-        Assert.Equal(dataRecord["Episode Type"], nbssAppointmentEvent.EpisodeType);
-        Assert.Equal(DateOnly.ParseExact(dataRecord.Fields["Episode Start"], "yyyyMMdd"), nbssAppointmentEvent.EpisodeStart);
-        Assert.Equal(dataRecord["Batch ID"], nbssAppointmentEvent.BatchId);
-        Assert.Equal(dataRecord["Screen or Asses"], nbssAppointmentEvent.AppointmentType);
-        Assert.Equal(byte.Parse(dataRecord.Fields["Screen Appt num"]), nbssAppointmentEvent.ScreeningAppointmentNumber);
-        Assert.Equal(dataRecord["Booked By"], nbssAppointmentEvent.BookedBy);
-        Assert.Equal(dataRecord["Cancelled By"], nbssAppointmentEvent.CancelledBy);
-        Assert.Equal(DateTime.ParseExact(dataRecord.Fields["Appt Date"] + dataRecord.Fields["Appt Time"], "yyyyMMddHHmm", null), nbssAppointmentEvent.AppointmentDateTime);
-        Assert.Equal(dataRecord["Location"], nbssAppointmentEvent.Location);
-        Assert.Equal(dataRecord["Clinic Name"], nbssAppointmentEvent.ClinicName);
-        Assert.Equal(dataRecord["Clinic Name (Let)"], nbssAppointmentEvent.ClinicNameOnLetters);
-        Assert.Equal(dataRecord["Clinic Address 1"], nbssAppointmentEvent.ClinicAddressLine1);
-        Assert.Equal(dataRecord["Clinic Address 2"], nbssAppointmentEvent.ClinicAddressLine2);
-        Assert.Equal(dataRecord["Clinic Address 3"], nbssAppointmentEvent.ClinicAddressLine3);
-        Assert.Equal(dataRecord["Clinic Address 4"], nbssAppointmentEvent.ClinicAddressLine4);
-        Assert.Equal(dataRecord["Clinic Address 5"], nbssAppointmentEvent.ClinicAddressLine5);
-        Assert.Equal(dataRecord["Postcode"], nbssAppointmentEvent.ClinicPostcode);
-        Assert.Equal(DateTime.ParseExact(dataRecord.Fields["Action Timestamp"], "yyyyMMdd-HHmmss", null), nbssAppointmentEvent.ActionTimestamp);
+        Assert.Equal(firstRecord["Sequence"], nbssAppointmentEvent.Sequence);
+        Assert.Equal(firstRecord["Action"], nbssAppointmentEvent.Action);
+        Assert.Equal(firstRecord["Clinic Code"], nbssAppointmentEvent.ClinicCode);
+        Assert.Equal(firstRecord["Holding Clinic"], nbssAppointmentEvent.HoldingClinic);
+        Assert.Equal(firstRecord["Status"], nbssAppointmentEvent.Status);
+        Assert.Equal(firstRecord["Attended Not Scr"], nbssAppointmentEvent.AttendedNotScreened);
+        Assert.Equal(firstRecord["Appointment ID"], nbssAppointmentEvent.AppointmenId);
+        Assert.Equal(firstRecord["NHS Num"], nbssAppointmentEvent.NhsNumber);
+        Assert.Equal(firstRecord["Episode Type"], nbssAppointmentEvent.EpisodeType);
+        Assert.Equal(DateOnly.ParseExact(firstRecord.Fields["Episode Start"], "yyyyMMdd"), nbssAppointmentEvent.EpisodeStart);
+        Assert.Equal(firstRecord["Batch ID"], nbssAppointmentEvent.BatchId);
+        Assert.Equal(firstRecord["Screen or Asses"], nbssAppointmentEvent.AppointmentType);
+        Assert.Equal(byte.Parse(firstRecord.Fields["Screen Appt num"]), nbssAppointmentEvent.ScreeningAppointmentNumber);
+        Assert.Equal(firstRecord["Booked By"], nbssAppointmentEvent.BookedBy);
+        Assert.Equal(firstRecord["Cancelled By"], nbssAppointmentEvent.CancelledBy);
+        Assert.Equal(DateTime.ParseExact(firstRecord.Fields["Appt Date"] + firstRecord.Fields["Appt Time"], "yyyyMMddHHmm", null), nbssAppointmentEvent.AppointmentDateTime);
+        Assert.Equal(firstRecord["Location"], nbssAppointmentEvent.Location);
+        Assert.Equal(firstRecord["Clinic Name"], nbssAppointmentEvent.ClinicName);
+        Assert.Equal(firstRecord["Clinic Name (Let)"], nbssAppointmentEvent.ClinicNameOnLetters);
+        Assert.Equal(firstRecord["Clinic Address 1"], nbssAppointmentEvent.ClinicAddressLine1);
+        Assert.Equal(firstRecord["Clinic Address 2"], nbssAppointmentEvent.ClinicAddressLine2);
+        Assert.Equal(firstRecord["Clinic Address 3"], nbssAppointmentEvent.ClinicAddressLine3);
+        Assert.Equal(firstRecord["Clinic Address 4"], nbssAppointmentEvent.ClinicAddressLine4);
+        Assert.Equal(firstRecord["Clinic Address 5"], nbssAppointmentEvent.ClinicAddressLine5);
+        Assert.Equal(firstRecord["Postcode"], nbssAppointmentEvent.ClinicPostcode);
+        Assert.Equal(DateTime.ParseExact(firstRecord.Fields["Action Timestamp"], "yyyyMMdd-HHmmss", null), nbssAppointmentEvent.ActionTimestamp);
+    }
+
+    [Fact]
+    public async Task WriteStagedData_WhenOptionalFieldsAreEmpty_MapsFieldToNullAndSavesToDb()
+    {
+        // Arrange
+        var parsedFile = TestDataBuilder.BuildValidParsedFile(1);
+        parsedFile.DataRecords[0].Fields["Holding Clinic"] = "";
+        parsedFile.DataRecords[0].Fields["Attended Not Scr"] = "";
+        parsedFile.DataRecords[0].Fields["Screen Appt num"] = "";
+        parsedFile.DataRecords[0].Fields["Cancelled By"] = "";
+        var meshFile = new MeshFile()
+        {
+            FileId = "1",
+            FileType = MeshFileType.NbssAppointmentEvents,
+            MailboxId = "ABC",
+            Status = MeshFileStatus.Transforming
+        };
+
+        // Act
+        await _stagingPersister.WriteStagedData(parsedFile, meshFile);
+
+        // Assert
+        Assert.Equal(1, await _dbContext.NbssAppointmentEvents.CountAsync());
+
+        var nbssAppointmentEvent = await _dbContext.NbssAppointmentEvents.FirstAsync();
+        Assert.Null(nbssAppointmentEvent.HoldingClinic);
+        Assert.Null(nbssAppointmentEvent.AttendedNotScreened);
+        Assert.Null(nbssAppointmentEvent.ScreeningAppointmentNumber);
+        Assert.Null(nbssAppointmentEvent.CancelledBy);
     }
 
     [Theory]
@@ -106,9 +138,9 @@ public class NbssAppointmentEventsTests
     public async Task WriteStagedData_WhenFieldMissing_DoesNotSaveToDb(string fieldName)
     {
         // Arrange
-        var parsedFile = TestDataBuilder.BuildValidParsedFile();
-        var recordWithoutBSO = TestDataBuilder.BuildFileDataRecordWithField(fieldName, null, 1);
-        parsedFile.DataRecords.Add(recordWithoutBSO);
+        var parsedFile = TestDataBuilder.BuildValidParsedFile(0);
+        var record = TestDataBuilder.BuildFileDataRecordWithField(fieldName, null, 1);
+        parsedFile.DataRecords.Add(record);
         var meshFile = new MeshFile()
         {
             FileId = "1",
@@ -127,12 +159,13 @@ public class NbssAppointmentEventsTests
     [InlineData("Screen Appt num")]
     [InlineData("Appt Date")]
     [InlineData("Appt Time")]
+    [InlineData("Action Timestamp")]
     public async Task WriteStagedData_WhenFieldHoldsInvalidValue_DoesNotSaveToDb(string fieldName)
     {
         // Arrange
-        var parsedFile = TestDataBuilder.BuildValidParsedFile();
-        var recordWithoutBSO = TestDataBuilder.BuildFileDataRecordWithField(fieldName, "Invalid value", 1);
-        parsedFile.DataRecords.Add(recordWithoutBSO);
+        var parsedFile = TestDataBuilder.BuildValidParsedFile(0);
+        var record = TestDataBuilder.BuildFileDataRecordWithField(fieldName, "Invalid value", 1);
+        parsedFile.DataRecords.Add(record);
         var meshFile = new MeshFile()
         {
             FileId = "1",
