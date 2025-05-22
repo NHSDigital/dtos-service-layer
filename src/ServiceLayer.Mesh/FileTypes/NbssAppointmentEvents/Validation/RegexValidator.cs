@@ -3,7 +3,7 @@ using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
 
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 
-public class InlineRegexValidator(
+public class RegexValidator(
     string fieldName,
     Regex pattern,
     string errorCodeMissing,
