@@ -2,7 +2,12 @@ using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
 
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 
-public class MaxLengthValidator(string fieldName, int maxLength, string errorCodeMissing, string errorCodeTooLong, bool allowEmpty = false)
+public class MaxLengthValidator(
+    string fieldName,
+    int maxLength,
+    string errorCodeMissing,
+    string errorCodeTooLong,
+    bool allowEmpty = false)
     : IRecordValidator
 {
     public IEnumerable<ValidationError> Validate(FileDataRecord fileDataRecord)
