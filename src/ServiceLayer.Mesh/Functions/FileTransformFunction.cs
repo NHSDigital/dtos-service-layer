@@ -13,21 +13,20 @@ namespace ServiceLayer.Mesh.Functions;
 
 public class FileTransformFunction(
     ILogger<FileTransformFunction> logger,
-    ServiceLayerDbContext serviceLayerDbContext,
-    IMeshFilesBlobStore meshFileBlobStore,
     IFileTransformFunctionConfiguration configuration,
-    IFileParser fileParser)
+    ServiceLayerDbContext serviceLayerDbContext,
+    IFileTransformQueueClient fileTransformQueueClient,
+    IMeshFilesBlobStore meshFileBlobStore,
+    IEnumerable<IFileTransformer> fileTransformers)
 {
     [Function("FileTransformFunction")]
     public async Task Run([QueueTrigger("%FileTransformQueueName%")] FileTransformQueueMessage message)
     {
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
-        var file = await serviceLayerDbContext.MeshFiles.FirstOrDefaultAsync(f => f.FileId == message.FileId);
-
+        var file = await GetFileAsync(message.FileId);
         if (file == null)
         {
-            logger.LogWarning("File with id: {FileId} not found in MeshFiles table.", message.FileId);
             return;
         }
 
@@ -39,19 +38,31 @@ public class FileTransformFunction(
         await UpdateFileStatusForTransformation(file);
         await transaction.CommitAsync();
 
-        var fileContent = await meshFileBlobStore.DownloadAsync(file);
+        try
+        {
+            await ProcessFileTransformation(file, message);
+        }
+        catch (Exception e)
+        {
+            await HandleTransformationError(file, message, ex);
+        }
 
-        var parsedfile = fileParser.Parse(fileContent);
 
-        // TODO - take dependency on IEnumerable<IFileTransformer>.
-        // After initial common checks against database, find the appropriate implementation of IFileTransformer to handle the functionality that differs between file type.
+
+
     }
 
-    private async Task UpdateFileStatusForTransformation(MeshFile file)
+    private async Task<MeshFile?> GetFileAsync(string fileId)
     {
-        file.Status = MeshFileStatus.Transforming;
-        file.LastUpdatedUtc = DateTime.UtcNow;
-        await serviceLayerDbContext.SaveChangesAsync();
+        var file = await serviceLayerDbContext.MeshFiles
+            .FirstOrDefaultAsync(f => f.FileId == fileId);
+
+        if (file == null)
+        {
+            logger.LogWarning("File with id: {fileId} not found in MeshFiles table.", fileId);
+        }
+
+        return file;
     }
 
     private bool IsFileSuitableForTransformation(MeshFile file)
@@ -70,5 +81,49 @@ public class FileTransformFunction(
             return false;
         }
         return true;
+    }
+
+    private async Task UpdateFileStatusForTransformation(MeshFile file)
+    {
+        file.Status = MeshFileStatus.Transforming;
+        file.LastUpdatedUtc = DateTime.UtcNow;
+        await serviceLayerDbContext.SaveChangesAsync();
+    }
+
+    private async Task ProcessFileTransformation(MeshFile file)
+    {
+        var fileContent = await meshFileBlobStore.DownloadAsync(file);
+
+        var transformer = fileTransformers.FirstOrDefault(f => f.HandlesFileType == file.FileType);
+        if (transformer == null)
+        {
+            throw new NotImplementedException($"No transformer registered for file type: {file.FileType}");
+        }
+
+        var validationErrors = await transformer.TransformFileAsync(fileContent, file);
+
+        if (validationErrors.Any())
+        {
+            file.ValidationErrors = SerializeValidationErrors(validationErrors);
+        }
+
+        file.Status = MeshFileStatus.Transformed;
+        file.LastUpdatedUtc = DateTime.UtcNow;
+        await serviceLayerDbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleTransformationError(MeshFile file, FileTransformQueueMessage message, Exception ex)
+    {
+        logger.LogError(ex, "An exception occurred during file transformation for fileId: {fileId}", message.FileId);
+        file.Status = MeshFileStatus.FailedTransform;
+        file.LastUpdatedUtc = DateTime.UtcNow;
+        await serviceLayerDbContext.SaveChangesAsync();
+        await fileTransformQueueClient.SendToPoisonQueueAsync(message);
+    }
+
+    private string SerializeValidationErrors(IList<ValidationError> validationErrors)
+    {
+        // TODO
+        return "";
     }
 }

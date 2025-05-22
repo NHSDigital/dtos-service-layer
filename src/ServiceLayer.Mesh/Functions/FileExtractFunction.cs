@@ -43,7 +43,7 @@ public class FileExtractFunction(
 
         try
         {
-            await ProcessFileExtraction(file, message);
+            await ProcessFileExtraction(file);
         }
         catch (Exception ex)
         {
@@ -89,7 +89,7 @@ public class FileExtractFunction(
         await serviceLayerDbContext.SaveChangesAsync();
     }
 
-    private async Task ProcessFileExtraction(MeshFile file, FileExtractQueueMessage message)
+    private async Task ProcessFileExtraction(MeshFile file)
     {
         var meshResponse = await meshInboxService.GetMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
         if (!meshResponse.IsSuccessful)
@@ -99,7 +99,7 @@ public class FileExtractFunction(
 
         var blobPath = await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
 
-        var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, message.FileId);
+        var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
         if (!meshAcknowledgementResponse.IsSuccessful)
         {
             logger.LogWarning("Mesh acknowledgement failed: {error}.\nThis is not a fatal error so processing will continue.", meshAcknowledgementResponse.Error);

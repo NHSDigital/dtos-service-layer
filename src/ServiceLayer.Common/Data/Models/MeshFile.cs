@@ -16,4 +16,6 @@ public class MeshFile
     public string? BlobPath { get; set; }
     public DateTime FirstSeenUtc { get; set; }
     public DateTime LastUpdatedUtc { get; set; }
+    // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
+    public string? ValidationErrors { get; set; }
 }
