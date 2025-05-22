@@ -8,15 +8,16 @@ services:
     restart: always
     environment:
       FUNCTIONS_WORKER_RUNTIME: "dotnet-isolated"
-      AzureWebJobsStorage: "${AZURE_WEB_JOBS_STORAGE}"
+      AzureWebJobsStorage: "${AZURITE_CONNECTION_STRING}"
       AzureWebJobsSecretStorageType: "files"
       DatabaseConnectionString: "${DatabaseConnectionString}"
       EVENT_GRID_TOPIC_URL: "${EVENT_GRID_TOPIC_URL}"
       EVENT_GRID_TOPIC_KEY: "${EVENT_GRID_TOPIC_KEY}"
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
     ports:
-      - "${API_PORT}:80"
+      - "${API_PORT}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:80/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,7 +39,7 @@ services:
     restart: always
     environment:
       FUNCTIONS_WORKER_RUNTIME: "dotnet-isolated"
-      AzureWebJobsStorage: "${AZURE_WEB_JOBS_STORAGE}"
+      AzureWebJobsStorage: "${AZURITE_CONNECTION_STRING}"
       AzureWebJobsSecretStorageType: "files"
       DatabaseConnectionString: "${DatabaseConnectionString}"
       FileDiscoveryTimerExpression: "${FileDiscoveryTimerExpression}"
@@ -47,16 +48,18 @@ services:
       FileExtractQueueName: "${FileExtractQueueName}"
       FileTransformQueueName: "${FileTransformQueueName}"
       StaleHours: "${StaleHours}"
-      MeshApiBaseUrl: "${MeshApiBaseUrl}"
+      MeshApiBaseUrl: "http://mesh_sandbox:80/messageexchange"
       NbssMailboxId: "${NbssMailboxId}"
       MeshPassword: "${MeshPassword}"
       MeshSharedKey: "${MeshSharedKey}"
       AZURITE_CONNECTION_STRING: "${AZURITE_CONNECTION_STRING}"
-      ASPNETCORE_ENVIRONMENT: "Production"
+      MeshStorageAccountUrl: "${AZURITE_CONNECTION_STRING}"
+      ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT}"
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
     ports:
-      - "${MESH_PORT}:80"
+      - "${MESH_PORT}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:80/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

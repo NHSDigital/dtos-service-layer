@@ -10,7 +10,7 @@ namespace ServiceLayer.Mesh.Functions;
 
 public class FileRetryFunction(
     ILogger<FileRetryFunction> logger,
-    ServiceLayerDbContext serviceLayerDbContext,
+    IDbContextFactory<ServiceLayerDbContext> dbContextFactory,
     IFileExtractQueueClient fileExtractQueueClient,
     IFileTransformQueueClient fileTransformQueueClient,
     IFileRetryFunctionConfiguration configuration)
@@ -22,12 +22,13 @@ public class FileRetryFunction(
 
         var staleDateTimeUtc = DateTime.UtcNow.AddHours(-configuration.StaleHours);
 
-        await Task.WhenAll(
-            RetryStaleExtractions(staleDateTimeUtc),
-            RetryStaleTransformations(staleDateTimeUtc));
+        await using var serviceLayerDbContext = dbContextFactory.CreateDbContext();
+
+        await RetryStaleExtractions(serviceLayerDbContext, staleDateTimeUtc);
+        await RetryStaleTransformations(serviceLayerDbContext, staleDateTimeUtc);
     }
 
-    private async Task RetryStaleExtractions(DateTime staleDateTimeUtc)
+    private async Task RetryStaleExtractions(ServiceLayerDbContext serviceLayerDbContext, DateTime staleDateTimeUtc)
     {
         var staleFiles = await serviceLayerDbContext.MeshFiles
             .Where(f =>
@@ -46,7 +47,7 @@ public class FileRetryFunction(
         }
     }
 
-    private async Task RetryStaleTransformations(DateTime staleDateTimeUtc)
+    private async Task RetryStaleTransformations(ServiceLayerDbContext serviceLayerDbContext, DateTime staleDateTimeUtc)
     {
         var staleFiles = await serviceLayerDbContext.MeshFiles
             .Where(f =>
