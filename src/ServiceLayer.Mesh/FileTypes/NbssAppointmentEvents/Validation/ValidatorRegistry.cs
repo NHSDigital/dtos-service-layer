@@ -32,6 +32,10 @@ public static partial class ValidatorRegistry
                 ErrorCodes.InvalidScreenOrAsses),
             new InlineRegexValidator("Screen Appt num", ScreenApptNumRegex(), ErrorCodes.MissingScreenApptNum,
                 ErrorCodes.InvalidScreenApptNum),
+            new InlineRegexValidator("Booked By", BookedByRegex(), ErrorCodes.MissingBookedBy,
+                ErrorCodes.InvalidBookedBy),
+            new InlineRegexValidator("Cancelled By", CancelledByRegex(), ErrorCodes.MissingCancelledBy,
+                ErrorCodes.InvalidCancelledBy),
             new InlineMaxLengthValidator("Clinic Name", 40, ErrorCodes.MissingClinicName,
                 ErrorCodes.InvalidClinicName, true),
             new InlineMaxLengthValidator("Clinic Name (Let)", 50, ErrorCodes.MissingClinicNameLet,
@@ -58,6 +62,12 @@ public static partial class ValidatorRegistry
 
     [GeneratedRegex(@"^[BCU]$", RegexOptions.Compiled)]
     private static partial Regex ActionRegex();
+
+    [GeneratedRegex(@"^[CH]$", RegexOptions.Compiled)]
+    private static partial Regex BookedByRegex();
+
+    [GeneratedRegex(@"^$|^[ CH]$", RegexOptions.Compiled)]
+    private static partial Regex CancelledByRegex();
 
     [GeneratedRegex(@"^[FGHNRST]$", RegexOptions.Compiled)]
     private static partial Regex EpisodeTypeRegex();

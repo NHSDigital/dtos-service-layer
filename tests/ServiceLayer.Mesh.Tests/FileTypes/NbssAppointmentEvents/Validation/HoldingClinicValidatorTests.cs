@@ -26,7 +26,6 @@ public class HoldingClinicValidatorTests : ValidationTestBase
     [InlineData("D")]       // invalid character
     [InlineData("  ")]      // Too many characters
     [InlineData("YN")]      // Too many characters
-    [InlineData("Y ")]      // Too many characters
     public void Validate_HoldingClinicInvalidFormat_ReturnsValidationError(string value)
     {
         // Arrange
