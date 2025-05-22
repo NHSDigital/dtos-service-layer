@@ -36,6 +36,8 @@ public static partial class ValidatorRegistry
                 ErrorCodes.InvalidBookedBy),
             new InlineRegexValidator("Cancelled By", CancelledByRegex(), ErrorCodes.MissingCancelledBy,
                 ErrorCodes.InvalidCancelledBy),
+            new InlineMaxLengthValidator("Location", 5, ErrorCodes.MissingLocation,
+                ErrorCodes.InvalidLocation),
             new InlineMaxLengthValidator("Clinic Name", 40, ErrorCodes.MissingClinicName,
                 ErrorCodes.InvalidClinicName, true),
             new InlineMaxLengthValidator("Clinic Name (Let)", 50, ErrorCodes.MissingClinicNameLet,
