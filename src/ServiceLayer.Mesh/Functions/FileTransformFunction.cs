@@ -99,9 +99,8 @@ public class FileTransformFunction(
 
     private async Task ProcessFileTransformation(MeshFile file)
     {
-        var fileContent = await meshFileBlobStore.DownloadAsync(file);
-
         var transformer = GetTransformerFor(file.FileType);
+        var fileContent = await meshFileBlobStore.DownloadAsync(file);
 
         var validationErrors = await transformer.TransformFileAsync(fileContent, file);
 

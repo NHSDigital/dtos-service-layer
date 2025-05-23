@@ -10,6 +10,7 @@ using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Storage;
+using ServiceLayer.TestUtilities;
 
 namespace ServiceLayer.Mesh.Tests.Functions;
 
@@ -58,14 +59,7 @@ public class FileTransformFunctionTests
         await _function.Run(message);
 
         // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} not found in MeshFiles table."),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
+        _loggerMock.VerifyLogger(LogLevel.Warning, $"File with id: {message.FileId} not found in MeshFiles table.");
 
         Assert.Equal(0, _dbContext.MeshFiles.Count());
         _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
@@ -78,35 +72,17 @@ public class FileTransformFunctionTests
     [InlineData(MeshFileStatus.Transformed)]
     [InlineData(MeshFileStatus.FailedExtract)]
     [InlineData(MeshFileStatus.FailedTransform)]
-    public async Task Run_FileStatusInvalid_ExitsSilently(MeshFileStatus invalidStatus )
+    public async Task Run_FileStatusInvalid_ExitsSilently(MeshFileStatus invalidStatus)
     {
         // Arrange
-        var originalLastUpdatedUtc = DateTime.UtcNow.AddHours(-1);
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = "file-1",
-            Status = invalidStatus,
-            LastUpdatedUtc = originalLastUpdatedUtc,
-        };
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
-
-        var message = new FileTransformQueueMessage { FileId = "file-1" };
+        var file = SaveMeshFile(invalidStatus);
+        var message = new FileTransformQueueMessage { FileId = file.FileId };
 
         // Act
         await _function.Run(message);
 
         // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}."),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
+        _loggerMock.VerifyLogger(LogLevel.Warning, $"File with id: {file.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}.");
 
         _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
         _fileTransformerMock.Verify(c => c.TransformFileAsync(It.IsAny<Stream>(), It.IsAny<MeshFile>()), Times.Never);
@@ -116,108 +92,55 @@ public class FileTransformFunctionTests
     public async Task Run_FileValidNoTransformersExist_ErrorLoggedAndStatusUpdated()
     {
         // Arrange
-        var fileId = "file-4";
-        DateTime originalLastUpdatedUtc = DateTime.UtcNow.AddHours(-1);
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = fileId,
-            Status = MeshFileStatus.Extracted,
-            LastUpdatedUtc = originalLastUpdatedUtc,
-        };
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
-
-        var expectedStream = new MemoryStream();
-        _blobStoreMock.Setup(m => m.DownloadAsync(file)).ReturnsAsync(expectedStream);
+        var file = SaveMeshFile();
 
         _fileTransformers.Clear();
 
-        var message = new FileTransformQueueMessage { FileId = fileId };
+        var message = new FileTransformQueueMessage { FileId = file.FileId };
 
         // Act
         await _function.Run(message);
 
         // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"An exception occurred during file transformation for fileId: {fileId}"),
-                It.Is<InvalidOperationException>(e => e.Message.StartsWith("No transformer registered to handle file type: ")),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
-        _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
+        _loggerMock.VerifyLogger(LogLevel.Error,$"An exception occurred during file transformation for fileId: {file.FileId}",
+            e => e is InvalidOperationException && e.Message.StartsWith("No transformer registered to handle file type: "));
+
+        _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        var updatedFile = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
-        Assert.Equal(MeshFileStatus.FailedTransform, updatedFile?.Status);
-        Assert.True(updatedFile?.LastUpdatedUtc > originalLastUpdatedUtc);
+        AssertFileStatusUpdated(file.FileId, MeshFileStatus.FailedTransform);
     }
 
     [Fact]
     public async Task Run_FileValidMultipleTransformersExist_ErrorLoggedAndStatusUpdated()
     {
         // Arrange
-        var fileId = "file-4";
-        DateTime originalLastUpdatedUtc = DateTime.UtcNow.AddHours(-1);
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = fileId,
-            Status = MeshFileStatus.Extracted,
-            LastUpdatedUtc = originalLastUpdatedUtc,
-        };
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
-
-        var expectedStream = new MemoryStream();
-        _blobStoreMock.Setup(m => m.DownloadAsync(file)).ReturnsAsync(expectedStream);
+        var file = SaveMeshFile();
 
         var anotherTransformer = new Mock<IFileTransformer>();
         anotherTransformer.Setup(x => x.CanHandle(MeshFileType.NbssAppointmentEvents)).Returns(true);
         _fileTransformers.Add(anotherTransformer.Object);
 
-        var message = new FileTransformQueueMessage { FileId = fileId };
+        var message = new FileTransformQueueMessage { FileId = file.FileId };
 
         // Act
         await _function.Run(message);
 
         // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"An exception occurred during file transformation for fileId: {fileId}"),
-                It.Is<InvalidOperationException>(e => e.Message.StartsWith("Multiple transformers found for file type: ")),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
-        _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
+        _loggerMock.VerifyLogger(LogLevel.Error,$"An exception occurred during file transformation for fileId: {file.FileId}",
+            e => e is InvalidOperationException && e.Message.StartsWith("Multiple transformers found for file type: "));
+
+        _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        var updatedFile = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
-        Assert.Equal(MeshFileStatus.FailedTransform, updatedFile?.Status);
-        Assert.True(updatedFile?.LastUpdatedUtc > originalLastUpdatedUtc);
+        AssertFileStatusUpdated(file.FileId, MeshFileStatus.FailedTransform);
     }
 
     [Fact]
     public async Task Run_FileHasValidationErrors_ErrorLoggedAndStatusAndValidationErrorsUpdated()
     {
         // Arrange
-        var fileId = "file-4";
-        DateTime originalLastUpdatedUtc = DateTime.UtcNow.AddHours(-1);
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = fileId,
-            Status = MeshFileStatus.Extracted,
-            LastUpdatedUtc = originalLastUpdatedUtc,
-        };
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
+        var file = SaveMeshFile();
 
         var expectedStream = new MemoryStream();
         _blobStoreMock.Setup(m => m.DownloadAsync(file)).ReturnsAsync(expectedStream);
@@ -231,29 +154,20 @@ public class FileTransformFunctionTests
         _fileTransformerMock.Setup(c => c.TransformFileAsync(expectedStream, file))
             .ReturnsAsync(validationErrors);
 
-        var message = new FileTransformQueueMessage { FileId = fileId };
+        var message = new FileTransformQueueMessage { FileId = file.FileId };
 
         // Act
         await _function.Run(message);
 
         // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"An exception occurred during file transformation for fileId: {fileId}"),
-                It.Is<InvalidOperationException>(e => e.Message.StartsWith("Validation errors encountered")),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
+        _loggerMock.VerifyLogger(LogLevel.Error,$"An exception occurred during file transformation for fileId: {file.FileId}",
+            e => e is InvalidOperationException && e.Message.StartsWith("Validation errors encountered"));
+
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        var updatedFile = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
-        Assert.Equal(MeshFileStatus.FailedTransform, updatedFile?.Status);
-        Assert.True(updatedFile?.LastUpdatedUtc > originalLastUpdatedUtc);
-
-        var savedValidationErrors = ValidationTestHelpers.GetValidationErrorsFromMeshFile(updatedFile);
-
+        var updatedFile = AssertFileStatusUpdated(file.FileId, MeshFileStatus.FailedTransform);
+        var savedValidationErrors = DeserializeValidationErrorsFromMeshFile(updatedFile);
         Assert.Equal(validationErrors, savedValidationErrors, new ValidationErrorComparer());
     }
 
@@ -263,17 +177,7 @@ public class FileTransformFunctionTests
     public async Task Run_FileValid_FileTransformedAndStatusUpdated(MeshFileStatus validStatus, int hoursOld)
     {
         // Arrange
-        DateTime originalLastUpdatedUtc = DateTime.UtcNow.AddHours(-hoursOld);
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = "file-1",
-            Status = validStatus,
-            LastUpdatedUtc = originalLastUpdatedUtc,
-        };
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
+        var file = SaveMeshFile(validStatus, hoursOld);
 
         var expectedStream = new MemoryStream();
         _blobStoreMock.Setup(m => m.DownloadAsync(file)).ReturnsAsync(expectedStream);
@@ -281,50 +185,41 @@ public class FileTransformFunctionTests
         _fileTransformerMock.Setup(c => c.TransformFileAsync(expectedStream, file))
             .ReturnsAsync(new List<ValidationError>());
 
-        var message = new FileTransformQueueMessage { FileId = "file-1" };
+        var message = new FileTransformQueueMessage { FileId = file.FileId };
 
         // Act
         await _function.Run(message);
 
         // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.IsAny<It.IsAnyType>(),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Never);
+        _loggerMock.VerifyNoLogs(LogLevel.Warning);
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
         _fileTransformerMock.Verify(x => x.TransformFileAsync(expectedStream, file), Times.Once);
-
-        var updatedFile = await _dbContext.MeshFiles.SingleOrDefaultAsync(x => x.FileId == file.FileId);
-        Assert.Equal(MeshFileStatus.Transformed, updatedFile?.Status);
-        Assert.True(updatedFile?.LastUpdatedUtc > originalLastUpdatedUtc);
+        AssertFileStatusUpdated(file.FileId, MeshFileStatus.Transformed);
     }
-}
 
-public class ValidationErrorComparer : IEqualityComparer<ValidationError>
-{
-    public bool Equals(ValidationError? x, ValidationError? y)
+    private MeshFile SaveMeshFile(MeshFileStatus status = MeshFileStatus.Extracted, int hoursOld = 1)
     {
-        if (ReferenceEquals(x, y)) return true;
-        if (x is null || y is null) return false;
-
-        return x.Field == y.Field &&
-               x.Error == y.Error &&
-               x.Code == y.Code &&
-               x.RowNumber == y.RowNumber;
+        var file = new MeshFile
+        {
+            FileType = MeshFileType.NbssAppointmentEvents,
+            MailboxId = Guid.NewGuid().ToString(),
+            FileId = Guid.NewGuid().ToString(),
+            Status = status,
+            LastUpdatedUtc = DateTime.UtcNow.AddHours(-hoursOld),
+        };
+        _dbContext.MeshFiles.Add(file);
+        _dbContext.SaveChanges();
+        return file;
     }
 
-    public int GetHashCode(ValidationError obj)
+    private MeshFile AssertFileStatusUpdated(string fileId, MeshFileStatus expectedStatus)
     {
-        return HashCode.Combine(obj.Field, obj.Error, obj.Code, obj.RowNumber);
+        var updated = _dbContext.MeshFiles.Single(x => x.FileId == fileId);
+        Assert.Equal(expectedStatus, updated.Status);
+        Assert.True(updated.LastUpdatedUtc > DateTime.UtcNow.AddSeconds(-10));
+        return updated;
     }
-}
 
-public static class ValidationTestHelpers
-{
     private static readonly JsonSerializerOptions ValidationErrorJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -333,11 +228,30 @@ public static class ValidationTestHelpers
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static List<ValidationError> GetValidationErrorsFromMeshFile(MeshFile file)
+    private static List<ValidationError> DeserializeValidationErrorsFromMeshFile(MeshFile file)
     {
         return JsonSerializer.Deserialize<List<ValidationError>>(
             file.ValidationErrors ?? "[]",
             ValidationErrorJsonOptions
         ) ?? [];
+    }
+
+    private class ValidationErrorComparer : IEqualityComparer<ValidationError>
+    {
+        public bool Equals(ValidationError? x, ValidationError? y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (x is null || y is null) return false;
+
+            return x.Field == y.Field &&
+                   x.Error == y.Error &&
+                   x.Code == y.Code &&
+                   x.RowNumber == y.RowNumber;
+        }
+
+        public int GetHashCode(ValidationError obj)
+        {
+            return HashCode.Combine(obj.Field, obj.Error, obj.Code, obj.RowNumber);
+        }
     }
 }
