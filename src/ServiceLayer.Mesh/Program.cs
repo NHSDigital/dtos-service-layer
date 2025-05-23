@@ -8,6 +8,7 @@ using Azure.Storage.Blobs;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Data;
+using ServiceLayer.Mesh.Storage;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -41,11 +42,17 @@ var host = new HostBuilder()
             if (isLocalEnvironment)
             {
                 var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
-                return new QueueServiceClient(connectionString);
+                return new QueueServiceClient(connectionString, new QueueClientOptions
+                {
+                    MessageEncoding = QueueMessageEncoding.Base64
+                });
             }
 
             var meshStorageAccountUrl = Environment.GetEnvironmentVariable("MeshStorageAccountUrl");
-            return new QueueServiceClient(new Uri(meshStorageAccountUrl), new DefaultAzureCredential());
+            return new QueueServiceClient(new Uri(meshStorageAccountUrl), new DefaultAzureCredential(), new QueueClientOptions
+            {
+                MessageEncoding = QueueMessageEncoding.Base64
+            });
         });
 
         services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();
@@ -57,6 +64,8 @@ var host = new HostBuilder()
                 Environment.GetEnvironmentVariable("AzureWebJobsStorage"),
                 Environment.GetEnvironmentVariable("BlobContainerName"));
         });
+
+        services.AddSingleton<IMeshFilesBlobStore, MeshFilesBlobStore>();
 
         services.AddTransient<IFileDiscoveryFunctionConfiguration, AppConfiguration>();
         services.AddTransient<IFileExtractFunctionConfiguration, AppConfiguration>();
