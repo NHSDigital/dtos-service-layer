@@ -19,7 +19,7 @@ namespace ServiceLayer.Mesh.Functions
         [Function("FileDiscoveryFunction")]
         public async Task Run([TimerTrigger("%FileDiscoveryTimerExpression%")] TimerInfo myTimer)
         {
-            logger.LogInformation("{functionName} started at: {time}", nameof(FileDiscoveryFunction), DateTime.UtcNow);
+            logger.LogInformation("{functionName} started.", nameof(FileDiscoveryFunction));
 
             var response = await meshInboxService.GetMessagesAsync(configuration.NbssMeshMailboxId);
 

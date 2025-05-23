@@ -79,8 +79,14 @@ public class FileExtractFunctionTests
         _fileTransformQueueClientMock.Verify(x => x.SendToPoisonQueueAsync(It.IsAny<FileTransformQueueMessage>()), Times.Never);
     }
 
-    [Fact]
-    public async Task Run_FileStatusInvalid_ExitsSilently()
+    [Theory]
+    [InlineData(MeshFileStatus.Extracted)]
+    [InlineData(MeshFileStatus.Extracting)]
+    [InlineData(MeshFileStatus.Transforming)]
+    [InlineData(MeshFileStatus.Transformed)]
+    [InlineData(MeshFileStatus.FailedExtract)]
+    [InlineData(MeshFileStatus.FailedTransform)]
+    public async Task Run_FileStatusInvalid_ExitsSilently(MeshFileStatus invalidStatus)
     {
         // Arrange
         var file = new MeshFile
@@ -88,7 +94,7 @@ public class FileExtractFunctionTests
             FileType = MeshFileType.NbssAppointmentEvents,
             MailboxId = "test-mailbox",
             FileId = "file-1",
-            Status = MeshFileStatus.Transforming, // Not eligible
+            Status = invalidStatus,
             LastUpdatedUtc = DateTime.UtcNow
         };
         _dbContext.MeshFiles.Add(file);
@@ -115,53 +121,19 @@ public class FileExtractFunctionTests
         _fileTransformQueueClientMock.Verify(x => x.SendToPoisonQueueAsync(It.IsAny<FileTransformQueueMessage>()), Times.Never);
     }
 
-    [Fact]
-    public async Task Run_FileStatusExtractingButNotTimedOut_ExitsSilently()
+    [Theory]
+    [InlineData(MeshFileStatus.Discovered, 0)]
+    [InlineData(MeshFileStatus.Extracting, 13)]
+    public async Task Run_FileValid_FileUploadedToBlobAndAcknowledgedAndEnqueued(MeshFileStatus validStatus, int hoursOld)
     {
         // Arrange
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = "file-2",
-            Status = MeshFileStatus.Extracting,
-            LastUpdatedUtc = DateTime.UtcNow // Not timed out
-        };
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
-
-        var message = new FileExtractQueueMessage { FileId = "file-2" };
-
-        // Act
-        await _function.Run(message);
-
-        // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString() == $"File with id: {message.FileId} found in MeshFiles table but is not suitable for extraction. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}."),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.Once);
-
-        _meshInboxServiceMock.Verify(x => x.GetHeadMessageByIdAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        _blobStoreMock.Verify(x => x.UploadAsync(It.IsAny<MeshFile>(), It.IsAny<byte[]>()), Times.Never);
-        _fileTransformQueueClientMock.Verify(x => x.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
-        _fileTransformQueueClientMock.Verify(x => x.SendToPoisonQueueAsync(It.IsAny<FileTransformQueueMessage>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Run_FileValid_FileUploadedToBlobAndAcknowledgedAndEnqueued()
-    {
-        // Arrange
-        var originalLastUpdatedUtc = DateTime.UtcNow.AddHours(-1);
+        var originalLastUpdatedUtc = DateTime.UtcNow.AddHours(-hoursOld);
         var file = new MeshFile
         {
             FileType = MeshFileType.NbssAppointmentEvents,
             MailboxId = "test-mailbox",
             FileId = "file-3",
-            Status = MeshFileStatus.Discovered,
+            Status = validStatus,
             LastUpdatedUtc = originalLastUpdatedUtc
         };
         _dbContext.MeshFiles.Add(file);
@@ -195,10 +167,10 @@ public class FileExtractFunctionTests
         _blobStoreMock.Verify(b => b.UploadAsync(It.Is<MeshFile>(f => f.FileId == file.FileId), content), Times.Once);
         _meshInboxServiceMock.Verify(m => m.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(file), Times.Once);
-        var updatedFile = _dbContext.MeshFiles.First();
-        Assert.Equal(blobPath, updatedFile.BlobPath);
-        Assert.Equal(MeshFileStatus.Extracted, updatedFile.Status);
-        Assert.True(updatedFile.LastUpdatedUtc > originalLastUpdatedUtc);
+        var updatedFile = await _dbContext.MeshFiles.SingleOrDefaultAsync(f => f.FileId == file.FileId);
+        Assert.Equal(blobPath, updatedFile?.BlobPath);
+        Assert.Equal(MeshFileStatus.Extracted, updatedFile?.Status);
+        Assert.True(updatedFile?.LastUpdatedUtc > originalLastUpdatedUtc);
     }
 
     [Fact]
@@ -242,10 +214,10 @@ public class FileExtractFunctionTests
         _meshInboxServiceMock.Verify(m => m.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
         _fileExtractQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
-        var updatedFile = _dbContext.MeshFiles.First();
-        Assert.Null(updatedFile.BlobPath);
-        Assert.Equal(MeshFileStatus.FailedExtract, updatedFile.Status);
-        Assert.True(updatedFile.LastUpdatedUtc > originalLastUpdatedUtc);
+        var updatedFile = await _dbContext.MeshFiles.SingleOrDefaultAsync(f => f.FileId == file.FileId);
+        Assert.Null(updatedFile?.BlobPath);
+        Assert.Equal(MeshFileStatus.FailedExtract, updatedFile?.Status);
+        Assert.True(updatedFile?.LastUpdatedUtc > originalLastUpdatedUtc);
     }
 
     [Fact]
@@ -295,8 +267,8 @@ public class FileExtractFunctionTests
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) =>
-                    v.ToString().StartsWith("Mesh acknowledgement failed: ") &&
-                    v.ToString().EndsWith("This is not a fatal error so processing will continue.")),
+                    v.ToString()!.StartsWith("Mesh acknowledgement failed: ") &&
+                    v.ToString()!.EndsWith("This is not a fatal error so processing will continue.")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ), Times.Once);
@@ -304,9 +276,9 @@ public class FileExtractFunctionTests
         _meshInboxServiceMock.Verify(m => m.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(file), Times.Once);
         _fileExtractQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Never);
-        var updatedFile = _dbContext.MeshFiles.First();
-        Assert.Equal(blobPath, updatedFile.BlobPath);
-        Assert.Equal(MeshFileStatus.Extracted, updatedFile.Status);
-        Assert.True(updatedFile.LastUpdatedUtc > originalLastUpdatedUtc);
+        var updatedFile = await _dbContext.MeshFiles.SingleOrDefaultAsync(f => f.FileId == file.FileId);
+        Assert.Equal(blobPath, updatedFile?.BlobPath);
+        Assert.Equal(MeshFileStatus.Extracted, updatedFile?.Status);
+        Assert.True(updatedFile?.LastUpdatedUtc > originalLastUpdatedUtc);
     }
 }

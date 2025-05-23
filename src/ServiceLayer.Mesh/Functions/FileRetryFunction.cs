@@ -18,7 +18,7 @@ public class FileRetryFunction(
     [Function("FileRetryFunction")]
     public async Task Run([TimerTrigger("%FileRetryTimerExpression%")] TimerInfo myTimer)
     {
-        logger.LogInformation("FileRetryFunction started");
+        logger.LogInformation("{functionName} started.", nameof(FileRetryFunction));
 
         var staleDateTimeUtc = DateTime.UtcNow.AddHours(-configuration.StaleHours);
 

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
@@ -5,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using ServiceLayer.Data;
 using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
-using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Storage;
 
@@ -19,9 +20,19 @@ public class FileTransformFunction(
     IMeshFilesBlobStore meshFileBlobStore,
     IEnumerable<IFileTransformer> fileTransformers)
 {
+    private static readonly JsonSerializerOptions ValidationErrorJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
+
     [Function("FileTransformFunction")]
     public async Task Run([QueueTrigger("%FileTransformQueueName%")] FileTransformQueueMessage message)
     {
+        logger.LogInformation("{functionName} started. Processing fileId: {fileId}", nameof(FileTransformFunction), message.FileId);
+
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
         var file = await GetFileAsync(message.FileId);
@@ -40,16 +51,12 @@ public class FileTransformFunction(
 
         try
         {
-            await ProcessFileTransformation(file, message);
+            await ProcessFileTransformation(file);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             await HandleTransformationError(file, message, ex);
         }
-
-
-
-
     }
 
     private async Task<MeshFile?> GetFileAsync(string fileId)
@@ -94,22 +101,33 @@ public class FileTransformFunction(
     {
         var fileContent = await meshFileBlobStore.DownloadAsync(file);
 
-        var transformer = fileTransformers.FirstOrDefault(f => f.HandlesFileType == file.FileType);
-        if (transformer == null)
-        {
-            throw new NotImplementedException($"No transformer registered for file type: {file.FileType}");
-        }
+        var transformer = GetTransformerFor(file.FileType);
 
         var validationErrors = await transformer.TransformFileAsync(fileContent, file);
 
         if (validationErrors.Any())
         {
-            file.ValidationErrors = SerializeValidationErrors(validationErrors);
+            file.ValidationErrors = JsonSerializer.Serialize(validationErrors, ValidationErrorJsonOptions);
+            throw new InvalidOperationException("Validation errors encountered");
         }
 
         file.Status = MeshFileStatus.Transformed;
         file.LastUpdatedUtc = DateTime.UtcNow;
         await serviceLayerDbContext.SaveChangesAsync();
+    }
+
+    private IFileTransformer GetTransformerFor(MeshFileType type)
+    {
+        try
+        {
+            return fileTransformers.SingleOrDefault(t => t.CanHandle(type))
+                   ?? throw new InvalidOperationException($"No transformer registered to handle file type: {type}");
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("more than one"))
+        {
+            throw new InvalidOperationException(
+                $"Multiple transformers found for file type: {type}. This is likely a configuration error.", ex);
+        }
     }
 
     private async Task HandleTransformationError(MeshFile file, FileTransformQueueMessage message, Exception ex)
@@ -119,11 +137,5 @@ public class FileTransformFunction(
         file.LastUpdatedUtc = DateTime.UtcNow;
         await serviceLayerDbContext.SaveChangesAsync();
         await fileTransformQueueClient.SendToPoisonQueueAsync(message);
-    }
-
-    private string SerializeValidationErrors(IList<ValidationError> validationErrors)
-    {
-        // TODO
-        return "";
     }
 }

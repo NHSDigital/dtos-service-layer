@@ -14,7 +14,7 @@ namespace ServiceLayer.Mesh.Functions
         [Function("MeshHandshakeFunction")]
         public async Task Run([TimerTrigger("%MeshHandshakeTimerExpression%")] TimerInfo myTimer)
         {
-            logger.LogInformation("{FunctionName} started", nameof(MeshHandshakeFunction));
+            logger.LogInformation("{FunctionName} started.", nameof(MeshHandshakeFunction));
 
             try
             {
