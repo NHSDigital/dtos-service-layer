@@ -60,9 +60,12 @@ var host = new HostBuilder()
 
         services.AddSingleton(provider =>
         {
-            return new BlobContainerClient(
+            var client = new BlobContainerClient(
                 Environment.GetEnvironmentVariable("AzureWebJobsStorage"),
                 Environment.GetEnvironmentVariable("BlobContainerName"));
+            client.CreateIfNotExistsAsync();
+            // might wanna make this async
+            return client;
         });
 
         services.AddSingleton<IMeshFilesBlobStore, MeshFilesBlobStore>();
