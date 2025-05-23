@@ -107,7 +107,7 @@ jobs:
     if: needs.metadata.outputs.does_pull_request_exist == 'true' || github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened'))
     with:
       docker_compose_file: ./compose.yaml
-      excluded_containers_csv_list: azurite,azurite-setup,sql-database,database-setup
+      excluded_containers_csv_list: azurite,azurite-setup,sql-database,database-setup,db
       environment_tag: ${{ needs.metadata.outputs.environment_tag }}
       function_app_source_code_path: src
       project_name: service-layer
