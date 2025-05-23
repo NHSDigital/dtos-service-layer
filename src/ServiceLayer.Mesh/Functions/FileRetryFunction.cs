@@ -10,7 +10,7 @@ namespace ServiceLayer.Mesh.Functions;
 
 public class FileRetryFunction(
     ILogger<FileRetryFunction> logger,
-    IDbContextFactory<ServiceLayerDbContext> dbContextFactory,
+    ServiceLayerDbContext serviceLayerDbContext,
     IFileExtractQueueClient fileExtractQueueClient,
     IFileTransformQueueClient fileTransformQueueClient,
     IFileRetryFunctionConfiguration configuration)
@@ -21,8 +21,6 @@ public class FileRetryFunction(
         logger.LogInformation("FileRetryFunction started");
 
         var staleDateTimeUtc = DateTime.UtcNow.AddHours(-configuration.StaleHours);
-
-        await using var serviceLayerDbContext = dbContextFactory.CreateDbContext();
 
         await RetryStaleExtractions(serviceLayerDbContext, staleDateTimeUtc);
         await RetryStaleTransformations(serviceLayerDbContext, staleDateTimeUtc);

@@ -27,7 +27,7 @@ var host = new HostBuilder()
             }).Build();
 
         // EF Core DbContext
-        services.AddDbContextFactory<ServiceLayerDbContext>(options =>
+        services.AddDbContext<ServiceLayerDbContext>(options =>
         {
             var connectionString = Environment.GetEnvironmentVariable("DatabaseConnectionString");
             if (string.IsNullOrEmpty(connectionString))

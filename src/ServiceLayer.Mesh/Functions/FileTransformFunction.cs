@@ -12,14 +12,13 @@ namespace ServiceLayer.Mesh.Functions;
 
 public class FileTransformFunction(
     ILogger<FileTransformFunction> logger,
-    IDbContextFactory<ServiceLayerDbContext> dbContextFactory,
+    ServiceLayerDbContext serviceLayerDbContext,
     IMeshFilesBlobStore meshFileBlobStore,
     IFileTransformFunctionConfiguration configuration)
 {
     [Function("FileTransformFunction")]
     public async Task Run([QueueTrigger("%FileTransformQueueName%")] FileTransformQueueMessage message)
     {
-        await using var serviceLayerDbContext = dbContextFactory.CreateDbContext();
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
         var file = await serviceLayerDbContext.MeshFiles.FirstOrDefaultAsync(f => f.FileId == message.FileId);
@@ -41,7 +40,8 @@ public class FileTransformFunction(
         var fileContent = await meshFileBlobStore.DownloadAsync(file);
 
         // TODO - take dependency on IEnumerable<IFileTransformer>.
-        // After initial common checks against database, find the appropriate implementation of IFileTransformer to handle the functionality that differs between file type.
+        // After initial common checks against database, find the appropriate implementation of IFileTransformer
+        // to handle the functionality that differs between file types.
     }
 
     private async Task UpdateFileStatusForTransformation(ServiceLayerDbContext serviceLayerDbContext, MeshFile file)

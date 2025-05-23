@@ -16,7 +16,7 @@ public class FileExtractFunction(
     ILogger<FileExtractFunction> logger,
     IFileExtractFunctionConfiguration configuration,
     IMeshInboxService meshInboxService,
-    IDbContextFactory<ServiceLayerDbContext> dbContextFactory,
+    ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
     IFileExtractQueueClient fileExtractQueueClient,
     IMeshFilesBlobStore meshFileBlobStore)
@@ -24,9 +24,8 @@ public class FileExtractFunction(
     [Function("FileExtractFunction")]
     public async Task Run([QueueTrigger("%FileExtractQueueName%")] FileExtractQueueMessage message)
     {
-        logger.LogInformation("{functionName} started at: {time}", nameof(FileDiscoveryFunction), DateTime.UtcNow);
+        logger.LogInformation("{functionName} started at: {time}", nameof(FileExtractFunction), DateTime.UtcNow);
 
-        await using var serviceLayerDbContext = dbContextFactory.CreateDbContext();
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
         var file = await GetFileAsync(serviceLayerDbContext, message.FileId);

@@ -13,7 +13,7 @@ public class FileDiscoveryFunction(
     ILogger<FileDiscoveryFunction> logger,
     IFileDiscoveryFunctionConfiguration configuration,
     IMeshInboxService meshInboxService,
-    IDbContextFactory<ServiceLayerDbContext> dbContextFactory,
+    ServiceLayerDbContext serviceLayerDbContext,
     IFileExtractQueueClient fileExtractQueueClient)
 {
     [Function("FileDiscoveryFunction")]
@@ -25,7 +25,6 @@ public class FileDiscoveryFunction(
 
         foreach (var messageId in response.Response.Messages)
         {
-            await using var serviceLayerDbContext = dbContextFactory.CreateDbContext();
             await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
             var existing = await serviceLayerDbContext.MeshFiles
