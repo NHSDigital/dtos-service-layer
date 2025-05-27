@@ -106,11 +106,11 @@ jobs:
     uses: NHSDigital/dtos-devops-templates/.github/workflows/stage-3-build.yaml@702fa9677b228272573f981025478a88d04da00e
     if: needs.metadata.outputs.does_pull_request_exist == 'true' || github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened'))
     with:
-      docker_compose_file: ./compose.yaml
       excluded_containers_csv_list: azurite,azurite-setup,sql-database,database-setup
       environment_tag: ${{ needs.metadata.outputs.environment_tag }}
       function_app_source_code_path: src
       project_name: service-layer
+      docker_compose_file_csv_list: ./compose.yaml
     secrets: inherit
   acceptance-stage: # Recommended maximum execution time is 10 minutes
     name: Acceptance stage
