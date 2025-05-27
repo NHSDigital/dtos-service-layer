@@ -2,8 +2,8 @@ services:
   api:
     container_name: "api"
     build:
-      context: ./Src
-      dockerfile: ServiceLayer.API/Dockerfile
+      context: ./src/ServiceLayer.API
+      dockerfile: Dockerfile
     platform: linux/amd64
     restart: always
     environment:
