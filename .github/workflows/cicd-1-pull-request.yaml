@@ -110,7 +110,7 @@ jobs:
       environment_tag: ${{ needs.metadata.outputs.environment_tag }}
       function_app_source_code_path: src
       project_name: service-layer
-      docker_compose_file_csv_list: ./scripts/docker/examples/sample-docker-compose.yaml
+      docker_compose_file_csv_list: templates/scripts/docker/examples/sample-docker-compose.yaml
     secrets: inherit
   acceptance-stage: # Recommended maximum execution time is 10 minutes
     name: Acceptance stage
