@@ -94,8 +94,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         // Assert
         LoggerMock.VerifyLogger(LogLevel.Error,
             $"An exception occurred during file transformation for fileId: {file.FileId}",
-            e => e is InvalidOperationException &&
-                 e.Message.StartsWith("No transformer registered to handle file type: "));
+            e => e is InvalidOperationException && e.Message.StartsWith("No transformer registered to handle file type: "));
 
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);

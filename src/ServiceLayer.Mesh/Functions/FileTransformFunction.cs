@@ -74,8 +74,7 @@ public class FileTransformFunction(
         // or are in a Transforming state and were last touched over 12 hours ago.
         var expectedStatuses = new[] { MeshFileStatus.Extracted, MeshFileStatus.Transforming };
         if (!expectedStatuses.Contains(file.Status) ||
-            (file.Status == MeshFileStatus.Transforming &&
-             file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-configuration.StaleHours)))
+            (file.Status == MeshFileStatus.Transforming && file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-configuration.StaleHours)))
         {
             logger.LogWarning(
                 "File with id: {FileId} found in MeshFiles table but is not suitable for transformation. Status: {Status}, LastUpdatedUtc: {LastUpdatedUtc}.",
@@ -118,7 +117,7 @@ public class FileTransformFunction(
         try
         {
             return fileTransformers.SingleOrDefault(t => t.CanHandle(type))
-                ?? throw new InvalidOperationException($"No transformer registered to handle file type: {type}");
+                   ?? throw new InvalidOperationException($"No transformer registered to handle file type: {type}");
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("more than one"))
         {
