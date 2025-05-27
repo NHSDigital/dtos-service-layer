@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 
-
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 
 public static class ServiceCollectionExtensions
@@ -11,7 +10,6 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IFileTransformer, FileTransformer>();
         services.AddTransient<IFileParser, FileParser>();
         services.AddTransient<IStagingPersister, StagingPersister>();
-
         services.AddSingleton<IValidationRunner, ValidationRunner>();
         services.RegisterValidators();
 

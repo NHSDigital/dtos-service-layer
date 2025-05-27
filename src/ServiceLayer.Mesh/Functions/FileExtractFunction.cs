@@ -22,7 +22,7 @@ public class FileExtractFunction(
     [Function("FileExtractFunction")]
     public async Task Run([QueueTrigger("%FileExtractQueueName%")] FileExtractQueueMessage message)
     {
-        logger.LogInformation("{functionName} started. Processing fileId: {fileId}", nameof(FileExtractFunction), message.FileId);
+        logger.LogInformation("{FunctionName} started. Processing fileId: {FileId}", nameof(FileExtractFunction), message.FileId);
 
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 

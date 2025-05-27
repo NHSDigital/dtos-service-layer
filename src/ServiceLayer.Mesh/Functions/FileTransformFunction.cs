@@ -31,7 +31,7 @@ public class FileTransformFunction(
     [Function("FileTransformFunction")]
     public async Task Run([QueueTrigger("%FileTransformQueueName%")] FileTransformQueueMessage message)
     {
-        logger.LogInformation("{functionName} started. Processing fileId: {fileId}", nameof(FileTransformFunction),
+        logger.LogInformation("{FunctionName} started. Processing fileId: {FileId}", nameof(FileTransformFunction),
             message.FileId);
 
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
@@ -62,7 +62,7 @@ public class FileTransformFunction(
 
         if (file == null)
         {
-            logger.LogWarning("File with id: {fileId} not found in MeshFiles table.", fileId);
+            logger.LogWarning("File with id: {FileId} not found in MeshFiles table.", fileId);
         }
 
         return file;
@@ -128,7 +128,7 @@ public class FileTransformFunction(
 
     private async Task HandleTransformationError(MeshFile file, FileTransformQueueMessage message, Exception ex)
     {
-        logger.LogError(ex, "An exception occurred during file transformation for fileId: {fileId}", message.FileId);
+        logger.LogError(ex, "An exception occurred during file transformation for fileId: {FileId}", message.FileId);
         file.Status = MeshFileStatus.FailedTransform;
         file.LastUpdatedUtc = DateTime.UtcNow;
         await serviceLayerDbContext.SaveChangesAsync();

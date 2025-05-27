@@ -19,7 +19,7 @@ public class FileDiscoveryFunction(
     [Function("FileDiscoveryFunction")]
     public async Task Run([TimerTrigger("%FileDiscoveryTimerExpression%")] TimerInfo myTimer)
     {
-        logger.LogInformation("{functionName} started.", nameof(FileDiscoveryFunction));
+        logger.LogInformation("{FunctionName} started.", nameof(FileDiscoveryFunction));
 
         var response = await meshInboxService.GetMessagesAsync(configuration.NbssMeshMailboxId);
 
