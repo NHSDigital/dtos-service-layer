@@ -36,7 +36,7 @@ var host = new HostBuilder()
                 throw new InvalidOperationException("The connection string has not been initialized.");
 
             options.UseSqlServer(connectionString);
-        }, ServiceLifetime.Scoped);
+        });
 
         var queueClientOptions = new QueueClientOptions
         {
