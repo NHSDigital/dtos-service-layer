@@ -8,13 +8,11 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection ConfigureNbssAppointmentEvents(this IServiceCollection services)
     {
-
         services.AddTransient<IFileTransformer, FileTransformer>();
-
         services.AddTransient<IFileParser, FileParser>();
-        services.AddTransient<IValidationRunner, ValidationRunner>();
         services.AddTransient<IStagingPersister, StagingPersister>();
 
+        services.AddSingleton<IValidationRunner, ValidationRunner>();
         services.RegisterValidators();
 
         return services;
@@ -22,10 +20,15 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection RegisterValidators(this IServiceCollection services)
     {
-        services.Scan(s => s.FromAssemblyOf<IFileValidator>()
-            .AddClasses(c => c.AssignableToAny(typeof(IFileValidator), typeof(IRecordValidator)))
-            .AsImplementedInterfaces()
-            .WithTransientLifetime());
+        foreach (var recordValidator in ValidatorRegistry.GetAllRecordValidators())
+        {
+            services.AddSingleton<IRecordValidator>(_ => recordValidator);
+        }
+
+        foreach (var fileValidator in ValidatorRegistry.GetAllFileValidators())
+        {
+            services.AddSingleton<IFileValidator>(_ => fileValidator);
+        }
 
         return services;
     }
