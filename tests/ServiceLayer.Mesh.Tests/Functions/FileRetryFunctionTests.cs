@@ -1,7 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Moq;
-using ServiceLayer.Data;
 using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Functions;
 using ServiceLayer.Mesh.Messaging;
@@ -9,38 +6,26 @@ using ServiceLayer.Mesh.Configuration;
 
 namespace ServiceLayer.Mesh.Tests.Functions;
 
-public class FileRetryFunctionTests
+public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
 {
-    private readonly Mock<ILogger<FileRetryFunction>> _loggerMock;
     private readonly Mock<IFileExtractQueueClient> _fileExtractQueueClientMock;
     private readonly Mock<IFileTransformQueueClient> _fileTransformQueueClientMock;
-    private readonly Mock<IFileRetryFunctionConfiguration> _configuration;
-    private readonly ServiceLayerDbContext _dbContext;
     private readonly FileRetryFunction _function;
 
     public FileRetryFunctionTests()
     {
-        _loggerMock = new Mock<ILogger<FileRetryFunction>>();
         _fileExtractQueueClientMock = new Mock<IFileExtractQueueClient>();
         _fileTransformQueueClientMock = new Mock<IFileTransformQueueClient>();
-        _configuration = new Mock<IFileRetryFunctionConfiguration>();
 
-        var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(warnings =>
-                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
-            .Options;
-
-        _dbContext = new ServiceLayerDbContext(options);
-
-        _configuration.Setup(c => c.StaleHours).Returns(12);
+        var configurationMock = new Mock<IFileRetryFunctionConfiguration>();
+        configurationMock.Setup(c => c.StaleHours).Returns(12);
 
         _function = new FileRetryFunction(
-            _loggerMock.Object,
-            _dbContext,
+            LoggerMock.Object,
+            DbContext,
             _fileExtractQueueClientMock.Object,
             _fileTransformQueueClientMock.Object,
-            _configuration.Object
+            configurationMock.Object
         );
     }
 
@@ -49,27 +34,17 @@ public class FileRetryFunctionTests
     [InlineData(MeshFileStatus.Extracting)]
     public async Task Run_EnqueuesDiscoveredOrExtractingFilesOlderThan12Hours(MeshFileStatus testStatus)
     {
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = "file-1",
-            Status = testStatus,
-            LastUpdatedUtc = DateTime.UtcNow.AddHours(-13)
-        };
-
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
+        // Arrange
+        var file = SaveMeshFile(testStatus, 13);
 
         // Act
         await _function.Run(null);
 
         // Assert
-        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-1")), Times.Once);
-        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == "file-1")), Times.Never);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Once);
+        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Never);
 
-        var updatedFile = await _dbContext.MeshFiles.FindAsync("file-1");
-        Assert.True(updatedFile!.LastUpdatedUtc > DateTime.UtcNow.AddMinutes(-1));
+        AssertFileUpdated(file.FileId, testStatus);
     }
 
     [Theory]
@@ -77,28 +52,17 @@ public class FileRetryFunctionTests
     [InlineData(MeshFileStatus.Transforming)]
     public async Task Run_EnqueuesExtractedOrTransformingFilesOlderThan12Hours(MeshFileStatus testStatus)
     {
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = "file-1",
-            Status = testStatus,
-            LastUpdatedUtc = DateTime.UtcNow.AddHours(-13)
-        };
-
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
+        // Arrange
+        var file = SaveMeshFile(testStatus, 13);
 
         // Act
         await _function.Run(null);
 
         // Assert
-        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == "file-1")), Times.Once);
-        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-1")), Times.Never);
+        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Once);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Never);
 
-
-        var updatedFile = await _dbContext.MeshFiles.FindAsync("file-1");
-        Assert.True(updatedFile!.LastUpdatedUtc > DateTime.UtcNow.AddMinutes(-1));
+        AssertFileUpdated(file.FileId, testStatus);
     }
 
     [Theory]
@@ -109,18 +73,7 @@ public class FileRetryFunctionTests
     public async Task Run_SkipsFreshFiles(MeshFileStatus testStatus)
     {
         // Arrange
-        var lastUpdatedUtc = DateTime.UtcNow.AddHours(-1);
-
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = "file-2",
-            Status = testStatus,
-            LastUpdatedUtc = lastUpdatedUtc
-        };
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
+        var file = SaveMeshFile(testStatus);
 
         // Act
         await _function.Run(null);
@@ -129,29 +82,23 @@ public class FileRetryFunctionTests
         _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
 
-        var updatedFile = await _dbContext.MeshFiles.FindAsync("file-2");
-        Assert.True(updatedFile!.LastUpdatedUtc == lastUpdatedUtc);
+        AssertFileUnchanged(file.FileId, file.Status, file.LastUpdatedUtc);
     }
 
-    [Fact]
-    public async Task Run_IgnoresFilesInOtherStatuses()
+    [Theory]
+    [InlineData(MeshFileStatus.Transformed)]
+    [InlineData(MeshFileStatus.FailedExtract)]
+    [InlineData(MeshFileStatus.FailedTransform)]
+    public async Task Run_IgnoresFilesInOtherStatuses(MeshFileStatus ignoredStatus)
     {
         // Arrange
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = "test-mailbox",
-            FileId = "file-5",
-            Status = MeshFileStatus.Transformed,
-            LastUpdatedUtc = DateTime.UtcNow.AddHours(-20)
-        };
-        _dbContext.MeshFiles.Add(file);
-        await _dbContext.SaveChangesAsync();
+        SaveMeshFile(ignoredStatus, 20);
 
         // Act
         await _function.Run(null);
 
         // Assert
+        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
         _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
     }
 
@@ -170,48 +117,21 @@ public class FileRetryFunctionTests
     public async Task Run_ProcessesMultipleEligibleFiles()
     {
         // Arrange
-        var files = new[]
-        {
-            new MeshFile
-            {
-                FileType = MeshFileType.NbssAppointmentEvents,
-                MailboxId = "test-mailbox",
-                FileId = "file-6",
-                Status = MeshFileStatus.Discovered,
-                LastUpdatedUtc = DateTime.UtcNow.AddHours(-13)
-            },
-            new MeshFile
-            {
-                FileType = MeshFileType.NbssAppointmentEvents,
-                MailboxId = "test-mailbox",
-                FileId = "file-7",
-                Status = MeshFileStatus.Extracted,
-                LastUpdatedUtc = DateTime.UtcNow.AddHours(-13)
-            },
-            new MeshFile
-            {
-                FileType = MeshFileType.NbssAppointmentEvents,
-                MailboxId = "test-mailbox",
-                FileId = "file-8",
-                Status = MeshFileStatus.Transforming,
-                LastUpdatedUtc = DateTime.UtcNow.AddHours(-13)
-            }
-        };
-
-        _dbContext.MeshFiles.AddRange(files);
-        await _dbContext.SaveChangesAsync();
+        var file1 = SaveMeshFile(MeshFileStatus.Discovered, 13);
+        var file2 = SaveMeshFile(MeshFileStatus.Extracted, 13);
+        var file3 = SaveMeshFile(MeshFileStatus.Transforming, 13);
 
         // Act
         await _function.Run(null);
 
         // Assert
-        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == "file-6")), Times.Once);
-        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Once);
+        _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == file1.FileId)), Times.Once);
+        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file2.FileId)), Times.Once);
+        _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file3.FileId)), Times.Once);
 
-        foreach (var fileId in new[] { "file-6", "file-7", "file-8" })
-        {
-            var updated = await _dbContext.MeshFiles.FindAsync(fileId);
-            Assert.True(updated!.LastUpdatedUtc > DateTime.UtcNow.AddMinutes(-1));
-        }
+        AssertFileUpdated(file1.FileId, MeshFileStatus.Discovered);
+        AssertFileUpdated(file2.FileId, MeshFileStatus.Extracted);
+        AssertFileUpdated(file3.FileId, MeshFileStatus.Transforming);
     }
 }
+

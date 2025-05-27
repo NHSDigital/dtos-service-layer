@@ -15,7 +15,6 @@ namespace ServiceLayer.Mesh.Tests.Functions;
 public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction>
 {
     private readonly Mock<IMeshFilesBlobStore> _blobStoreMock = new();
-    private readonly Mock<IFileTransformFunctionConfiguration> _configuration = new();
     private readonly Mock<IFileTransformQueueClient> _fileTransformQueueClientMock = new();
     private readonly FileTransformFunction _function;
     private readonly List<IFileTransformer> _fileTransformers = new();
@@ -23,14 +22,15 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
 
     public FileTransformFunctionTests()
     {
-        _configuration.Setup(c => c.StaleHours).Returns(12);
+        var functionConfigurationMock = new Mock<IFileTransformFunctionConfiguration>();
+        functionConfigurationMock.Setup(c => c.StaleHours).Returns(12);
 
         _fileTransformerMock.Setup(c => c.CanHandle(MeshFileType.NbssAppointmentEvents)).Returns(true);
         _fileTransformers.Add(_fileTransformerMock.Object);
 
         _function = new FileTransformFunction(
             LoggerMock.Object,
-            _configuration.Object,
+            functionConfigurationMock.Object,
             DbContext,
             _fileTransformQueueClientMock.Object,
             _blobStoreMock.Object,
@@ -100,7 +100,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        AssertFileStatusUpdated(file.FileId, MeshFileStatus.FailedTransform);
+        AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform);
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        AssertFileStatusUpdated(file.FileId, MeshFileStatus.FailedTransform);
+        AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        var updatedFile = AssertFileStatusUpdated(file.FileId, MeshFileStatus.FailedTransform);
+        var updatedFile = AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform);
         var savedValidationErrors = DeserializeValidationErrorsFromMeshFile(updatedFile);
         Assert.Equal(validationErrors, savedValidationErrors, new ValidationErrorComparer());
     }
@@ -188,7 +188,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         LoggerMock.VerifyNoLogs(LogLevel.Warning);
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
         _fileTransformerMock.Verify(x => x.TransformFileAsync(expectedStream, file), Times.Once);
-        AssertFileStatusUpdated(file.FileId, MeshFileStatus.Transformed);
+        AssertFileUpdated(file.FileId, MeshFileStatus.Transformed);
     }
 
     private static readonly JsonSerializerOptions ValidationErrorJsonOptions = new()

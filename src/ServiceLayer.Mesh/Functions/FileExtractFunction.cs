@@ -96,7 +96,7 @@ public class FileExtractFunction(
         var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId);
         if (!meshAcknowledgementResponse.IsSuccessful)
         {
-            logger.LogWarning($"Mesh acknowledgement failed: [ {meshAcknowledgementResponse.Error.ToFormattedString()} ].\nThis is not a fatal error so processing will continue.");
+            logger.LogWarning("Mesh acknowledgement failed: [ {ToFormattedString} ].\nThis is not a fatal error so processing will continue.", meshAcknowledgementResponse.Error.ToFormattedString());
         }
 
         file.BlobPath = blobPath;

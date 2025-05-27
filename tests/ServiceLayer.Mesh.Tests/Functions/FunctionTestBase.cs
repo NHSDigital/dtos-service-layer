@@ -37,7 +37,16 @@ public abstract class FunctionTestBase<TFunction>
         return file;
     }
 
-    protected MeshFile AssertFileStatusUpdated(string fileId, MeshFileStatus expectedStatus)
+    protected MeshFile AssertFileUnchanged(string fileId, MeshFileStatus expectedStatus,
+        DateTime expectedLastUpdatedUtc)
+    {
+        var unchanged = DbContext.MeshFiles.Single(x => x.FileId == fileId);
+        Assert.Equal(expectedStatus, unchanged.Status);
+        Assert.Equal(expectedLastUpdatedUtc, unchanged.LastUpdatedUtc);
+        return unchanged;
+    }
+
+    protected MeshFile AssertFileUpdated(string fileId, MeshFileStatus expectedStatus)
     {
         var updated = DbContext.MeshFiles.Single(x => x.FileId == fileId);
         Assert.Equal(expectedStatus, updated.Status);

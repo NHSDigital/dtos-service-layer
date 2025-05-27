@@ -1,8 +1,8 @@
-using Azure;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
 using ServiceLayer.Mesh.Configuration;
+using ServiceLayer.Mesh.Extensions;
 
 namespace ServiceLayer.Mesh.Functions
 {
@@ -22,18 +22,17 @@ namespace ServiceLayer.Mesh.Functions
 
                 if (response.IsSuccessful)
                 {
-                    logger.LogInformation("Mesh handshake completed successfully for mailbox {MailboxId}. Status: {Status}",
-                    response.Response.MailboxId, response.IsSuccessful);
+                    logger.LogInformation(
+                        "Mesh handshake completed successfully for mailbox {ConfigurationNbssMeshMailboxId}.", configuration.NbssMeshMailboxId);
                 }
                 else
                 {
-                    logger.LogWarning("Mesh handshake failed for mailbox {MailboxId}. Error: {Error}",
-                    configuration.NbssMeshMailboxId, response.Error);
+                    logger.LogWarning("Mesh handshake failed for mailbox {ConfigurationNbssMeshMailboxId}: [ {ToFormattedString} ]", configuration.NbssMeshMailboxId, response.Error.ToFormattedString());
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An error occurred during mesh handshake for mailbox {MailboxId}.", configuration.NbssMeshMailboxId);
+                logger.LogWarning(ex, "An error occurred during mesh handshake for mailbox {MailboxId}.", configuration.NbssMeshMailboxId);
             }
         }
     }

@@ -119,7 +119,7 @@ public class FileExtractFunctionTests : FunctionTestBase<FileExtractFunction>
         _meshInboxServiceMock.Verify(m => m.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(file), Times.Once);
 
-        var updatedFile = AssertFileStatusUpdated(file.FileId, MeshFileStatus.Extracted);
+        var updatedFile = AssertFileUpdated(file.FileId, MeshFileStatus.Extracted);
         Assert.Equal(blobPath, updatedFile.BlobPath);
     }
 
@@ -156,7 +156,7 @@ public class FileExtractFunctionTests : FunctionTestBase<FileExtractFunction>
         _meshInboxServiceMock.Verify(m => m.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
         _fileExtractQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
-        var updatedFile = AssertFileStatusUpdated(file.FileId, MeshFileStatus.FailedExtract);
+        var updatedFile = AssertFileUpdated(file.FileId, MeshFileStatus.FailedExtract);
         Assert.Null(updatedFile.BlobPath);
     }
 
@@ -204,7 +204,7 @@ public class FileExtractFunctionTests : FunctionTestBase<FileExtractFunction>
         _meshInboxServiceMock.Verify(m => m.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(file), Times.Once);
         _fileExtractQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Never);
-        var updatedFile = AssertFileStatusUpdated(file.FileId, MeshFileStatus.Extracted);
+        var updatedFile = AssertFileUpdated(file.FileId, MeshFileStatus.Extracted);
         Assert.Equal(blobPath, updatedFile.BlobPath);
     }
 }
