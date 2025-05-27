@@ -2,7 +2,6 @@ using Google.Protobuf.WellKnownTypes;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
 using NHS.MESH.Client.Contracts.Services;
 using ServiceLayer.Data;
 using ServiceLayer.Data.Models;
@@ -24,30 +23,30 @@ public class FileExtractFunction(
     [Function("FileExtractFunction")]
     public async Task Run([QueueTrigger("%FileExtractQueueName%")] FileExtractQueueMessage message)
     {
-        logger.LogInformation("{functionName} started at: {time}", nameof(FileExtractFunction), DateTime.UtcNow);
+        logger.LogInformation("{functionName} started.", nameof(FileExtractFunction));
 
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
-        var file = await GetFileAsync(serviceLayerDbContext, message.FileId);
+        var file = await GetFileAsync(message.FileId);
         if (file == null || !IsFileSuitableForExtraction(file))
         {
             return;
         }
 
-        await UpdateFileStatusForExtraction(serviceLayerDbContext, file);
+        await UpdateFileStatusForExtraction(file);
         await transaction.CommitAsync();
 
         try
         {
-            await ProcessFileExtraction(serviceLayerDbContext, file, message);
+            await ProcessFileExtraction(file, message);
         }
         catch (Exception ex)
         {
-            await HandleExtractionError(serviceLayerDbContext, file, message, ex);
+            await HandleExtractionError(file, message, ex);
         }
     }
 
-    private async Task<MeshFile?> GetFileAsync(ServiceLayerDbContext serviceLayerDbContext, string fileId)
+    private async Task<MeshFile?> GetFileAsync(string fileId)
     {
         var file = await serviceLayerDbContext.MeshFiles
             .FirstOrDefaultAsync(f => f.FileId == fileId);
@@ -78,14 +77,14 @@ public class FileExtractFunction(
         return true;
     }
 
-    private async Task UpdateFileStatusForExtraction(ServiceLayerDbContext serviceLayerDbContext, MeshFile file)
+    private async Task UpdateFileStatusForExtraction(MeshFile file)
     {
         file.Status = MeshFileStatus.Extracting;
         file.LastUpdatedUtc = DateTime.UtcNow;
         await serviceLayerDbContext.SaveChangesAsync();
     }
 
-    private async Task ProcessFileExtraction(ServiceLayerDbContext serviceLayerDbContext, MeshFile file, FileExtractQueueMessage message)
+    private async Task ProcessFileExtraction(MeshFile file, FileExtractQueueMessage message)
     {
         var meshResponse = await meshInboxService.GetMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
         if (!meshResponse.IsSuccessful)
@@ -109,7 +108,7 @@ public class FileExtractFunction(
         await fileTransformQueueClient.EnqueueFileTransformAsync(file);
     }
 
-    private async Task HandleExtractionError(ServiceLayerDbContext serviceLayerDbContext, MeshFile file, FileExtractQueueMessage message, Exception ex)
+    private async Task HandleExtractionError(MeshFile file, FileExtractQueueMessage message, Exception ex)
     {
         logger.LogError(ex, "An exception occurred during file extraction for fileId: {fileId}", message.FileId);
         file.Status = MeshFileStatus.FailedExtract;

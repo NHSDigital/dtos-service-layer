@@ -34,7 +34,7 @@ public class FileTransformFunction(
             return;
         }
 
-        await UpdateFileStatusForTransformation(serviceLayerDbContext, file);
+        await UpdateFileStatusForTransformation(file);
         await transaction.CommitAsync();
 
         var fileContent = await meshFileBlobStore.DownloadAsync(file);
@@ -44,7 +44,7 @@ public class FileTransformFunction(
         // to handle the functionality that differs between file types.
     }
 
-    private async Task UpdateFileStatusForTransformation(ServiceLayerDbContext serviceLayerDbContext, MeshFile file)
+    private async Task UpdateFileStatusForTransformation(MeshFile file)
     {
         file.Status = MeshFileStatus.Transforming;
         file.LastUpdatedUtc = DateTime.UtcNow;

@@ -9,50 +9,50 @@ using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Data;
 using ServiceLayer.Mesh.Storage;
+using ServiceLayer.Common;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        var environment = EnvironmentVariables.GetRequired("ASPNETCORE_ENVIRONMENT");
         var isLocalEnvironment = environment == "Development";
 
         // MESH Client config
         services
-            .AddMeshClient(_ => _.MeshApiBaseUrl = Environment.GetEnvironmentVariable("MeshApiBaseUrl"))
-            .AddMailbox(Environment.GetEnvironmentVariable("NbssMailboxId"), new NHS.MESH.Client.Configuration.MailboxConfiguration
+            .AddMeshClient(_ => _.MeshApiBaseUrl = EnvironmentVariables.GetRequired("MeshApiBaseUrl"))
+            .AddMailbox(EnvironmentVariables.GetRequired("NbssMailboxId"), new NHS.MESH.Client.Configuration.MailboxConfiguration
             {
-                Password = Environment.GetEnvironmentVariable("MeshPassword"),
-                SharedKey = Environment.GetEnvironmentVariable("MeshSharedKey"),
+                Password = EnvironmentVariables.GetRequired("MeshPassword"),
+                SharedKey = EnvironmentVariables.GetRequired("MeshSharedKey"),
             }).Build();
 
         // EF Core DbContext
         services.AddDbContext<ServiceLayerDbContext>(options =>
         {
-            var connectionString = Environment.GetEnvironmentVariable("DatabaseConnectionString");
+            var connectionString = EnvironmentVariables.GetRequired("DatabaseConnectionString");
             if (string.IsNullOrEmpty(connectionString))
                 throw new InvalidOperationException("The connection string has not been initialized.");
 
             options.UseSqlServer(connectionString);
         });
 
+        var queueClientOptions = new QueueClientOptions
+        {
+            MessageEncoding = QueueMessageEncoding.Base64
+        };
+
         // Register QueueClients as singletons
         services.AddSingleton(provider =>
         {
             if (isLocalEnvironment)
             {
-                var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
-                return new QueueServiceClient(connectionString, new QueueClientOptions
-                {
-                    MessageEncoding = QueueMessageEncoding.Base64
-                });
+                var connectionString = EnvironmentVariables.GetRequired("AzureWebJobsStorage");
+                return new QueueServiceClient(connectionString, queueClientOptions);
             }
 
-            var meshStorageAccountUrl = Environment.GetEnvironmentVariable("MeshStorageAccountUrl");
-            return new QueueServiceClient(new Uri(meshStorageAccountUrl), new DefaultAzureCredential(), new QueueClientOptions
-            {
-                MessageEncoding = QueueMessageEncoding.Base64
-            });
+            var meshStorageAccountUrl = EnvironmentVariables.GetRequired("MeshStorageAccountUrl");
+            return new QueueServiceClient(new Uri(meshStorageAccountUrl), new DefaultAzureCredential(), queueClientOptions);
         });
 
         services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();
@@ -60,12 +60,9 @@ var host = new HostBuilder()
 
         services.AddSingleton(provider =>
         {
-            var client = new BlobContainerClient(
-                Environment.GetEnvironmentVariable("AzureWebJobsStorage"),
-                Environment.GetEnvironmentVariable("BlobContainerName"));
-            client.CreateIfNotExistsAsync();
-            // might wanna make this async
-            return client;
+            return new BlobContainerClient(
+                EnvironmentVariables.GetRequired("AzureWebJobsStorage"),
+                EnvironmentVariables.GetRequired("BlobContainerName"));
         });
 
         services.AddSingleton<IMeshFilesBlobStore, MeshFilesBlobStore>();

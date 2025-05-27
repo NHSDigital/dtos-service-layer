@@ -22,11 +22,11 @@ public class FileRetryFunction(
 
         var staleDateTimeUtc = DateTime.UtcNow.AddHours(-configuration.StaleHours);
 
-        await RetryStaleExtractions(serviceLayerDbContext, staleDateTimeUtc);
-        await RetryStaleTransformations(serviceLayerDbContext, staleDateTimeUtc);
+        await RetryStaleExtractions(staleDateTimeUtc);
+        await RetryStaleTransformations(staleDateTimeUtc);
     }
 
-    private async Task RetryStaleExtractions(ServiceLayerDbContext serviceLayerDbContext, DateTime staleDateTimeUtc)
+    private async Task RetryStaleExtractions(DateTime staleDateTimeUtc)
     {
         var staleFiles = await serviceLayerDbContext.MeshFiles
             .Where(f =>
@@ -45,7 +45,7 @@ public class FileRetryFunction(
         }
     }
 
-    private async Task RetryStaleTransformations(ServiceLayerDbContext serviceLayerDbContext, DateTime staleDateTimeUtc)
+    private async Task RetryStaleTransformations(DateTime staleDateTimeUtc)
     {
         var staleFiles = await serviceLayerDbContext.MeshFiles
             .Where(f =>
