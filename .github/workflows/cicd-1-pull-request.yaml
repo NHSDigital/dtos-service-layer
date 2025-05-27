@@ -103,7 +103,7 @@ jobs:
   build-stage: # Recommended maximum execution time is 3 minutes
     name: Image build stage
     needs: [metadata, commit-stage, test-stage]
-    uses: NHSDigital/dtos-devops-templates/.github/workflows/stage-3-build.yaml@702fa9677b228272573f981025478a88d04da00e
+    uses: NHSDigital/dtos-devops-templates/.github/workflows/stage-3-build.yaml@dtoss-8958
     if: needs.metadata.outputs.does_pull_request_exist == 'true' || github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened'))
     with:
       excluded_containers_csv_list: azurite,azurite-setup,sql-database,database-setup
