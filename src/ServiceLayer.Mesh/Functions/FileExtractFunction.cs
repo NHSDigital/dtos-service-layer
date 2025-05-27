@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
 using ServiceLayer.Data;
 using ServiceLayer.Data.Models;
-using ServiceLayer.Mesh.Configuration;
+using ServiceLayer.Mesh.Extensions;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Storage;
 
@@ -13,7 +13,6 @@ namespace ServiceLayer.Mesh.Functions;
 
 public class FileExtractFunction(
     ILogger<FileExtractFunction> logger,
-    IFileExtractFunctionConfiguration configuration,
     IMeshInboxService meshInboxService,
     ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
@@ -28,12 +27,7 @@ public class FileExtractFunction(
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
         var file = await GetFileAsync(message.FileId);
-        if (file == null)
-        {
-            return;
-        }
-
-        if (!IsFileSuitableForExtraction(file))
+        if (file == null || !IsFileSuitableForExtraction(file))
         {
             return;
         }
@@ -91,18 +85,18 @@ public class FileExtractFunction(
 
     private async Task ProcessFileExtraction(MeshFile file)
     {
-        var meshResponse = await meshInboxService.GetMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
+        var meshResponse = await meshInboxService.GetMessageByIdAsync(file.MailboxId, file.FileId);
         if (!meshResponse.IsSuccessful)
         {
-            throw new InvalidOperationException($"Mesh extraction failed: {meshResponse.Error}");
+            throw new InvalidOperationException($"Mesh extraction failed: [ {meshResponse.Error.ToFormattedString()} ]");
         }
 
         var blobPath = await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
 
-        var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
+        var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId);
         if (!meshAcknowledgementResponse.IsSuccessful)
         {
-            logger.LogWarning("Mesh acknowledgement failed: {error}.\nThis is not a fatal error so processing will continue.", meshAcknowledgementResponse.Error);
+            logger.LogWarning($"Mesh acknowledgement failed: [ {meshAcknowledgementResponse.Error.ToFormattedString()} ].\nThis is not a fatal error so processing will continue.");
         }
 
         file.BlobPath = blobPath;

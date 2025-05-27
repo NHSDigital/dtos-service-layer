@@ -2,7 +2,6 @@ namespace ServiceLayer.Mesh.Configuration;
 
 public class AppConfiguration :
     IFileDiscoveryFunctionConfiguration,
-    IFileExtractFunctionConfiguration,
     IFileExtractQueueClientConfiguration,
     IFileTransformQueueClientConfiguration,
     IFileTransformFunctionConfiguration,

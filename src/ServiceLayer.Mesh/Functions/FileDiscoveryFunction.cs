@@ -23,6 +23,8 @@ namespace ServiceLayer.Mesh.Functions
 
             var response = await meshInboxService.GetMessagesAsync(configuration.NbssMeshMailboxId);
 
+            // TODO - check if response.IsSuccessful before proceeding to dereference the Response.Messages
+
             foreach (var messageId in response.Response.Messages)
             {
                 await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();

@@ -1,10 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Google.Protobuf.WellKnownTypes;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using ServiceLayer.Data;
 using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Functions;
@@ -14,35 +12,26 @@ using ServiceLayer.TestUtilities;
 
 namespace ServiceLayer.Mesh.Tests.Functions;
 
-public class FileTransformFunctionTests
+public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction>
 {
-    private readonly Mock<ILogger<FileTransformFunction>> _loggerMock = new();
     private readonly Mock<IMeshFilesBlobStore> _blobStoreMock = new();
     private readonly Mock<IFileTransformFunctionConfiguration> _configuration = new();
     private readonly Mock<IFileTransformQueueClient> _fileTransformQueueClientMock = new();
-    private readonly ServiceLayerDbContext _dbContext;
     private readonly FileTransformFunction _function;
     private readonly List<IFileTransformer> _fileTransformers = new();
     private readonly Mock<IFileTransformer> _fileTransformerMock = new();
 
     public FileTransformFunctionTests()
     {
-        var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .ConfigureWarnings(warnings =>
-                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
-            .Options;
-        _dbContext = new ServiceLayerDbContext(options);
-
         _configuration.Setup(c => c.StaleHours).Returns(12);
 
         _fileTransformerMock.Setup(c => c.CanHandle(MeshFileType.NbssAppointmentEvents)).Returns(true);
         _fileTransformers.Add(_fileTransformerMock.Object);
 
         _function = new FileTransformFunction(
-            _loggerMock.Object,
+            LoggerMock.Object,
             _configuration.Object,
-            _dbContext,
+            DbContext,
             _fileTransformQueueClientMock.Object,
             _blobStoreMock.Object,
             _fileTransformers
@@ -59,9 +48,9 @@ public class FileTransformFunctionTests
         await _function.Run(message);
 
         // Assert
-        _loggerMock.VerifyLogger(LogLevel.Warning, $"File with id: {message.FileId} not found in MeshFiles table.");
+        LoggerMock.VerifyLogger(LogLevel.Warning, $"File with id: {message.FileId} not found in MeshFiles table.");
 
-        Assert.Equal(0, _dbContext.MeshFiles.Count());
+        Assert.Equal(0, DbContext.MeshFiles.Count());
         _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
     }
 
@@ -82,7 +71,8 @@ public class FileTransformFunctionTests
         await _function.Run(message);
 
         // Assert
-        _loggerMock.VerifyLogger(LogLevel.Warning, $"File with id: {file.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}.");
+        LoggerMock.VerifyLogger(LogLevel.Warning,
+            $"File with id: {file.FileId} found in MeshFiles table but is not suitable for transformation. Status: {file.Status}, LastUpdatedUtc: {file.LastUpdatedUtc.ToTimestamp()}.");
 
         _blobStoreMock.Verify(x => x.DownloadAsync(It.IsAny<MeshFile>()), Times.Never);
         _fileTransformerMock.Verify(c => c.TransformFileAsync(It.IsAny<Stream>(), It.IsAny<MeshFile>()), Times.Never);
@@ -102,8 +92,10 @@ public class FileTransformFunctionTests
         await _function.Run(message);
 
         // Assert
-        _loggerMock.VerifyLogger(LogLevel.Error,$"An exception occurred during file transformation for fileId: {file.FileId}",
-            e => e is InvalidOperationException && e.Message.StartsWith("No transformer registered to handle file type: "));
+        LoggerMock.VerifyLogger(LogLevel.Error,
+            $"An exception occurred during file transformation for fileId: {file.FileId}",
+            e => e is InvalidOperationException &&
+                 e.Message.StartsWith("No transformer registered to handle file type: "));
 
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
@@ -127,7 +119,8 @@ public class FileTransformFunctionTests
         await _function.Run(message);
 
         // Assert
-        _loggerMock.VerifyLogger(LogLevel.Error,$"An exception occurred during file transformation for fileId: {file.FileId}",
+        LoggerMock.VerifyLogger(LogLevel.Error,
+            $"An exception occurred during file transformation for fileId: {file.FileId}",
             e => e is InvalidOperationException && e.Message.StartsWith("Multiple transformers found for file type: "));
 
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
@@ -147,8 +140,8 @@ public class FileTransformFunctionTests
 
         var validationErrors = new List<ValidationError>
         {
-            new(){ Code = "NBSSAPPT001", Error = "error message", Field = "field", RowNumber = 1},
-            new(){ Code = "NBSSAPPT002", Error = "error message 2", Field = "field 2"}
+            new() { Code = "NBSSAPPT001", Error = "error message", Field = "field", RowNumber = 1 },
+            new() { Code = "NBSSAPPT002", Error = "error message 2", Field = "field 2" }
         };
 
         _fileTransformerMock.Setup(c => c.TransformFileAsync(expectedStream, file))
@@ -160,7 +153,8 @@ public class FileTransformFunctionTests
         await _function.Run(message);
 
         // Assert
-        _loggerMock.VerifyLogger(LogLevel.Error,$"An exception occurred during file transformation for fileId: {file.FileId}",
+        LoggerMock.VerifyLogger(LogLevel.Error,
+            $"An exception occurred during file transformation for fileId: {file.FileId}",
             e => e is InvalidOperationException && e.Message.StartsWith("Validation errors encountered"));
 
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
@@ -191,33 +185,10 @@ public class FileTransformFunctionTests
         await _function.Run(message);
 
         // Assert
-        _loggerMock.VerifyNoLogs(LogLevel.Warning);
+        LoggerMock.VerifyNoLogs(LogLevel.Warning);
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
         _fileTransformerMock.Verify(x => x.TransformFileAsync(expectedStream, file), Times.Once);
         AssertFileStatusUpdated(file.FileId, MeshFileStatus.Transformed);
-    }
-
-    private MeshFile SaveMeshFile(MeshFileStatus status = MeshFileStatus.Extracted, int hoursOld = 1)
-    {
-        var file = new MeshFile
-        {
-            FileType = MeshFileType.NbssAppointmentEvents,
-            MailboxId = Guid.NewGuid().ToString(),
-            FileId = Guid.NewGuid().ToString(),
-            Status = status,
-            LastUpdatedUtc = DateTime.UtcNow.AddHours(-hoursOld),
-        };
-        _dbContext.MeshFiles.Add(file);
-        _dbContext.SaveChanges();
-        return file;
-    }
-
-    private MeshFile AssertFileStatusUpdated(string fileId, MeshFileStatus expectedStatus)
-    {
-        var updated = _dbContext.MeshFiles.Single(x => x.FileId == fileId);
-        Assert.Equal(expectedStatus, updated.Status);
-        Assert.True(updated.LastUpdatedUtc > DateTime.UtcNow.AddSeconds(-10));
-        return updated;
     }
 
     private static readonly JsonSerializerOptions ValidationErrorJsonOptions = new()
