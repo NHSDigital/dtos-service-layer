@@ -4,6 +4,6 @@ namespace ServiceLayer.Mesh;
 
 public interface IFileTransformer
 {
-    MeshFileType HandlesFileType { get; }
+    bool CanHandle(MeshFileType fileType);
     Task<IList<ValidationError>> TransformFileAsync(Stream stream, MeshFile metaData);
 }

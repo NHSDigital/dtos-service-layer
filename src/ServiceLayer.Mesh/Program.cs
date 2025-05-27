@@ -58,7 +58,6 @@ var host = new HostBuilder()
 
         services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();
         services.AddSingleton<IFileTransformQueueClient, FileTransformQueueClient>();
-        services.AddSingleton<IFileParser, FileParser>();
 
         services.AddSingleton(provider =>
         {
@@ -70,12 +69,13 @@ var host = new HostBuilder()
         services.AddSingleton<IMeshFilesBlobStore, MeshFilesBlobStore>();
 
         services.AddTransient<IFileDiscoveryFunctionConfiguration, AppConfiguration>();
-        services.AddTransient<IFileExtractFunctionConfiguration, AppConfiguration>();
         services.AddTransient<IFileExtractQueueClientConfiguration, AppConfiguration>();
         services.AddTransient<IFileTransformQueueClientConfiguration, AppConfiguration>();
         services.AddTransient<IMeshHandshakeFunctionConfiguration, AppConfiguration>();
         services.AddTransient<IFileRetryFunctionConfiguration, AppConfiguration>();
         services.AddTransient<IFileTransformFunctionConfiguration, AppConfiguration>();
+
+        services.ConfigureNbssAppointmentEvents();
     });
 
 

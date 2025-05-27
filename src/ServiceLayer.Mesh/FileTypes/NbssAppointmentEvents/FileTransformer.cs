@@ -3,31 +3,23 @@ using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 
-// TODO - NBSS appointment file specific implementation of IFileTransformer. To orchestrate parsing, validation and staging of data (delegated to separate classes)
-public class FileTransformer : IFileTransformer
+public class FileTransformer(
+    IFileParser fileParser,
+    IValidationRunner validationRunner,
+    IStagingPersister stagingPersister)
+    : FileTransformerBase
 {
-    private readonly IFileParser _fileParser;
-    private readonly IValidationRunner _validationRunner;
-    private readonly IStagingPersister _stagingPersister;
+    protected override MeshFileType HandlesFileType => MeshFileType.NbssAppointmentEvents;
 
-    public FileTransformer(IFileParser fileParser, IValidationRunner validationRunner, IStagingPersister stagingPersister)
-    {
-        _fileParser = fileParser;
-        _validationRunner = validationRunner;
-        _stagingPersister = stagingPersister;
-    }
-
-    public MeshFileType HandlesFileType => MeshFileType.NbssAppointmentEvents;
-
-    public async Task<IList<ValidationError>> TransformFileAsync(Stream stream, MeshFile metaData)
+    public override async Task<IList<ValidationError>> TransformFileAsync(Stream stream, MeshFile metaData)
     {
         // TODO - wrap this parsing in a try-catch and return a List<ValidationError> in case of any unforeseen parsing issues (file is totally unlike anything we expect)
-        var parsed = _fileParser.Parse(stream);
+        var parsed = fileParser.Parse(stream);
 
-        var validationErrors = _validationRunner.Validate(parsed);
+        var validationErrors = validationRunner.Validate(parsed);
         if (!validationErrors.Any())
         {
-            await _stagingPersister.WriteStagedData(parsed, metaData);
+            await stagingPersister.WriteStagedData(parsed, metaData);
         }
 
         return validationErrors;

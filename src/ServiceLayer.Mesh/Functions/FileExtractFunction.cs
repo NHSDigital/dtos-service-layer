@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using NHS.MESH.Client.Contracts.Services;
 using ServiceLayer.Data;
 using ServiceLayer.Data.Models;
-using ServiceLayer.Mesh.Configuration;
+using ServiceLayer.Mesh.Extensions;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Storage;
 
@@ -13,7 +13,6 @@ namespace ServiceLayer.Mesh.Functions;
 
 public class FileExtractFunction(
     ILogger<FileExtractFunction> logger,
-    IFileExtractFunctionConfiguration configuration,
     IMeshInboxService meshInboxService,
     ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
@@ -23,7 +22,7 @@ public class FileExtractFunction(
     [Function("FileExtractFunction")]
     public async Task Run([QueueTrigger("%FileExtractQueueName%")] FileExtractQueueMessage message)
     {
-        logger.LogInformation("{functionName} started.", nameof(FileExtractFunction));
+        logger.LogInformation("{FunctionName} started. Processing fileId: {FileId}", nameof(FileExtractFunction), message.FileId);
 
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
@@ -38,7 +37,7 @@ public class FileExtractFunction(
 
         try
         {
-            await ProcessFileExtraction(file, message);
+            await ProcessFileExtraction(file);
         }
         catch (Exception ex)
         {
@@ -84,20 +83,20 @@ public class FileExtractFunction(
         await serviceLayerDbContext.SaveChangesAsync();
     }
 
-    private async Task ProcessFileExtraction(MeshFile file, FileExtractQueueMessage message)
+    private async Task ProcessFileExtraction(MeshFile file)
     {
-        var meshResponse = await meshInboxService.GetMessageByIdAsync(configuration.NbssMeshMailboxId, file.FileId);
+        var meshResponse = await meshInboxService.GetMessageByIdAsync(file.MailboxId, file.FileId);
         if (!meshResponse.IsSuccessful)
         {
-            throw new InvalidOperationException($"Mesh extraction failed: {meshResponse.Error}");
+            throw new InvalidOperationException($"Mesh extraction failed: [ {meshResponse.Error.ToFormattedString()} ]");
         }
 
         var blobPath = await meshFileBlobStore.UploadAsync(file, meshResponse.Response.FileAttachment.Content);
 
-        var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(configuration.NbssMeshMailboxId, message.FileId);
+        var meshAcknowledgementResponse = await meshInboxService.AcknowledgeMessageByIdAsync(file.MailboxId, file.FileId);
         if (!meshAcknowledgementResponse.IsSuccessful)
         {
-            logger.LogWarning("Mesh acknowledgement failed: {error}.\nThis is not a fatal error so processing will continue.", meshAcknowledgementResponse.Error);
+            logger.LogWarning("Mesh acknowledgement failed: [ {ToFormattedString} ].\nThis is not a fatal error so processing will continue.", meshAcknowledgementResponse.Error.ToFormattedString());
         }
 
         file.BlobPath = blobPath;

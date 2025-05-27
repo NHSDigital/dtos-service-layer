@@ -19,10 +19,11 @@ public class FileDiscoveryFunction(
     [Function("FileDiscoveryFunction")]
     public async Task Run([TimerTrigger("%FileDiscoveryTimerExpression%")] TimerInfo myTimer)
     {
-        logger.LogInformation("{functionName} started at: {time}", nameof(FileDiscoveryFunction), DateTime.UtcNow);
+        logger.LogInformation("{FunctionName} started.", nameof(FileDiscoveryFunction));
 
         var response = await meshInboxService.GetMessagesAsync(configuration.NbssMeshMailboxId);
 
+        // TODO - check if response.IsSuccessful before proceeding to dereference the Response.Messages
         foreach (var messageId in response.Response.Messages)
         {
             await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
