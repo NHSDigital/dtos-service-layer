@@ -214,9 +214,9 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
             if (x is null || y is null) return false;
 
             return x.Field == y.Field &&
-                   x.Error == y.Error &&
-                   x.Code == y.Code &&
-                   x.RowNumber == y.RowNumber;
+                x.Error == y.Error &&
+                x.Code == y.Code &&
+                x.RowNumber == y.RowNumber;
         }
 
         public int GetHashCode(ValidationError obj)
