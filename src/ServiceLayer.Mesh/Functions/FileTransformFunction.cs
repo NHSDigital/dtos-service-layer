@@ -117,7 +117,7 @@ public class FileTransformFunction(
         try
         {
             return fileTransformers.SingleOrDefault(t => t.CanHandle(type))
-                   ?? throw new InvalidOperationException($"No transformer registered to handle file type: {type}");
+                ?? throw new InvalidOperationException($"No transformer registered to handle file type: {type}");
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("more than one"))
         {
