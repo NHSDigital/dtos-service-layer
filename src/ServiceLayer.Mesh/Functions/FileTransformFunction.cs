@@ -36,12 +36,7 @@ public class FileTransformFunction(
         await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
         var file = await GetFileAsync(message.FileId);
-        if (file == null)
-        {
-            return;
-        }
-
-        if (!IsFileSuitableForTransformation(file))
+        if (file == null || !IsFileSuitableForTransformation(file))
         {
             return;
         }

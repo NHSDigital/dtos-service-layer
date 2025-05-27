@@ -3,23 +3,36 @@ using ServiceLayer.Data.Models;
 
 namespace ServiceLayer.Mesh.Storage;
 
-public class MeshFilesBlobStore(BlobContainerClient blobContainerClient) : IMeshFilesBlobStore
+public class MeshFilesBlobStore : IMeshFilesBlobStore
 {
+    private BlobContainerClient _blobContainerClient;
+
+    public MeshFilesBlobStore(BlobContainerClient blobContainerClient)
+    {
+        _blobContainerClient = blobContainerClient;
+        EnsureContainerExists();
+    }
+
     public async Task<Stream> DownloadAsync(MeshFile file)
     {
-        var blobClient = blobContainerClient.GetBlobClient(file.BlobPath);
+        var blobClient = _blobContainerClient.GetBlobClient(file.BlobPath);
         return (await blobClient.DownloadAsync()).Value.Content;
     }
 
     public async Task<string> UploadAsync(MeshFile file, byte[] data)
     {
         var blobPath = $"{file.FileType}/{file.FileId}";
-        var blobClient = blobContainerClient.GetBlobClient(blobPath);
+        var blobClient = _blobContainerClient.GetBlobClient(blobPath);
 
         var dataStream = new MemoryStream(data);
 
         await blobClient.UploadAsync(dataStream, overwrite: true);
 
         return blobPath;
+    }
+
+    private void EnsureContainerExists()
+    {
+        _blobContainerClient.CreateIfNotExists();
     }
 }
