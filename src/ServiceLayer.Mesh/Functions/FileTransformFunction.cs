@@ -44,7 +44,8 @@ public class FileTransformFunction(
         var parsedfile = fileParser.Parse(fileContent);
 
         // TODO - take dependency on IEnumerable<IFileTransformer>.
-        // After initial common checks against database, find the appropriate implementation of IFileTransformer to handle the functionality that differs between file type.
+        // After initial common checks against database, find the appropriate implementation of IFileTransformer
+        // to handle the functionality that differs between file types.
     }
 
     private async Task UpdateFileStatusForTransformation(MeshFile file)

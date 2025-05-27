@@ -22,9 +22,8 @@ public class FileRetryFunction(
 
         var staleDateTimeUtc = DateTime.UtcNow.AddHours(-configuration.StaleHours);
 
-        await Task.WhenAll(
-            RetryStaleExtractions(staleDateTimeUtc),
-            RetryStaleTransformations(staleDateTimeUtc));
+        await RetryStaleExtractions(staleDateTimeUtc);
+        await RetryStaleTransformations(staleDateTimeUtc);
     }
 
     private async Task RetryStaleExtractions(DateTime staleDateTimeUtc)

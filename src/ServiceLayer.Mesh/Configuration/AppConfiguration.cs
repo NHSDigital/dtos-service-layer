@@ -1,3 +1,5 @@
+using ServiceLayer.Common;
+
 namespace ServiceLayer.Mesh.Configuration;
 
 public class AppConfiguration :
@@ -19,12 +21,7 @@ public class AppConfiguration :
 
     private static string GetRequired(string key)
     {
-        var value = Environment.GetEnvironmentVariable(key);
-
-        if (string.IsNullOrEmpty(value))
-        {
-            throw new InvalidOperationException($"Environment variable '{key}' is not set or is empty.");
-        }
+        var value = EnvironmentVariables.GetRequired(key);
 
         return value;
     }

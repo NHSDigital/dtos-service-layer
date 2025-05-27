@@ -7,52 +7,51 @@ using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
 
-namespace ServiceLayer.Mesh.Functions
+namespace ServiceLayer.Mesh.Functions;
+
+public class FileDiscoveryFunction(
+    ILogger<FileDiscoveryFunction> logger,
+    IFileDiscoveryFunctionConfiguration configuration,
+    IMeshInboxService meshInboxService,
+    ServiceLayerDbContext serviceLayerDbContext,
+    IFileExtractQueueClient fileExtractQueueClient)
 {
-    public class FileDiscoveryFunction(
-        ILogger<FileDiscoveryFunction> logger,
-        IFileDiscoveryFunctionConfiguration configuration,
-        IMeshInboxService meshInboxService,
-        ServiceLayerDbContext serviceLayerDbContext,
-        IFileExtractQueueClient fileExtractQueueClient)
+    [Function("FileDiscoveryFunction")]
+    public async Task Run([TimerTrigger("%FileDiscoveryTimerExpression%")] TimerInfo myTimer)
     {
-        [Function("FileDiscoveryFunction")]
-        public async Task Run([TimerTrigger("%FileDiscoveryTimerExpression%")] TimerInfo myTimer)
+        logger.LogInformation("{functionName} started at: {time}", nameof(FileDiscoveryFunction), DateTime.UtcNow);
+
+        var response = await meshInboxService.GetMessagesAsync(configuration.NbssMeshMailboxId);
+
+        foreach (var messageId in response.Response.Messages)
         {
-            logger.LogInformation("{functionName} started at: {time}", nameof(FileDiscoveryFunction), DateTime.UtcNow);
+            await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
 
-            var response = await meshInboxService.GetMessagesAsync(configuration.NbssMeshMailboxId);
+            var existing = await serviceLayerDbContext.MeshFiles
+                .AnyAsync(f => f.FileId == messageId);
 
-            foreach (var messageId in response.Response.Messages)
+            if (!existing)
             {
-                await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
-
-                var existing = await serviceLayerDbContext.MeshFiles
-                    .AnyAsync(f => f.FileId == messageId);
-
-                if (!existing)
+                var file = new MeshFile
                 {
-                    var file = new MeshFile
-                    {
-                        FileId = messageId,
-                        FileType = MeshFileType.NbssAppointmentEvents,
-                        MailboxId = configuration.NbssMeshMailboxId,
-                        Status = MeshFileStatus.Discovered,
-                        FirstSeenUtc = DateTime.UtcNow,
-                        LastUpdatedUtc = DateTime.UtcNow
-                    };
+                    FileId = messageId,
+                    FileType = MeshFileType.NbssAppointmentEvents,
+                    MailboxId = configuration.NbssMeshMailboxId,
+                    Status = MeshFileStatus.Discovered,
+                    FirstSeenUtc = DateTime.UtcNow,
+                    LastUpdatedUtc = DateTime.UtcNow
+                };
 
-                    serviceLayerDbContext.MeshFiles.Add(file);
+                serviceLayerDbContext.MeshFiles.Add(file);
 
-                    await serviceLayerDbContext.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                await serviceLayerDbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-                    await fileExtractQueueClient.EnqueueFileExtractAsync(file);
-                }
-                else
-                {
-                    await transaction.RollbackAsync();
-                }
+                await fileExtractQueueClient.EnqueueFileExtractAsync(file);
+            }
+            else
+            {
+                await transaction.RollbackAsync();
             }
         }
     }
