@@ -1,10 +1,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS installer-env
 WORKDIR /src/dotnet-function-app
 
-COPY ./ServiceLayer.API/ServiceLayer.API.csproj .
+COPY ServiceLayer.API.csproj .
 RUN dotnet restore
 
-COPY ./ServiceLayer.API/ .
+COPY . .
 
 RUN dotnet publish -c Release -o /home/site/wwwroot
 
