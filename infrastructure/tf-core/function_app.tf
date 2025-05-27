@@ -8,7 +8,6 @@ module "functionapp" {
   location            = each.value.region
 
   acr_login_server                       = "ghcr.io/nhsdigital"
-  acr_mi_client_id                       = data.azurerm_user_assigned_identity.acr_mi.client_id
   ai_connstring                          = data.azurerm_application_insights.ai.connection_string
   always_on                              = var.function_apps.always_on
   app_service_logs_disk_quota_mb         = var.function_apps.app_service_logs_disk_quota_mb
