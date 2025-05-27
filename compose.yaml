@@ -1,4 +1,11 @@
 services:
+  web:
+    image: nginx:latest
+    container_name: simple-nginx
+    ports:
+      - "8080:80"
+    restart: always
+
   api:
     container_name: "api"
     build:
