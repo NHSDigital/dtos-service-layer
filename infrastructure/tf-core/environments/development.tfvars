@@ -153,6 +153,7 @@ function_apps = {
   app_service_logs_disk_quota_mb         = 35
   app_service_logs_retention_period_days = 7
   always_on                              = true
+  cont_registry_use_mi                   = false
   docker_env_tag                         = "development"
   docker_img_prefix                      = "service-layer"
   enable_appsrv_storage                  = "false"
