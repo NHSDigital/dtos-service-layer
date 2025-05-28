@@ -7,6 +7,7 @@ module "functionapp" {
   resource_group_name = azurerm_resource_group.core[each.value.region].name
   location            = each.value.region
 
+  acr_login_server                       = "ghcr.io/nhsdigital"
   ai_connstring                          = data.azurerm_application_insights.ai.connection_string
   always_on                              = var.function_apps.always_on
   app_service_logs_disk_quota_mb         = var.function_apps.app_service_logs_disk_quota_mb
@@ -17,7 +18,7 @@ module "functionapp" {
   # azuread_group_ids                                    = each.value.azuread_group_ids
   function_app_slots                                   = var.function_app_slots
   health_check_path                                    = var.function_apps.health_check_path
-  image_name                                           = "ghcr.io/nhsdigital/${var.function_apps.docker_img_prefix}-${lower(each.value.name_suffix)}"
+  image_name                                           = "${var.function_apps.docker_img_prefix}-${lower(each.value.name_suffix)}"
   image_tag                                            = var.function_apps.docker_env_tag
   ip_restriction_default_action                        = var.function_apps.ip_restriction_default_action
   ip_restrictions                                      = each.value.ip_restrictions
