@@ -2,7 +2,7 @@ services:
   api:
     container_name: "api"
     build:
-      context: ./Src
+      context: ./src
       dockerfile: ServiceLayer.API/Dockerfile
     platform: linux/amd64
     restart: always
