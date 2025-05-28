@@ -14,7 +14,7 @@ module "functionapp" {
   app_service_logs_retention_period_days = var.function_apps.app_service_logs_retention_period_days
   app_settings                           = each.value.app_settings
   asp_id                                 = module.app-service-plan["${each.value.app_service_plan_key}-${each.value.region}"].app_service_plan_id
-  assigned_identity_ids                  = var.function_apps.cont_registry_use_mi ? [data.azurerm_user_assigned_identity.acr_mi.id] : []
+  assigned_identity_ids                  = []
   cont_registry_use_mi                   = var.function_apps.cont_registry_use_mi
   # azuread_group_ids                                    = each.value.azuread_group_ids
   function_app_slots                                   = var.function_app_slots
