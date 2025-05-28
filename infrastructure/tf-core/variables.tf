@@ -151,6 +151,7 @@ variable "function_apps" {
     always_on                              = bool
     app_service_logs_disk_quota_mb         = optional(number)
     app_service_logs_retention_period_days = optional(number)
+    cont_registry_use_mi                   = optional(bool, false)
     docker_env_tag                         = string
     docker_img_prefix                      = string
     enable_appsrv_storage                  = bool
