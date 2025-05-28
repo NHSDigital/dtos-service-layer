@@ -165,8 +165,27 @@ function_apps = {
 
   function_app_config = {
 
-
-
+    ServiceLayer = {
+      name_suffix            = "service-layer-api"
+      function_endpoint_name = "ServiceLayer"
+      app_service_plan_key   = "Default"
+      db_connection_string   = "DatabaseConnectionString"
+      env_vars = {
+        static = {
+          MeshSharedKey = "TestKey"
+          NbssMailboxId = "X26ABC1"
+        }
+        from_key_vault = {
+          # env_var_name                          = "key_vault_secret_name"
+          # FLAGSMITH_SERVER_SIDE_ENVIRONMENT_KEY = "flagsmith-server-side-environment-key"
+          # MeshPassword                          = "MeshPassword"
+        }
+        local_urls = {
+          # %s becomes the environment and region prefix (e.g. dev-uks)
+          # MeshApiBaseUrl = "https://%s-messageexchange.azurewebsites.net"
+        }
+      }
+    }
   }
 }
 
