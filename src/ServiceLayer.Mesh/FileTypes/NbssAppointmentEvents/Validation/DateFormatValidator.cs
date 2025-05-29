@@ -17,6 +17,7 @@ public class DateFormatValidator(
         {
             yield return new ValidationError
             {
+                Scope = ValidationErrorScope.Record,
                 RowNumber = fileDataRecord.RowNumber,
                 Field = fieldName,
                 Error = $"{fieldName} is missing",
@@ -29,6 +30,7 @@ public class DateFormatValidator(
         {
             yield return new ValidationError
             {
+                Scope = ValidationErrorScope.Record,
                 RowNumber = fileDataRecord.RowNumber,
                 Field = fieldName,
                 Error = $"{fieldName} is in an invalid format",
