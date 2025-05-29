@@ -1,10 +1,9 @@
 using System.Text.Json;
 using Azure.Storage.Queues;
-using Microsoft.Extensions.Logging;
 
 namespace ServiceLayer.Mesh.Messaging;
 
-public abstract class QueueClientBase(ILogger logger, QueueServiceClient queueServiceClient)
+public abstract class QueueClientBase(QueueServiceClient queueServiceClient)
 {
     private QueueClient? _queueClient;
     private QueueClient? _poisonQueueClient;
