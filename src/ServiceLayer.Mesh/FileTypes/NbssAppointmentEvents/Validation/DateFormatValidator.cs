@@ -1,45 +1,40 @@
+using System.Globalization;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
 
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 
-public class MaxLengthValidator(
+public class DateFormatValidator(
     string fieldName,
-    int maxLength,
+    string format,
     string errorCodeMissing,
-    string errorCodeTooLong,
-    bool allowEmpty = false)
-    : IRecordValidator
+    string errorCodeInvalidFormat) : IRecordValidator
 {
     public IEnumerable<ValidationError> Validate(FileDataRecord fileDataRecord)
     {
         var value = fileDataRecord[fieldName];
 
-        if (value == null || (!allowEmpty && string.IsNullOrWhiteSpace(value)))
+        if (value == null)
         {
-            var error = $"{fieldName} is missing{(allowEmpty ? "" : " or empty")}";
-
             yield return new ValidationError
             {
                 Scope = ValidationErrorScope.Record,
                 RowNumber = fileDataRecord.RowNumber,
                 Field = fieldName,
-                Error = error,
+                Error = $"{fieldName} is missing",
                 Code = errorCodeMissing,
             };
             yield break;
         }
 
-        if (value.Length > maxLength)
+        if (!DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
         {
-            var error = $"{fieldName} exceeds maximum length of {maxLength}";
-
             yield return new ValidationError
             {
                 Scope = ValidationErrorScope.Record,
                 RowNumber = fileDataRecord.RowNumber,
                 Field = fieldName,
-                Error = error,
-                Code = errorCodeTooLong,
+                Error = $"{fieldName} is in an invalid format",
+                Code = errorCodeInvalidFormat,
             };
         }
     }

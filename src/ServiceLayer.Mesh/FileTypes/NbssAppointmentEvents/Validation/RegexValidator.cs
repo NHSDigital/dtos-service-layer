@@ -20,6 +20,7 @@ public class RegexValidator(
         {
             yield return new ValidationError
             {
+                Scope = ValidationErrorScope.Record,
                 RowNumber = fileDataRecord.RowNumber,
                 Field = FieldName,
                 Error = $"{FieldName} is missing",
@@ -32,6 +33,7 @@ public class RegexValidator(
         {
             yield return new ValidationError
             {
+                Scope = ValidationErrorScope.Record,
                 RowNumber = fileDataRecord.RowNumber,
                 Field = FieldName,
                 Error = $"{FieldName} is in an invalid format",

@@ -27,7 +27,7 @@ public class MaxLengthValidatorTests
         var errors = validator.Validate(record).ToList();
 
         // Assert
-        errors.ShouldContainValidationError(FieldName, expectedError, MissingCode, 1);
+        errors.ShouldContainValidationError(FieldName, expectedError, MissingCode, ValidationErrorScope.Record, 1);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class MaxLengthValidatorTests
         var errors = validator.Validate(record).ToList();
 
         // Assert
-        errors.ShouldContainValidationError(FieldName, "TestField is missing or empty", MissingCode, 2);
+        errors.ShouldContainValidationError(FieldName, "TestField is missing or empty", MissingCode, ValidationErrorScope.Record,2);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class MaxLengthValidatorTests
         var errors = validator.Validate(record).ToList();
 
         // Assert
-        errors.ShouldContainValidationError(FieldName, $"TestField exceeds maximum length of {maxLength}", TooLongCode, 4);
+        errors.ShouldContainValidationError(FieldName, $"TestField exceeds maximum length of {maxLength}", TooLongCode, ValidationErrorScope.Record,4);
     }
 
     [Theory]

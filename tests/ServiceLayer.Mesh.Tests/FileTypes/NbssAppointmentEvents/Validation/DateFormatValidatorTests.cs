@@ -4,12 +4,12 @@ using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
 
 namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents.Validation;
 
-public partial class RegexValidatorTests
+public class DateFormatValidatorTests
 {
     private const string FieldName = "TestField";
     private const string MissingCode = "ERR001";
     private const string InvalidFormatCode = "ERR002";
-    private readonly Regex _pattern = TestRegex();
+    private const string Format = "yyyyMMdd";
 
     [Fact]
     public void Validate_NullValue_ShouldReturnMissingError()
@@ -21,18 +21,18 @@ public partial class RegexValidatorTests
         };
         record.Fields.Clear();
 
-        var validator = new RegexValidator(FieldName, _pattern, MissingCode, InvalidFormatCode);
+        var validator = new DateFormatValidator(FieldName, Format, MissingCode, InvalidFormatCode);
 
         // Act
         var errors = validator.Validate(record).ToList();
 
         // Assert
-        errors.ShouldContainValidationError(FieldName, $"{FieldName} is missing", MissingCode, ValidationErrorScope.Record,1);
+        errors.ShouldContainValidationError(FieldName, $"{FieldName} is missing", MissingCode, ValidationErrorScope.Record, 1);
     }
 
     [Theory]
     [InlineData("")]
-    [InlineData("invalid")]
+    [InlineData("20250631")]
     public void Validate_ValueNotMatchingPattern_ShouldReturnInvalidFormatError(string invalidValue)
     {
         // Arrange
@@ -42,7 +42,7 @@ public partial class RegexValidatorTests
         };
         record.Fields.Add(FieldName, invalidValue);
 
-        var validator = new RegexValidator(FieldName, _pattern, MissingCode, InvalidFormatCode);
+        var validator = new DateFormatValidator(FieldName, Format, MissingCode, InvalidFormatCode);
 
         // Act
         var errors = validator.Validate(record).ToList();
@@ -52,8 +52,8 @@ public partial class RegexValidatorTests
     }
 
     [Theory]
-    [InlineData("AB12")]
-    [InlineData("CD34")]
+    [InlineData("20250630")]
+    [InlineData("19990807")]
     public void Validate_ValueMatchingPattern_ShouldReturnNoErrors(string validValue)
     {
         var record = new FileDataRecord
@@ -62,13 +62,10 @@ public partial class RegexValidatorTests
         };
         record.Fields.Add(FieldName, validValue);
 
-        var validator = new RegexValidator(FieldName, _pattern, MissingCode, InvalidFormatCode);
+        var validator = new DateFormatValidator(FieldName, Format, MissingCode, InvalidFormatCode);
 
         var errors = validator.Validate(record).ToList();
 
         Assert.Empty(errors);
     }
-
-    [GeneratedRegex(@"^[A-Z]{2}\d{2}$", RegexOptions.Compiled)]
-    private static partial Regex TestRegex();
 }

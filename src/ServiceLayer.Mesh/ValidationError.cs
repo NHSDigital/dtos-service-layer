@@ -9,4 +9,6 @@ public class ValidationError
     public required string Code { get; set; }
 
     public required string Error { get; set; }
+
+    public required ValidationErrorScope Scope { get; set; }
 }

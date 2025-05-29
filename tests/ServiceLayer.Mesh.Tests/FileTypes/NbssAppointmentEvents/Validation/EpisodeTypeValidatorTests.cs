@@ -30,7 +30,7 @@ public class EpisodeTypeValidatorTests : ValidationTestBase
     [InlineData(" ")]       // Whitespace
     [InlineData("FG")]      // Too many characters
     [InlineData("RST")]     // Too many characters
-    public void Validate_EpisoderTypeInvalidFormat_ReturnsValidationError(string value)
+    public void Validate_EpisodeTypeInvalidFormat_ReturnsValidationError(string value)
     {
         // Arrange
         var file = ParsedFileWithModifiedRecord(r => r.Fields["Episode Type"] = value);
