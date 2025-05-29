@@ -167,7 +167,7 @@ function_apps = {
   function_app_config = {
 
     ServiceLayer = {
-      name_suffix            = "service-layer-api"
+      name_suffix            = "api"
       function_endpoint_name = "ServiceLayer"
       app_service_plan_key   = "Default"
       db_connection_string   = "DatabaseConnectionString"
