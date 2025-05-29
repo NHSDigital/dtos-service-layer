@@ -24,6 +24,7 @@ public static partial class ValidatorRegistry
                 ErrorCodes.InvalidAttendedNotScr),
             new MaxLengthValidator("Appointment ID", 27, ErrorCodes.MissingAppointmentId,
                 ErrorCodes.InvalidAppointmentId),
+            new NhsNumValidator(),
             new RegexValidator("Episode Type", EpisodeTypeRegex(), ErrorCodes.MissingEpisodeType,
                 ErrorCodes.InvalidEpisodeType),
             new MaxLengthValidator("Batch ID", 9, ErrorCodes.MissingBatchId,
