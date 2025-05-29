@@ -1,15 +1,13 @@
 using Azure.Storage.Queues;
-using Microsoft.Extensions.Logging;
 using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
 
 namespace ServiceLayer.Mesh.Messaging;
 
 public class FileExtractQueueClient(
-    ILogger<FileExtractQueueClient> logger,
     IFileExtractQueueClientConfiguration configuration,
     QueueServiceClient queueServiceClient)
-    : QueueClientBase(logger, queueServiceClient), IFileExtractQueueClient
+    : QueueClientBase(queueServiceClient), IFileExtractQueueClient
 {
     public async Task EnqueueFileExtractAsync(MeshFile file)
     {
