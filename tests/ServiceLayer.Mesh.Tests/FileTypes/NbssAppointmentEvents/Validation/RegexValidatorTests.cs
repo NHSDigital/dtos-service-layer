@@ -27,7 +27,7 @@ public class RegexValidatorTests
         var errors = validator.Validate(record).ToList();
 
         // Assert
-        errors.ShouldContainValidationError(FieldName, $"{FieldName} is missing", MissingCode, 1);
+        errors.ShouldContainValidationError(FieldName, $"{FieldName} is missing", MissingCode, ValidationErrorScope.Record,1);
     }
 
     [Theory]
@@ -48,7 +48,7 @@ public class RegexValidatorTests
         var errors = validator.Validate(record).ToList();
 
         // Assert
-        errors.ShouldContainValidationError(FieldName, $"{FieldName} is in an invalid format", InvalidFormatCode, 2);
+        errors.ShouldContainValidationError(FieldName, $"{FieldName} is in an invalid format", InvalidFormatCode,ValidationErrorScope.Record, 2);
     }
 
     [Theory]
