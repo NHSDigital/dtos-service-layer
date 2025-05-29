@@ -112,7 +112,6 @@ jobs:
       project_name: service-layer
       docker_compose_file_csv_list: ./compose.yaml
       changed_folders: ./Src/ServiceLayer.API
-      acr_name: acrukshubdevserins.azurecr.io
     secrets: inherit
   acceptance-stage: # Recommended maximum execution time is 10 minutes
     name: Acceptance stage
