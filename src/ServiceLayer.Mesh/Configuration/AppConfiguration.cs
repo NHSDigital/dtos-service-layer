@@ -1,5 +1,3 @@
-using ServiceLayer.Common;
-
 namespace ServiceLayer.Mesh.Configuration;
 
 public class AppConfiguration :
