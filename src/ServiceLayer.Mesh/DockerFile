@@ -7,7 +7,7 @@ COPY ./ServiceLayer.Mesh/ServiceLayer.Mesh.csproj .
 RUN dotnet restore
 
 COPY ./dotnet-mesh-client/ ../dotnet-mesh-client/
-COPY ./ServiceLayer.Common/ ../ServiceLayer.Common/
+COPY ./ServiceLayer.Shared/ ../ServiceLayer.Shared/
 COPY ./ServiceLayer.Mesh/ .
 
 RUN dotnet publish -c Release -o /home/site/wwwroot
