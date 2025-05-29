@@ -11,6 +11,7 @@ public partial class NhsNumValidator() :
         {
             yield return new ValidationError
             {
+                Scope = ValidationErrorScope.Record,
                 RowNumber = rowNumber,
                 Field = FieldName,
                 Error = "NHS Num has invalid check digit",

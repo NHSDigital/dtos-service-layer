@@ -20,6 +20,7 @@ public class MaxLengthValidator(
 
             yield return new ValidationError
             {
+                Scope = ValidationErrorScope.Record,
                 RowNumber = fileDataRecord.RowNumber,
                 Field = fieldName,
                 Error = error,
@@ -34,6 +35,7 @@ public class MaxLengthValidator(
 
             yield return new ValidationError
             {
+                Scope = ValidationErrorScope.Record,
                 RowNumber = fileDataRecord.RowNumber,
                 Field = fieldName,
                 Error = error,
