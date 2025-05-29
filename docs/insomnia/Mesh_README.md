@@ -20,7 +20,9 @@ This guide explains how to set up and use the Insomnia collection for testing th
 
 After starting your containers, you need to retrieve your local master key for API authentication:
 
+```bash
 podman exec -it mesh-ingest cat /azure-functions-host/Secrets/host.json
+```
 
 #### Manual extraction
 
