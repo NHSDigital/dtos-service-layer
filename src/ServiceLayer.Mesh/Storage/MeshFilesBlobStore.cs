@@ -5,7 +5,7 @@ namespace ServiceLayer.Mesh.Storage;
 
 public class MeshFilesBlobStore : IMeshFilesBlobStore
 {
-    private BlobContainerClient _blobContainerClient;
+    private readonly BlobContainerClient _blobContainerClient;
 
     public MeshFilesBlobStore(BlobContainerClient blobContainerClient)
     {
