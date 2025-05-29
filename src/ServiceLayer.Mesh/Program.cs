@@ -26,12 +26,6 @@ var host = new HostBuilder()
         services.AddNbssAppointmentEventServices();
     });
 
-
-// Application Insights isn't enabled by default. See https://aka.ms/AAt8mw4.
-// builder.Services
-//     .AddApplicationInsightsTelemetryWorkerService()
-//     .ConfigureFunctionsApplicationInsights();
-
 var app = host.Build();
 await app.RunAsync();
 return;
