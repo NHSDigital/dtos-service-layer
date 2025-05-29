@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.JavaScript;
 using System.Text.RegularExpressions;
 
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
@@ -27,6 +28,8 @@ public static partial class ValidatorRegistry
             new NhsNumValidator(),
             new RegexValidator("Episode Type", EpisodeTypeRegex(), ErrorCodes.MissingEpisodeType,
                 ErrorCodes.InvalidEpisodeType),
+            new DateFormatValidator("Episode Start", "yyyyMMdd", ErrorCodes.MissingEpisodeStart,
+                ErrorCodes.InvalidEpisodeStart),
             new MaxLengthValidator("Batch ID", 9, ErrorCodes.MissingBatchId,
                 ErrorCodes.InvalidBatchId),
             new RegexValidator("Screen or Asses", ScreenOrAssesRegex(), ErrorCodes.MissingScreenOrAsses,
@@ -37,6 +40,10 @@ public static partial class ValidatorRegistry
                 ErrorCodes.InvalidBookedBy),
             new RegexValidator("Cancelled By", CancelledByRegex(), ErrorCodes.MissingCancelledBy,
                 ErrorCodes.InvalidCancelledBy),
+            new DateFormatValidator("Appt Date", "yyyyMMdd", ErrorCodes.MissingApptDate,
+                ErrorCodes.InvalidApptDate),
+            new DateFormatValidator("Appt Time", "HHmm", ErrorCodes.MissingApptTime,
+                ErrorCodes.InvalidApptTime),
             new MaxLengthValidator("Location", 5, ErrorCodes.MissingLocation,
                 ErrorCodes.InvalidLocation),
             new MaxLengthValidator("Clinic Name", 40, ErrorCodes.MissingClinicName,
@@ -55,6 +62,8 @@ public static partial class ValidatorRegistry
                 ErrorCodes.InvalidClinicAddress5, true),
             new MaxLengthValidator("Postcode", 8, ErrorCodes.MissingPostcode,
                 ErrorCodes.InvalidPostcode, true),
+            new DateFormatValidator("Action Timestamp", "yyyyMMdd-HHmmss", ErrorCodes.MissingActionTimestamp,
+                ErrorCodes.InvalidActionTimestamp)
         ];
     }
 
