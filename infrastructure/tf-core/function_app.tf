@@ -56,7 +56,7 @@ locals {
   app_settings_common = {
     REMOTE_DEBUGGING_ENABLED            = var.function_apps.remote_debugging_enabled
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = var.function_apps.enable_appsrv_storage
-    WEBSITE_PULL_IMAGE_OVER_VNET        = var.features.private_endpoints_enabled
+    WEBSITE_PULL_IMAGE_OVER_VNET        = "false"
     FUNCTIONS_WORKER_RUNTIME            = "dotnet-isolated"
   }
 
