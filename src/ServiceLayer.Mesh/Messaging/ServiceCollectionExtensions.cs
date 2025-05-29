@@ -24,7 +24,7 @@ internal static class ServiceCollectionExtensions
             }
 
             var meshStorageAccountUrl = EnvironmentVariables.GetRequired("MeshStorageAccountUrl");
-            return new QueueServiceClient(new Uri(meshStorageAccountUrl), new DefaultAzureCredential(), queueClientOptions);
+            return new QueueServiceClient(new Uri(meshStorageAccountUrl), new ManagedIdentityCredential(), queueClientOptions);
         });
 
         services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();

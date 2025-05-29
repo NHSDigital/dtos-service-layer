@@ -20,7 +20,7 @@ internal static class ServiceCollectionExtensions
 
             var meshStorageAccountUrl = EnvironmentVariables.GetRequired("MeshStorageAccountUrl");
 
-            var serviceClient = new BlobServiceClient(new Uri(meshStorageAccountUrl), new DefaultAzureCredential());
+            var serviceClient = new BlobServiceClient(new Uri(meshStorageAccountUrl), new ManagedIdentityCredential());
             return serviceClient.GetBlobContainerClient(containerName);
         });
 
