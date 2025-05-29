@@ -139,8 +139,8 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
 
         var validationErrors = new List<ValidationError>
         {
-            new() { Code = "NBSSAPPT001", Error = "error message", Field = "field", RowNumber = 1 },
-            new() { Code = "NBSSAPPT002", Error = "error message 2", Field = "field 2" }
+            new() { Scope = ValidationErrorScope.Record, Code = "NBSSAPPT001", Error = "error message", Field = "field", RowNumber = 1 },
+            new() { Scope = ValidationErrorScope.Header, Code = "NBSSAPPT002", Error = "error message 2", Field = "field 2" }
         };
 
         _fileTransformerMock.Setup(c => c.TransformFileAsync(expectedStream, file))

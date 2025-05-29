@@ -7,6 +7,7 @@ public static class ValidationErrorAssertions
         string expectedField,
         string expectedError,
         string expectedCode,
+        ValidationErrorScope expectedScope = ValidationErrorScope.Record,
         int? expectedRowNumber = null)
     {
         var error = errors.FirstOrDefault(e =>
@@ -16,7 +17,7 @@ public static class ValidationErrorAssertions
             (expectedRowNumber == null || e.RowNumber == expectedRowNumber)
         );
 
-        Assert.True(error != null, $"Expected validation error with Field: '{expectedField}', Error: '{expectedError}', Code: '{expectedCode}'{(expectedRowNumber != null ? $", RowNumber: {expectedRowNumber}" : "")}, but none was found.");
+        Assert.True(error != null, $"Expected validation error with Scope: '{expectedScope}', Field: '{expectedField}', Error: '{expectedError}', Code: '{expectedCode}'{(expectedRowNumber != null ? $", RowNumber: {expectedRowNumber}" : "")}, but none was found.");
 
     }
 }
