@@ -1,3 +1,4 @@
+using Microsoft.Azure.Functions.Worker;
 using Moq;
 using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Functions;
@@ -38,7 +39,7 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
         var file = SaveMeshFile(testStatus, 13);
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Once);
@@ -56,7 +57,7 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
         var file = SaveMeshFile(testStatus, 13);
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Once);
@@ -76,7 +77,7 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
         var file = SaveMeshFile(testStatus);
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
@@ -95,7 +96,7 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
         SaveMeshFile(ignoredStatus, 20);
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.IsAny<MeshFile>()), Times.Never);
@@ -106,7 +107,7 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
     public async Task Run_IfNoFilesFoundDoNothing()
     {
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.IsAny<MeshFile>()), Times.Never);
@@ -122,7 +123,7 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
         var file3 = SaveMeshFile(MeshFileStatus.Transforming, 13);
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == file1.FileId)), Times.Once);
