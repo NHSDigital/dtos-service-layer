@@ -71,6 +71,8 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+    volumes:
+      - mesh-config-data:/azure-functions-host/Secrets/
     networks:
       - backend
 
@@ -141,4 +143,7 @@ volumes:
     name: azurite-data
   db-data:
     name: db-data
+    driver: local
+  mesh-config-data:
+    name: mesh-config-data
     driver: local
