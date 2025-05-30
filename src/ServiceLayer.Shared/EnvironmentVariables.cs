@@ -1,3 +1,5 @@
+namespace ServiceLayer;
+
 public static class EnvironmentVariables
 {
     /// <summary>
