@@ -1,10 +1,9 @@
 using System.Text.Json;
 using Azure.Storage.Queues;
-using Microsoft.Extensions.Logging;
 
 namespace ServiceLayer.Mesh.Messaging;
 
-public abstract class QueueClientBase(ILogger logger, QueueServiceClient queueServiceClient)
+public abstract class QueueClientBase(QueueServiceClient queueServiceClient)
 {
     private QueueClient? _queueClient;
     private QueueClient? _poisonQueueClient;
@@ -37,30 +36,13 @@ public abstract class QueueClientBase(ILogger logger, QueueServiceClient queueSe
 
     protected async Task SendJsonMessageAsync<T>(T message)
     {
-        try
-        {
-            var json = JsonSerializer.Serialize(message, QueueJsonOptions);
-            await Client.SendMessageAsync(json);
-        }
-        catch (Exception e)
-        {
-            // TODO - consider including file ID or correlation ID in error logs
-            logger.LogError(e, "Error sending message to queue {QueueName}", QueueName);
-            throw;
-        }
+        var json = JsonSerializer.Serialize(message, QueueJsonOptions);
+        await Client.SendMessageAsync(json);
     }
 
     protected async Task SendToPoisonQueueAsync<T>(T message)
     {
-        try
-        {
-            var json = JsonSerializer.Serialize(message, QueueJsonOptions);
-            await PoisonClient.SendMessageAsync(json);
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "Error sending message to poison queue {PoisonQueueName}", $"{QueueName}-poison");
-            throw;
-        }
+        var json = JsonSerializer.Serialize(message, QueueJsonOptions);
+        await PoisonClient.SendMessageAsync(json);
     }
 }

@@ -4,12 +4,12 @@ using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
 
 namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents.Validation;
 
-public class RegexValidatorTests
+public partial class RegexValidatorTests
 {
     private const string FieldName = "TestField";
     private const string MissingCode = "ERR001";
     private const string InvalidFormatCode = "ERR002";
-    private readonly Regex _pattern = new(@"^[A-Z]{2}\d{2}$", RegexOptions.Compiled);
+    private readonly Regex _pattern = TestRegex();
 
     [Fact]
     public void Validate_NullValue_ShouldReturnMissingError()
@@ -68,4 +68,7 @@ public class RegexValidatorTests
 
         Assert.Empty(errors);
     }
+
+    [GeneratedRegex(@"^[A-Z]{2}\d{2}$", RegexOptions.Compiled)]
+    private static partial Regex TestRegex();
 }
