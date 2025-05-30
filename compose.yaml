@@ -34,7 +34,7 @@ services:
     container_name: "mesh-ingest"
     build:
       context: ./src
-      dockerfile: ServiceLayer.MESH/Dockerfile
+      dockerfile: ServiceLayer.Mesh/Dockerfile
     platform: linux/amd64
     restart: always
     environment:
