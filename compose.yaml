@@ -53,10 +53,11 @@ services:
       MeshPassword: "${MeshPassword}"
       MeshSharedKey: "${MeshSharedKey}"
       AZURITE_CONNECTION_STRING: "${AZURITE_CONNECTION_STRING}"
-      MeshStorageAccountUrl: "${AZURITE_CONNECTION_STRING}"
+      MeshBlobStorageUrl: "${AZURITE_CONNECTION_STRING}"
+      MeshQueueStorageUrl: "${AZURITE_CONNECTION_STRING}"
       ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT}"
       ASPNETCORE_URLS: "http://0.0.0.0:8080"
-      BlobContainerName: "${BlobContainerName}"
+      MeshBlobContainerName: "${MeshBlobContainerName}"
     ports:
       - "${MESH_INGEST_PORT}:8080"
     healthcheck:
