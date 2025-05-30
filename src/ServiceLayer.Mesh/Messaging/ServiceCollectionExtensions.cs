@@ -23,8 +23,8 @@ internal static class ServiceCollectionExtensions
                 return new QueueServiceClient(connectionString, queueClientOptions);
             }
 
-            var meshStorageAccountUrl = EnvironmentVariables.GetRequired("MeshStorageAccountUrl");
-            return new QueueServiceClient(new Uri(meshStorageAccountUrl), new ManagedIdentityCredential(), queueClientOptions);
+            var meshQueueStorageUrl = EnvironmentVariables.GetRequired("MeshQueueStorageUrl");
+            return new QueueServiceClient(new Uri(meshQueueStorageUrl), new ManagedIdentityCredential(), queueClientOptions);
         });
 
         services.AddSingleton<IFileExtractQueueClient, FileExtractQueueClient>();

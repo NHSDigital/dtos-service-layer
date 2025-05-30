@@ -11,16 +11,16 @@ internal static class ServiceCollectionExtensions
     {
         services.AddSingleton(_ =>
         {
-            var containerName = EnvironmentVariables.GetRequired("BlobContainerName");
+            var containerName = EnvironmentVariables.GetRequired("MeshBlobContainerName");
 
             if (isLocalEnvironment)
             {
                 return new BlobContainerClient(EnvironmentVariables.GetRequired("AzureWebJobsStorage"),containerName);
             }
 
-            var meshStorageAccountUrl = EnvironmentVariables.GetRequired("MeshStorageAccountUrl");
+            var meshBlobStorageUrl = EnvironmentVariables.GetRequired("MeshBlobStorageUrl");
 
-            var serviceClient = new BlobServiceClient(new Uri(meshStorageAccountUrl), new ManagedIdentityCredential());
+            var serviceClient = new BlobServiceClient(new Uri(meshBlobStorageUrl), new ManagedIdentityCredential());
             return serviceClient.GetBlobContainerClient(containerName);
         });
 
