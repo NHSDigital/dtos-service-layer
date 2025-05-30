@@ -1,7 +1,6 @@
 using Azure.Identity;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.DependencyInjection;
-using ServiceLayer.Common;
 
 namespace ServiceLayer.Mesh.Messaging;
 

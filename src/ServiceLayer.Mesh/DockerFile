@@ -2,12 +2,12 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS installer-env
 WORKDIR /src/dotnet-function-app
 
 COPY ./dotnet-mesh-client/application/DotNetMeshClient/NHS.Mesh.Client/NHS.Mesh.Client.csproj ../dotnet-mesh-client/application/DotNetMeshClient/NHS.Mesh.Client/
-COPY ./ServiceLayer.Common/ServiceLayer.Common.csproj ../ServiceLayer.Common/
+COPY ./ServiceLayer.Shared/ServiceLayer.Shared.csproj ../ServiceLayer.Shared/
 COPY ./ServiceLayer.Mesh/ServiceLayer.Mesh.csproj .
 RUN dotnet restore
 
 COPY ./dotnet-mesh-client/ ../dotnet-mesh-client/
-COPY ./ServiceLayer.Common/ ../ServiceLayer.Common/
+COPY ./ServiceLayer.Shared/ ../ServiceLayer.Shared/
 COPY ./ServiceLayer.Mesh/ .
 
 RUN dotnet publish -c Release -o /home/site/wwwroot

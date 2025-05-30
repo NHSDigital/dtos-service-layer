@@ -5,7 +5,6 @@ using ServiceLayer;
 using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.Messaging;
 using ServiceLayer.Mesh.Storage;
-using ServiceLayer.Common;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 
 var host = new HostBuilder()

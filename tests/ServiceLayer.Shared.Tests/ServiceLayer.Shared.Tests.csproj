@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <RootNamespace>ServiceLayer.Tests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -23,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\ServiceLayer.Common\ServiceLayer.Common.csproj" />
+      <ProjectReference Include="..\..\src\ServiceLayer.Shared\ServiceLayer.Shared.csproj" />
     </ItemGroup>
 
 </Project>

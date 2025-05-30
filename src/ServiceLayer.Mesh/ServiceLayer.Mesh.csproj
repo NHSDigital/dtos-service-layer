@@ -31,7 +31,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ServiceLayer.Common\ServiceLayer.Common.csproj" />
+    <ProjectReference Include="..\ServiceLayer.Shared\ServiceLayer.Shared.csproj" />
     <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext" />
     <ProjectReference Include="..\dotnet-mesh-client\application\DotNetMeshClient\NHS.Mesh.Client\NHS.Mesh.Client.csproj" />
   </ItemGroup>

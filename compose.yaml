@@ -119,7 +119,7 @@ services:
     container_name: db-migrations
     build:
       context: .
-      dockerfile: src/ServiceLayer.Common/Dockerfile.migrations
+      dockerfile: src/ServiceLayer.Shared/Dockerfile.migrations
       args:
         DatabaseConnectionString: "${DatabaseConnectionString}"
     depends_on:

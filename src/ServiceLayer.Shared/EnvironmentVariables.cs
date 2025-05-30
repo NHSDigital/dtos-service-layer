@@ -1,5 +1,3 @@
-namespace ServiceLayer.Common;
-
 public static class EnvironmentVariables
 {
     /// <summary>
