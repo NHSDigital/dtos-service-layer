@@ -29,7 +29,7 @@ collection:
         method: POST
         body:
           mimeType: application/octet-stream
-          fileName:
+          fileName: ""
         headers:
           - name: Content-Type
             value: text/csv
@@ -210,10 +210,10 @@ collection:
         body:
           mimeType: application/json
           text: |-
-              // Replace with actual FileId from MESH inbox
+            	// Replace with actual FileId from MESH inbox
               // Get FileIds by calling: GET /messageexchange/X26ABC1/inbox
             {
-                "FileId": "159896E597B24A9F8E82F0674C10AB98"
+                "FileId": "159896E597B24A9F8E82F0674C10AB98" 
             }
         headers:
           - name: Content-Type
@@ -242,10 +242,10 @@ collection:
         body:
           mimeType: application/json
           text: |-
-              // Replace with actual FileId from MESH inbox
+            	// Replace with actual FileId from MESH inbox
               // Get FileIds by calling: GET /messageexchange/X26ABC1/inbox
             {
-                "FileId": "159896E597B24A9F8E82F0674C10AB98"
+                "FileId": "159896E597B24A9F8E82F0674C10AB98" 
             }
         headers:
           - name: Content-Type
