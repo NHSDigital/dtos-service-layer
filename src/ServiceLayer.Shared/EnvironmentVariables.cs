@@ -19,4 +19,33 @@ public static class EnvironmentVariables
 
         return value;
     }
+
+    public static int GetRequiredInt(string key)
+    {
+        var value = GetRequired(key);
+
+        if (!int.TryParse(value, out var intValue))
+        {
+            throw new InvalidOperationException($"Environment variable '{key}' is not a valid integer");
+        }
+
+        return intValue;
+    }
+
+    public static int GetOptionalInt(string key, int defaultValue)
+    {
+        var value = Environment.GetEnvironmentVariable(key);
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return defaultValue;
+        }
+
+        if (!int.TryParse(value, out var intValue))
+        {
+            throw new InvalidOperationException($"Environment variable '{key}' is not a valid integer");
+        }
+
+        return intValue;
+    }
 }

@@ -6,12 +6,16 @@ internal static class ServiceCollectionExtensions
 {
     internal static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
-        services.AddTransient<IFileDiscoveryFunctionConfiguration, AppConfiguration>();
-        services.AddTransient<IFileExtractQueueClientConfiguration, AppConfiguration>();
-        services.AddTransient<IFileTransformQueueClientConfiguration, AppConfiguration>();
-        services.AddTransient<IMeshHandshakeFunctionConfiguration, AppConfiguration>();
-        services.AddTransient<IFileRetryFunctionConfiguration, AppConfiguration>();
-        services.AddTransient<IFileTransformFunctionConfiguration, AppConfiguration>();
+        var implementationType = typeof(AppConfiguration);
+
+        var interfaces = implementationType
+            .GetInterfaces()
+            .Where(i => i.Namespace == implementationType.Namespace);
+
+        foreach (var serviceType in interfaces)
+        {
+            services.AddTransient(serviceType, implementationType);
+        }
 
         return services;
     }
