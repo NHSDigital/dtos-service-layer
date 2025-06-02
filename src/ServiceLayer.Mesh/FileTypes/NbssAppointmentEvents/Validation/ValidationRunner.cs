@@ -11,17 +11,17 @@ public class ValidationRunner(
     {
         var errors = new List<ValidationError>();
 
+        foreach (var validator in fileValidators)
+        {
+            errors.AddRange(validator.Validate(file));
+        }
+
         foreach (var dataRecord in file.DataRecords)
         {
             foreach (var recordValidator in recordValidators)
             {
                 errors.AddRange(recordValidator.Validate(dataRecord));
             }
-        }
-
-        foreach (var validator in fileValidators)
-        {
-            errors.AddRange(validator.Validate(file));
         }
 
         return errors;
