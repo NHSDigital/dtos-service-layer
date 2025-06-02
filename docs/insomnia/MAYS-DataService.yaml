@@ -29,7 +29,7 @@ collection:
         method: POST
         body:
           mimeType: application/octet-stream
-          fileName:
+          fileName: ""
         headers:
           - name: Content-Type
             value: text/csv
