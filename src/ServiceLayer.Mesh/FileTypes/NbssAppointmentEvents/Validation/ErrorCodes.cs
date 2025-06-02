@@ -71,4 +71,5 @@ public static class ErrorCodes
     public const string MissingActionTimestamp = "NBSSAPPT067";
     public const string InvalidActionTimestamp = "NBSSAPPT068";
     public const string UnknownRecordTypeIdentifier = "NBSSAPPT069";
+    public const string ValidationAborted = "NBSSAPPT999";
 }
