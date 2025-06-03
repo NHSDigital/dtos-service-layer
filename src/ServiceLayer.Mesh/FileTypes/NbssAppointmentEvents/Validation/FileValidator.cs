@@ -15,25 +15,10 @@ public partial class FileValidator : IFileValidator
 
     public IEnumerable<ValidationError> Validate(ParsedFile file)
     {
-        foreach (var error in ValidateHeaderPresence(file))
-        {
-            yield return error;
-        }
-
-        foreach (var error in ValidateTrailerPresence(file))
-        {
-            yield return error;
-        }
-
-        foreach (var error in ValidateExtractId(file))
-        {
-            yield return error;
-        }
-
-        foreach (var error in ValidateRecordCount(file))
-        {
-            yield return error;
-        }
+        return ValidateHeaderPresence(file)
+            .Concat(ValidateTrailerPresence(file))
+            .Concat(ValidateExtractId(file))
+            .Concat(ValidateRecordCount(file));
     }
 
     private static IEnumerable<ValidationError> ValidateHeaderPresence(ParsedFile file)
@@ -103,7 +88,9 @@ public partial class FileValidator : IFileValidator
                 Error = "Record count does not match value in header",
                 Scope = ValidationErrorScope.Trailer
             };
-        } else if (headerRecordCountErrors.Count == 0 && file.DataRecords.Count != int.Parse(file.FileHeader.RecordCount!))
+        }
+        else if (headerRecordCountErrors.Count == 0 &&
+            file.DataRecords.Count != int.Parse(file.FileHeader.RecordCount!))
         {
             yield return new ValidationError
             {
