@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
 using System.Text.RegularExpressions;
 
 namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
@@ -69,7 +68,7 @@ public static partial class ValidatorRegistry
 
     public static IEnumerable<IFileValidator> GetAllFileValidators()
     {
-        return [];
+        return [new FileValidator()];
     }
 
     [GeneratedRegex(@"^[BCU]$", RegexOptions.Compiled)]
