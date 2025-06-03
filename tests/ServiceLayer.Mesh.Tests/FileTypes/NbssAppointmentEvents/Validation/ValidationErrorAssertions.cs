@@ -4,7 +4,7 @@ public static class ValidationErrorAssertions
 {
     public static void ShouldContainValidationError(
         this IEnumerable<ValidationError> errors,
-        string expectedField,
+        string? expectedField,
         string expectedError,
         string expectedCode,
         ValidationErrorScope expectedScope = ValidationErrorScope.Record,
