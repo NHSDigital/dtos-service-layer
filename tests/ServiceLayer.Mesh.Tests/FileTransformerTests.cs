@@ -161,7 +161,7 @@ public class FileTransformerTests
         _fileParserMock.Setup(p => p.Parse(_testStream)).Throws(unexpectedException);
 
         // Act
-        var result = await _fileTransformer.TransformFileAsync(_testStream, null);
+        var result = await _fileTransformer.TransformFileAsync(_testStream, null!);
 
         // Assert
         Assert.Single(result);
