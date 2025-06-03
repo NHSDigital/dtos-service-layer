@@ -1,6 +1,6 @@
 services:
-  api:
-    container_name: "api"
+  svclyr-api:
+    container_name: "svclyr-api"
     build:
       context: ./src
       dockerfile: ServiceLayer.API/Dockerfile
@@ -30,8 +30,8 @@ services:
     networks:
       - backend
 
-  mesh-ingest:
-    container_name: "mesh-ingest"
+  svclyr-mesh-ingest:
+    container_name: "svclyr-mesh-ingest"
     build:
       context: ./src
       dockerfile: ServiceLayer.Mesh/Dockerfile
