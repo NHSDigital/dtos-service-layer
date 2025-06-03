@@ -109,7 +109,7 @@ public class FileExtractFunction(
 
     private async Task HandleExtractionError(MeshFile file, FileExtractQueueMessage message, Exception ex)
     {
-        logger.LogError(ex, "An exception occurred during file extraction for fileId: {fileId}", message.FileId);
+        logger.LogError(ex, "An exception occurred during file extraction for fileId: {FileId}", message.FileId);
         file.Status = MeshFileStatus.FailedExtract;
         file.LastUpdatedUtc = DateTime.UtcNow;
         await serviceLayerDbContext.SaveChangesAsync();

@@ -1,6 +1,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
+using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 using System.Globalization;
 using System.Text;
 
@@ -31,6 +32,7 @@ public class FileParser : IFileParser
 
         var rowNumber = 0;
         var fields = new List<string>();
+        var fieldsFound = false;
 
         while (csv.Read())
         {
@@ -44,9 +46,15 @@ public class FileParser : IFileParser
 
                 case FieldsIdentifier:
                     fields = ParseFields(csv);
+                    fieldsFound = true;
                     break;
 
                 case DataIdentifier:
+                    if (!fieldsFound)
+                    {
+                        throw new FileParsingException(
+                        ErrorCodes.MissingFieldHeadings, "Field headings are missing");
+                    }
                     rowNumber++;
                     result.DataRecords.Add(ParseDataRecord(csv, fields, rowNumber));
                     break;
@@ -56,7 +64,10 @@ public class FileParser : IFileParser
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Unknown record identifier: {recordIdentifier}");
+                    recordIdentifier = recordIdentifier ?? "No Record Identifier found";
+                    throw new FileParsingException(
+                        ErrorCodes.UnknownRecordTypeIdentifier,
+                        $"Unknown Record Identifier {recordIdentifier}");
             }
         }
 
@@ -96,11 +107,6 @@ public class FileParser : IFileParser
 
     private static FileDataRecord ParseDataRecord(CsvReader csv, List<string> columnHeadings, int rowNumber)
     {
-        if (columnHeadings.Count == 0)
-        {
-            throw new InvalidOperationException("Field headers (NBSSAPPT_FLDS) must appear before data records.");
-        }
-
         const int dataFieldStartIndex = 1;
 
         var record = new FileDataRecord { RowNumber = rowNumber };
@@ -140,4 +146,3 @@ public class FileParser : IFileParser
         }
     }
 }
-

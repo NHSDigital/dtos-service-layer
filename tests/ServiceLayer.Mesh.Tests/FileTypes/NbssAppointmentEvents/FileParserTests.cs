@@ -4,6 +4,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
+using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 using static ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.FileParser;
 
 namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents;
@@ -144,27 +145,29 @@ public class FileParserTests
     }
 
     [Fact]
-    public void Parse_MissingFieldsRecord_ThrowsInvalidOperationException()
+    public void Parse_MissingFieldsRecord_ThrowsFileParsingException()
     {
         // Arrange
         using var fileStream = GetTestFileStream("MissingFields.dat");
 
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => _fileParser.Parse(fileStream));
+        var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(fileStream));
 
-        Assert.Equal("Field headers (NBSSAPPT_FLDS) must appear before data records.", exception.Message);
+        Assert.Equal(ErrorCodes.MissingFieldHeadings, exception.Code);
+        Assert.Equal("Field headings are missing", exception.ErrorMessage);
     }
 
     [Fact]
-    public void Parse_UnknownRecordType_ThrowsInvalidOperationException()
+    public void Parse_UnknownRecordType_ThrowsFileParsingException()
     {
         // Arrange
         using var fileStream = GetTestFileStream("UnknownRecord.dat");
 
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => _fileParser.Parse(fileStream));
+        var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(fileStream));
 
-        Assert.Equal("Unknown record identifier: UNKNOWN_TYPE", exception.Message);
+        Assert.Equal(ErrorCodes.UnknownRecordTypeIdentifier, exception.Code);
+        Assert.Equal("Unknown Record Identifier UNKNOWN_TYPE", exception.ErrorMessage);
     }
 
     [Fact]
@@ -317,6 +320,112 @@ public class FileParserTests
         Assert.Equal("20250204", result.TransferEndDate);
         Assert.Equal("161846", result.TransferEndTime);
         Assert.Equal("000002", result.RecordCount);
+    }
+
+
+    [Fact]
+    public void Parse_DataRecordBeforeFields_ThrowsFileParsingExceptionWithCorrectCode()
+    {
+        // Arrange
+        using var stream = GetTestFileStream("DataBeforeFields.dat");
+
+        // Act & Assert
+        var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(stream));
+
+        Assert.Equal(ErrorCodes.MissingFieldHeadings, exception.Code);
+        Assert.Equal("Field headings are missing", exception.ErrorMessage);
+    }
+
+    [Fact]
+    public void Parse_UnknownRecordTypeWithNullIdentifier_ThrowsFileParsingExceptionWithNull()
+    {
+        // Arrange
+        using var stream = GetTestFileStream("NullRecordType.dat");
+
+        // Act & Assert
+        var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(stream));
+
+        Assert.Equal(ErrorCodes.UnknownRecordTypeIdentifier, exception.Code);
+        Assert.Equal("Unknown Record Identifier ", exception.ErrorMessage);
+    }
+
+    [Fact]
+    public void Parse_UnknownRecordTypeWithEmptyString_ThrowsFileParsingExceptionWithNull()
+    {
+        // Arrange
+        using var stream = GetTestFileStream("EmptyRecordType.dat");
+
+        // Act & Assert
+        var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(stream));
+
+        Assert.Equal(ErrorCodes.UnknownRecordTypeIdentifier, exception.Code);
+        Assert.Equal("Unknown Record Identifier ", exception.ErrorMessage);
+    }
+
+    [Fact]
+    public void Parse_FileParsingExceptionWithInnerException_PreservesInnerException()
+    {
+        // Arrange
+        var innerException = new InvalidOperationException("Inner error");
+
+        // Act
+        var exception = new FileParsingException("TEST001", "Test error", innerException);
+
+        // Assert
+        Assert.Equal("TEST001", exception.Code);
+        Assert.Equal("Test error", exception.ErrorMessage);
+        Assert.Equal(innerException, exception.InnerException);
+        Assert.Equal("Test error", exception.Message);
+    }
+
+    [Fact]
+    public void Parse_FileWithOnlyHeader_CompletesSuccessfully()
+    {
+        // Arrange
+        using var stream = GetTestFileStream("HeaderMapping.dat");
+
+        // Act
+        var result = _fileParser.Parse(stream);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.FileHeader);
+        Assert.Equal("NBSSAPPT_HDR", result.FileHeader.RecordTypeIdentifier);
+        Assert.Null(result.FileTrailer);
+        Assert.Empty(result.DataRecords);
+    }
+
+    [Fact]
+    public void Parse_FileWithOnlyTrailer_CompletesSuccessfully()
+    {
+        // Arrange
+        using var stream = GetTestFileStream("TrailerMapping.dat");
+
+        // Act
+        var result = _fileParser.Parse(stream);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Null(result.FileHeader);
+        Assert.NotNull(result.FileTrailer);
+        Assert.Equal("NBSSAPPT_END", result.FileTrailer.RecordTypeIdentifier);
+        Assert.Empty(result.DataRecords);
+    }
+
+    [Fact]
+    public void Parse_FileWithOnlyFields_CompletesSuccessfully()
+    {
+        // Arrange
+        using var stream = GetTestFileStream("FieldsOnly.dat");
+
+        // Act
+        var result = _fileParser.Parse(stream);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Null(result.FileHeader);
+        Assert.Null(result.FileTrailer);
+        Assert.Empty(result.DataRecords);
     }
 
     // Helper methods
