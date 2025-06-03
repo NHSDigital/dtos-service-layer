@@ -1,3 +1,5 @@
+using Moq;
+using ServiceLayer.Mesh.Configuration;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 
@@ -5,6 +7,8 @@ namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents.Validation;
 
 public abstract class ValidationTestBase
 {
+    private readonly Mock<IValidationRunnerConfiguration> _configurationMock = new();
+
     protected readonly ValidationRunner SystemUnderTest;
 
     protected ValidationTestBase()
@@ -12,7 +16,9 @@ public abstract class ValidationTestBase
         var recordValidators = ValidatorRegistry.GetAllRecordValidators();
         var fileValidators = ValidatorRegistry.GetAllFileValidators();
 
-        SystemUnderTest = new ValidationRunner(fileValidators, recordValidators);
+        _configurationMock.Setup(c => c.MaximumValidationErrors).Returns(100);
+
+        SystemUnderTest = new ValidationRunner(_configurationMock.Object, fileValidators, recordValidators);
     }
 
     protected static ParsedFile ValidParsedFile =>
