@@ -48,7 +48,7 @@ services:
       FileExtractQueueName: "${FileExtractQueueName}"
       FileTransformQueueName: "${FileTransformQueueName}"
       StaleHours: "${StaleHours}"
-      MeshApiBaseUrl: "http://mesh_sandbox:80/messageexchange"
+      MeshApiBaseUrl: "http://mesh-sandbox/messageexchange"
       NbssMailboxId: "${NbssMailboxId}"
       MeshPassword: "${MeshPassword}"
       MeshSharedKey: "${MeshSharedKey}"
@@ -70,6 +70,8 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+      mesh-sandbox:
+        condition: service_started
     networks:
       - backend
 
@@ -103,10 +105,14 @@ services:
     ports:
       - "1433:1433"
     user: "root"
-    volumes:
-      - db-data:/var/opt/mssql
+    # volumes:
+    #   - db-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f sqlservr || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "grep -q 'SQL Server is now ready for client connections' /var/opt/mssql/log/errorlog || exit 1",
+        ]
       interval: 20s
       timeout: 10s
       retries: 6
@@ -128,6 +134,28 @@ services:
       DATABASE_NAME: "${DATABASE_NAME}"
       DATABASE_USER: "${DATABASE_USER}"
       DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
+    networks:
+      - backend
+
+
+  mesh-sandbox:
+    container_name: mesh-sandbox
+    build: ../mesh-sandbox/
+    ports:
+      - "8700:80"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    environment:
+      - SHARED_KEY=TestKey
+      - SSL=no
+    volumes:
+      # mount a different mailboxes.jsonl to pre created mailboxes
+      - ../mesh-sandbox/src/mesh_sandbox/store/data/mailboxes.jsonl:/app/mesh_sandbox/store/data/mailboxes.jsonl:ro
+      - ../mesh-sandbox/src/mesh_sandbox/test_plugin:/app/mesh_sandbox/plugins:ro
+      # you can mount a directory if you want access the stored messages
+      - ../mesh-sandbox/messages:/tmp/mesh_store
     networks:
       - backend
 

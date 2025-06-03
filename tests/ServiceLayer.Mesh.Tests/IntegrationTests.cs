@@ -1,6 +1,10 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 
 namespace ServiceLayer.Mesh.Tests;
 
@@ -12,16 +16,32 @@ public class DockerComposeCollection : ICollectionFixture<DockerComposeFixture>
 [Collection("DockerComposeCollection")]
 public class IntegrationTests
 {
+    [Fact]
+    public async Task EndToEndTest()
+    {
+        // Arrange
+        await WaitForHealthyService();
+
+        // Act
+        var fileId = await SendFileToMeshInbox("KMK_20250212095121_APPT_87.dat");
+
+        // Wait to allow functions to process file
+        await Task.Delay(10000);
+
+        // Assert
+        Assert.True(await WasFileUploadedToBlobContainer(fileId));
+    }
+
     private static async Task WaitForHealthyService()
     {
-        bool environmentIsUp = false;
+        bool isServiceHealthy = false;
 
-        while (environmentIsUp == false)
+        while (isServiceHealthy == false)
         {
             var response = await HttpHelper.SendHttpRequestAsync(HttpMethod.Get, "http://localhost:7072/api/health");
             if (response.IsSuccessStatusCode)
             {
-                environmentIsUp = true;
+                isServiceHealthy = true;
             }
             else
             {
@@ -30,18 +50,7 @@ public class IntegrationTests
         }
     }
 
-    [Fact]
-    public async Task EndToEndTest()
-    {
-        // Arrange
-        await WaitForHealthyService();
-
-        await SendFileToMeshInbox("KMK_20250212095121_APPT_87.dat");
-
-        await Task.Delay(5000);
-    }
-
-    private static async Task SendFileToMeshInbox(string fileName)
+    private static async Task<string> SendFileToMeshInbox(string fileName)
     {
         byte[] binaryData = await File.ReadAllBytesAsync($"TestData/{fileName}");
         var content = new ByteArrayContent(binaryData);
@@ -60,12 +69,44 @@ public class IntegrationTests
                 headers.Add("Mex-Workflowid", "API-DOCS-TEST");
             }
         );
+
+        string responseBody = await response.Content.ReadAsStringAsync();
+
+        var responseObject = JsonSerializer.Deserialize<MeshResponse>(responseBody);
+
+        return responseObject.MessageID;
+    }
+
+    private static async Task<bool> WasFileUploadedToBlobContainer(string fileId)
+    {
+        var blobConnectionString = "";
+
+        var containerClient = new BlobContainerClient(blobConnectionString, "incoming-mesh-files");
+
+        try
+        {
+            var blobClient = containerClient.GetBlobClient($"NbssAppointmentEvents/{fileId}");
+
+            BlobProperties properties = await blobClient.GetPropertiesAsync();
+            return true; // If we get properties, the blob exists
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            return false;
+        }
+    }
+
+    public class MeshResponse
+    {
+        [JsonPropertyName("messageID")]
+        public required string MessageID { get; set; }
     }
 }
 
 public static class HttpHelper
 {
-    private static readonly HttpClient _client = new HttpClient();
+    private static readonly HttpClient _client = new();
 
     public static async Task<HttpResponseMessage> SendHttpRequestAsync(
         HttpMethod method,
@@ -78,19 +119,18 @@ public static class HttpHelper
             Content = content
         };
 
-        // Customize headers if provided
         configureHeaders?.Invoke(request.Headers);
 
         try
         {
             var response = await _client.SendAsync(request);
-            response.EnsureSuccessStatusCode(); // Throw if not a success status
+            response.EnsureSuccessStatusCode();
             return response;
         }
         catch (HttpRequestException ex)
         {
             Console.WriteLine($"HTTP Request failed: {ex.Message}");
-            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+            return new HttpResponseMessage(HttpStatusCode.InternalServerError);
         }
     }
 }
@@ -103,7 +143,7 @@ public class DockerComposeFixture : IAsyncLifetime
         var startInfo = new ProcessStartInfo
         {
             FileName = "docker",
-            Arguments = "compose up -d mesh-ingest azurite db db-migrations",
+            Arguments = "compose up -d mesh-ingest mesh-sandbox azurite db db-migrations",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
