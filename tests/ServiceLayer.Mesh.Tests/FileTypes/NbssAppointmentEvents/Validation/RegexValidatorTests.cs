@@ -56,6 +56,7 @@ public partial class RegexValidatorTests
     [InlineData("CD34")]
     public void Validate_ValueMatchingPattern_ShouldReturnNoErrors(string validValue)
     {
+        // Arrange
         var record = new FileDataRecord
         {
             RowNumber = 3
@@ -64,8 +65,10 @@ public partial class RegexValidatorTests
 
         var validator = new RegexValidator(FieldName, _pattern, MissingCode, InvalidFormatCode);
 
+        // Act
         var errors = validator.Validate(record).ToList();
 
+        // Assert
         Assert.Empty(errors);
     }
 
