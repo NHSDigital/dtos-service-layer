@@ -36,10 +36,6 @@ variables:
     value: tf_plan_core_DEV
   - name: ENVIRONMENT
     value: development
-  - name: image-hash
-    value: ${{ parameters.image-hash }}
-  - name: registry-host
-    value: ${{ parameters.registry-host }}
 
 stages:
   - stage: terraform_plan
@@ -54,6 +50,9 @@ stages:
           - checkout: self
           - checkout: dtos-devops-templates
           - template: .azuredevops/templates/steps/tf_plan.yaml@dtos-devops-templates
+            parameters:
+              image-hash: ${{ parameters.image-hash }}
+              registry-host: ${{ parameters.registry-host }}
 
   - stage: terraform_apply
     displayName: Terraform Apply
