@@ -41,11 +41,14 @@ clean:: # Remove Terraform files (terraform) - optional: terraform_dir|dir=[path
 		opts=$(or ${terraform_opts}, ${opts})
 
 _terraform: # Terraform command wrapper - mandatory: cmd=[command to execute]; optional: dir=[path to a directory where the command will be executed, relative to the project's top-level directory, default is one of the module variables or the example directory, if not set], opts=[options to pass to the Terraform command, default is none/empty]
-	# 'TERRAFORM_STACK' is passed to the functions as environment variable
-	TERRAFORM_STACK=$(or ${TERRAFORM_STACK}, $(or ${terraform_stack}, $(or ${STACK}, $(or ${stack}, scripts/terraform/examples/terraform-state-aws-s3))))
-	dir=$(or ${dir}, ${TERRAFORM_STACK})
-	source scripts/terraform/terraform.lib.sh
-	terraform-${cmd} # 'dir' and 'opts' are accessible by the function as environment variables, if set
+# 'TERRAFORM_STACK' is passed to the functions as environment variable
+	TERRAFORM_STACK="$${TERRAFORM_STACK:-$${terraform_stack:-$${STACK:-$${stack:-scripts/terraform/examples/terraform-state-aws-s3}}}}"; \
+	dir="$${dir:-$${TERRAFORM_STACK}}"; \
+	if [ ! -d "$$dir" ]; then \
+		echo "[WARNING] Terraform directory not found: $$dir. Ensure TERRAFORM_STACK is set " >&2; \
+	fi; \
+	source scripts/terraform/terraform.lib.sh; \
+	terraform-${cmd} \
 
 # ==============================================================================
 # Quality checks - please DO NOT edit this section!
@@ -67,10 +70,10 @@ terraform-example-destroy-aws-infrastructure: # Destroy example of AWS infrastru
 	make terraform-destroy opts="-auto-approve"
 
 terraform-example-clean: # Remove Terraform example files @ExamplesAndTests
-	dir=$(or ${dir}, ${TERRAFORM_STACK})
-	source scripts/terraform/terraform.lib.sh
-	terraform-clean
-	rm -f ${TERRAFORM_STACK}/.terraform.lock.hcl
+	dir="$${dir:-$${TERRAFORM_STACK}}"; \
+	source scripts/terraform/terraform.lib.sh; \
+	terraform-clean; \
+	rm -f "$${TERRAFORM_STACK}/.terraform.lock.hcl" \
 
 # ==============================================================================
 # Configuration - please DO NOT edit this section!
@@ -93,4 +96,4 @@ ${VERBOSE}.SILENT: \
 	terraform-install \
 	terraform-plan \
 	terraform-shellscript-lint \
-	terraform-validate \
+	terraform-validate
