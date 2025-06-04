@@ -262,6 +262,7 @@ variable "network_security_group_rules" {
       source_addresses  = ["0.0.0.0/0"]
       destination_fqdns = ["example.com"]
     },
+  ]
 */
 
 variable "regions" {
