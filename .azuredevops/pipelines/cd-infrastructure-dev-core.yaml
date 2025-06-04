@@ -14,14 +14,14 @@ resources:
     - repository: dtos-devops-templates
       type: github
       name: NHSDigital/dtos-devops-templates
-      ref: dtoss-9326-trigger-cd-pipeline-with-commit
+      ref: feat/dtoss-9326-trigger-cd-pipeline-with-commit
       endpoint: NHSDigital
 
 parameters:
-  - name: image-hash
+  - name: imageHash
     type: string
     default: ''
-  - name: registry-host
+  - name: registryHost
     type: string
 
 variables:
@@ -51,8 +51,8 @@ stages:
           - checkout: dtos-devops-templates
           - template: .azuredevops/templates/steps/tf_plan.yaml@dtos-devops-templates
             parameters:
-              image-hash: ${{ parameters.image-hash }}
-              registry-host: ${{ parameters.registry-host }}
+              imageHash: ${{ parameters.imageHash }}
+              registryHost: ${{ parameters.registryHost }}
 
   - stage: terraform_apply
     displayName: Terraform Apply

@@ -153,6 +153,7 @@ function_apps = {
   app_service_logs_disk_quota_mb         = 35
   app_service_logs_retention_period_days = 7
   always_on                              = true
+  cont_registry_use_mi                   = false
   docker_env_tag                         = "nft"
   docker_img_prefix                      = "service-layer"
   enable_appsrv_storage                  = "false"
@@ -165,8 +166,48 @@ function_apps = {
 
   function_app_config = {
 
+    ServiceLayerAPI = {
+      name_suffix            = "svclyr-api"
+      function_endpoint_name = "ServiceLayerAPI"
+      app_service_plan_key   = "Default"
+      env_vars = {
+        static = {
+          # env_var_name = value
+        }
+        from_key_vault = {
+          # env_var_name = "key_vault_secret_name"
+        }
+        local_urls = {
+          # %s becomes the environment and region prefix (e.g. dev-uks)
+        }
+      }
+    }
 
-
+    ServiceLayerMesh = {
+      name_suffix            = "svclyr-mesh-ingest"
+      function_endpoint_name = "ServiceLayerMesh"
+      app_service_plan_key   = "Default"
+      db_connection_string   = "DatabaseConnectionString"
+      env_vars = {
+        static = {
+          MeshApiBaseUrl               = "https://msg.intspineservices.nhs.uk"
+          FileDiscoveryTimerExpression = "0 */5 * * * *"
+          MeshHandshakeTimerExpression = "0 0 0 * * *"
+          FileRetryTimerExpression     = "0 0 * * * *"
+          FileExtractQueueName         = "file-extract"
+          FileTransformQueueName       = "file-transform"
+          StaleHours                   = "12"
+          MeshBlobContainerName        = "incoming-mesh-files"
+          MeshBlobStorageUrl           = "https://stsvclyrnftuksmeshstor.blob.core.windows.net"
+          MeshQueueStorageUrl          = "https://stsvclyrnftuksmeshstor.queue.core.windows.net"
+        }
+        from_key_vault = {
+          MeshPassword  = "MeshPassword"
+          MeshSharedKey = "MeshSharedKey"
+          NbssMailboxId = "NbssMailboxId"
+        }
+      }
+    }
   }
 }
 
@@ -192,9 +233,9 @@ sqlserver = {
     azure_services_access_enabled = true
   }
 
-  # parman database
+  # svclyr database
   dbs = {
-    parman = {
+    svclyr = {
       db_name_suffix = "service_layer_database"
       collation      = "SQL_Latin1_General_CP1_CI_AS"
       licence_type   = "LicenseIncluded"
@@ -215,17 +256,23 @@ storage_accounts = {
     public_network_access_enabled = false
     containers                    = {}
   }
-  # webapp = {
-  #   name_suffix                             = "webappstor"
-  #   account_tier                            = "Standard"
-  #   replication_type                        = "LRS"
-  #   public_network_access_enabled           = true
-  #   blob_properties_delete_retention_policy = 7
-  #   blob_properties_versioning_enabled      = false
-  #   containers = {
-  #     webapp = {
-  #       container_name = "webapp"
-  #     }
-  #   }
-  # }
+  mesh = {
+    name_suffix                             = "meshstor"
+    account_tier                            = "Standard"
+    replication_type                        = "LRS"
+    public_network_access_enabled           = true
+    blob_properties_delete_retention_policy = 7
+    blob_properties_versioning_enabled      = false
+    containers = {
+      incoming = {
+        container_name = "incoming-mesh-files"
+      }
+    }
+    queues = [
+      "file-extract",
+      "file-extract-poison",
+      "file-transform",
+      "file-transform-poison"
+    ]
+  }
 }
