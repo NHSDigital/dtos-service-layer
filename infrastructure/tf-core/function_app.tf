@@ -7,7 +7,7 @@ module "functionapp" {
   resource_group_name = azurerm_resource_group.core[each.value.region].name
   location            = each.value.region
 
-  acr_login_server                       = "https://ghcr.io/nhsdigital"
+  acr_login_server = "${var.registry_host}"
   ai_connstring                          = data.azurerm_application_insights.ai.connection_string
   always_on                              = var.function_apps.always_on
   app_service_logs_disk_quota_mb         = var.function_apps.app_service_logs_disk_quota_mb
@@ -15,11 +15,11 @@ module "functionapp" {
   app_settings                           = each.value.app_settings
   asp_id                                 = module.app-service-plan["${each.value.app_service_plan_key}-${each.value.region}"].app_service_plan_id
   cont_registry_use_mi                   = var.function_apps.cont_registry_use_mi
-  # azuread_group_ids                                    = each.value.azuread_group_ids
+  # azuread_group_ids                                   = each.value.azuread_group_ids
   function_app_slots                                   = var.function_app_slots
   health_check_path                                    = var.function_apps.health_check_path
   image_name                                           = "${var.function_apps.docker_img_prefix}-${lower(each.value.name_suffix)}"
-  image_tag                                            = var.function_apps.docker_env_tag
+  image_tag                                            = "${var.image_commit_hash}"
   ip_restriction_default_action                        = var.function_apps.ip_restriction_default_action
   ip_restrictions                                      = each.value.ip_restrictions
   log_analytics_workspace_id                           = data.terraform_remote_state.audit.outputs.log_analytics_workspace_id[local.primary_region]

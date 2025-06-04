@@ -14,13 +14,15 @@ resources:
     - repository: dtos-devops-templates
       type: github
       name: NHSDigital/dtos-devops-templates
-      ref: feat/DTOSS-9131-deploy-Service-Layer-infra
+      ref: dtoss-9326-trigger-cd-pipeline-with-commit
       endpoint: NHSDigital
 
 parameters:
   - name: image-hash
     type: string
     default: ''
+  - name: registry-host
+    type: string
 
 variables:
   - group: DEV_core_backend
@@ -36,6 +38,8 @@ variables:
     value: development
   - name: image-hash
     value: ${{ parameters.image-hash }}
+  - name: registry-host
+    value: ${{ parameters.registry-host }}
 
 stages:
   - stage: terraform_plan
