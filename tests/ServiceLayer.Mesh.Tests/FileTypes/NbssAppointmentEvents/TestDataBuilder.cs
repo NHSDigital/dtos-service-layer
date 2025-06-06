@@ -12,7 +12,7 @@ public static class TestDataBuilder
             ExtractId = "00000107",
             TransferStartDate = "20250519",
             TransferStartTime = "153806",
-            RecordCount = numberOfRecords.ToString()
+            RecordCount = numberOfRecords.ToString("D6")
         };
 
         var trailer = new FileTrailerRecord
@@ -21,7 +21,7 @@ public static class TestDataBuilder
             ExtractId = "00000107",
             TransferEndDate = "20250519",
             TransferEndTime = "153957",
-            RecordCount = numberOfRecords.ToString()
+            RecordCount = numberOfRecords.ToString("D6")
         };
 
         var dataRecords = Enumerable.Range(1, numberOfRecords)
