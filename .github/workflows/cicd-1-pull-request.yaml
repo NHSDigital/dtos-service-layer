@@ -103,7 +103,7 @@ jobs:
   build-image-stage: # Recommended maximum execution time is 3 minutes
     name: Image build stage
     needs: [metadata, commit-stage, test-stage]
-    uses: NHSDigital/dtos-devops-templates/.github/workflows/stage-3-build.yaml@main
+    uses: NHSDigital/dtos-devops-templates/.github/workflows/stage-3-build.yaml
     if: needs.metadata.outputs.does_pull_request_exist == 'true' || github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened'))
     with:
       docker_compose_file_csv_list: ./compose.yaml

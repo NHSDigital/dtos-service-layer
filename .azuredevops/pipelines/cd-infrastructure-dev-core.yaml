@@ -43,6 +43,8 @@ stages:
     condition: eq(variables['Build.Reason'], 'Manual')
     variables:
       tfVarsFile: environments/$(ENVIRONMENT).tfvars
+      imageHash: ${{ parameters.imageHash }}
+      registryHost: ${{ parameters.registryHost }}
     jobs:
       - job: init_and_plan
         displayName: Init, plan, store artifact
@@ -50,9 +52,6 @@ stages:
           - checkout: self
           - checkout: dtos-devops-templates
           - template: .azuredevops/templates/steps/tf_plan.yaml@dtos-devops-templates
-            parameters:
-              imageHash: ${{ parameters.imageHash }}
-              registryHost: ${{ parameters.registryHost }}
 
   - stage: terraform_apply
     displayName: Terraform Apply
