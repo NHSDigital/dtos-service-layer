@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.EntityFrameworkCore;
+using ServiceLayer.Data;
 
 namespace ServiceLayer.Mesh.Tests;
 
@@ -17,7 +19,7 @@ public class DockerComposeCollection : ICollectionFixture<DockerComposeFixture>
 public class IntegrationTests
 {
     [Fact]
-    public async Task EndToEndTest()
+    public async Task FileUploadedToMesh_FileIsUploadedToBlobContainerAndInsertedIntoDb()
     {
         // Arrange
         await WaitForHealthyService();
@@ -25,11 +27,13 @@ public class IntegrationTests
         // Act
         var fileId = await SendFileToMeshInbox("KMK_20250212095121_APPT_87.dat");
 
-        // Wait to allow functions to process file
-        await Task.Delay(10000);
+        // Wait to allow functions to ingest the file. The CRON timer trigger for the FileDiscovery function must be considered.
+        await Task.Delay(45000);
 
         // Assert
+        Assert.NotNull(fileId);
         Assert.True(await WasFileUploadedToBlobContainer(fileId));
+        Assert.True(await WasFileInsertedIntoDatabase(fileId));
     }
 
     private static async Task WaitForHealthyService()
@@ -45,12 +49,14 @@ public class IntegrationTests
             }
             else
             {
-                await Task.Delay(1000);
+                await Task.Delay(5000);
             }
         }
+
+        Console.WriteLine("Mesh Ingest Service is healthy and ready to start ingesting files");
     }
 
-    private static async Task<string> SendFileToMeshInbox(string fileName)
+    private static async Task<string?> SendFileToMeshInbox(string fileName)
     {
         byte[] binaryData = await File.ReadAllBytesAsync($"TestData/{fileName}");
         var content = new ByteArrayContent(binaryData);
@@ -74,7 +80,7 @@ public class IntegrationTests
 
         var responseObject = JsonSerializer.Deserialize<MeshResponse>(responseBody);
 
-        return responseObject.MessageID;
+        return responseObject?.MessageID;
     }
 
     private static async Task<bool> WasFileUploadedToBlobContainer(string fileId)
@@ -95,6 +101,18 @@ public class IntegrationTests
             Console.WriteLine($"An error occurred: {ex.Message}");
             return false;
         }
+    }
+
+    private static async Task<bool> WasFileInsertedIntoDatabase(string fileId)
+    {
+        var connectionString = "";
+        var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
+            .UseSqlServer(connectionString)
+            .Options;
+
+        var context = new ServiceLayerDbContext(options);
+
+        return await context.MeshFiles.AnyAsync(x => x.FileId == fileId);
     }
 
     public class MeshResponse
@@ -151,11 +169,17 @@ public class DockerComposeFixture : IAsyncLifetime
         };
 
         using var process = Process.Start(startInfo);
+
+        if (process == null)
+        {
+            throw new Exception("Failed to start the Docker process.");
+        }
+
         await process.WaitForExitAsync();
 
         if (process.ExitCode != 0)
         {
-            throw new Exception($"docker compose up failed, error: {process.StandardError.ReadToEnd()}");
+            throw new Exception($"Docker process started but failed, error: {process.StandardError.ReadToEnd()}");
         }
     }
 
@@ -173,6 +197,17 @@ public class DockerComposeFixture : IAsyncLifetime
         };
 
         using var process = Process.Start(stopInfo);
+
+        if (process == null)
+        {
+            throw new Exception("Failed to start the Docker process.");
+        }
+
         await process.WaitForExitAsync();
+
+        if (process.ExitCode != 0)
+        {
+            throw new Exception($"Docker process started but failed, error: {process.StandardError.ReadToEnd()}");
+        }
     }
 }
