@@ -64,7 +64,7 @@ public class FileParser : IFileParser
                     break;
 
                 default:
-                    recordIdentifier = recordIdentifier ?? "No Record Identifier found";
+                    recordIdentifier ??= "No Record Identifier found";
                     throw new FileParsingException(
                         ErrorCodes.UnknownRecordTypeIdentifier,
                         $"Unknown Record Identifier {recordIdentifier}");
