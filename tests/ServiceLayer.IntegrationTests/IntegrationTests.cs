@@ -18,6 +18,21 @@ public class DockerComposeCollection : ICollectionFixture<DockerComposeFixture>
 [Collection("DockerComposeCollection")]
 public class IntegrationTests
 {
+    private readonly string _azuriteAccountKey = Environment.GetEnvironmentVariable("AZURITE_ACCOUNT_KEY")
+        ?? throw new InvalidOperationException($"Environment variable 'AZURITE_ACCOUNT_KEY' is not set.");
+    private readonly string _azuriteAccountName = Environment.GetEnvironmentVariable("AZURITE_ACCOUNT_NAME")
+        ?? throw new InvalidOperationException($"Environment variable 'AZURITE_ACCOUNT_NAME' is not set.");
+    private readonly string _azuriteBlobPort = Environment.GetEnvironmentVariable("AZURITE_BLOB_PORT")
+        ?? throw new InvalidOperationException($"Environment variable 'AZURITE_BLOB_PORT' is not set.");
+    private readonly string _meshIngestPort = Environment.GetEnvironmentVariable("MESH_INGEST_PORT")
+        ?? throw new InvalidOperationException($"Environment variable 'MESH_INGEST_PORT' is not set.");
+    private readonly string _meshSandboxPort = Environment.GetEnvironmentVariable("MESH_SANDBOX_PORT")
+        ?? throw new InvalidOperationException($"Environment variable 'MESH_SANDBOX_PORT' is not set.");
+    private readonly string _blobContainerName = Environment.GetEnvironmentVariable("BLOB_CONTAINER_NAME")
+        ?? throw new InvalidOperationException($"Environment variable 'BLOB_CONTAINER_NAME' is not set.");
+    private readonly string _databaseConnectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
+        ?? throw new InvalidOperationException($"Environment variable 'DATABASE_CONNECTION_STRING' is not set.");
+
     [Fact]
     public async Task FileSentToMeshInbox_FileIsUploadedToBlobContainerAndInsertedIntoDb()
     {
@@ -36,13 +51,13 @@ public class IntegrationTests
         Assert.True(await WasFileInsertedIntoDatabase(fileId));
     }
 
-    private static async Task WaitForHealthyService()
+    private async Task WaitForHealthyService()
     {
         int attemptCounter = 0;
 
         while (attemptCounter < 10)
         {
-            var response = await HttpHelper.SendHttpRequestAsync(HttpMethod.Get, "http://localhost:7072/api/health");
+            var response = await HttpHelper.SendHttpRequestAsync(HttpMethod.Get, $"http://localhost:{_meshIngestPort}/api/health");
 
             if (response.IsSuccessStatusCode)
             {
@@ -59,7 +74,7 @@ public class IntegrationTests
         throw new TimeoutException("Timed out waiting on Mesh Ingest Service health check");
     }
 
-    private static async Task<string?> SendFileToMeshInbox(string fileName)
+    private async Task<string?> SendFileToMeshInbox(string fileName)
     {
         byte[] binaryData = await File.ReadAllBytesAsync($"TestData/{fileName}");
         var content = new ByteArrayContent(binaryData);
@@ -67,7 +82,7 @@ public class IntegrationTests
 
         var response = await HttpHelper.SendHttpRequestAsync(
             HttpMethod.Post,
-            "http://localhost:8700/messageexchange/X26ABC1/outbox",
+            $"http://localhost:{_meshSandboxPort}/messageexchange/X26ABC1/outbox",
             content,
             headers =>
             {
@@ -86,11 +101,11 @@ public class IntegrationTests
         return responseObject?.MessageID;
     }
 
-    private static async Task<bool> WasFileUploadedToBlobContainer(string fileId)
+    private async Task<bool> WasFileUploadedToBlobContainer(string fileId)
     {
-        var blobConnectionString = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1";
+        var blobConnectionString = $"DefaultEndpointsProtocol=http;AccountName={_azuriteAccountName};AccountKey={_azuriteAccountKey};BlobEndpoint=http://localhost:{_azuriteBlobPort}/{_azuriteAccountName}";
 
-        var containerClient = new BlobContainerClient(blobConnectionString, "incoming-mesh-files");
+        var containerClient = new BlobContainerClient(blobConnectionString, _blobContainerName);
 
         try
         {
@@ -106,11 +121,10 @@ public class IntegrationTests
         }
     }
 
-    private static async Task<bool> WasFileInsertedIntoDatabase(string fileId)
+    private async Task<bool> WasFileInsertedIntoDatabase(string fileId)
     {
-        var connectionString = "Server=localhost;Database=ServiceLayer;User Id=SA;Password=YourStrong@Passw0rd;TrustServerCertificate=True";
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
-            .UseSqlServer(connectionString)
+            .UseSqlServer(_databaseConnectionString)
             .Options;
 
         var context = new ServiceLayerDbContext(options);
