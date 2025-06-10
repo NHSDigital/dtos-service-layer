@@ -68,7 +68,12 @@ public static partial class ValidatorRegistry
 
     public static IEnumerable<IFileValidator> GetAllFileValidators()
     {
-        return [new FileValidator()];
+        return [
+            new HeaderPresenceValidator(),
+            new TrailerPresenceValidator(),
+            new ExtractIdValidator(),
+            new RecordCountValidator()
+        ];
     }
 
     [GeneratedRegex(@"^[BCU]$", RegexOptions.Compiled)]
