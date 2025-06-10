@@ -56,7 +56,7 @@ public class FileTransformer(
     private IList<ValidationError> HandleUnexpectedException(Exception ex, MeshFile metaData)
     {
         logger.LogError(ex, "System error occurred while parsing NBSS appointment file. File: {FileName}",
-            metaData?.FileId ?? "Unknown");
+            metaData.FileId);
 
         return
         [

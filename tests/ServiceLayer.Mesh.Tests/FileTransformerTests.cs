@@ -154,28 +154,6 @@ public class FileTransformerTests
     }
 
     [Fact]
-    public async Task TransformFileAsync_UnexpectedExceptionWithNullMetaData_LogsUnknownFileName()
-    {
-        // Arrange
-        var unexpectedException = new InvalidOperationException("Something went wrong");
-        _fileParserMock.Setup(p => p.Parse(_testStream)).Throws(unexpectedException);
-
-        // Act
-        var result = await _fileTransformer.TransformFileAsync(_testStream, null!);
-
-        // Assert
-        Assert.Single(result);
-        var validationError = result[0];
-        Assert.Equal(ErrorCodes.UnableToParseFile, validationError.Code);
-        Assert.Equal("Unable to parse file", validationError.Error);
-        Assert.Equal(ValidationErrorScope.File, validationError.Scope);
-
-        _loggerMock.VerifyLogger(LogLevel.Error,
-            "System error occurred while parsing NBSS appointment file. File: Unknown",
-            ex => ex == unexpectedException);
-    }
-
-    [Fact]
     public async Task TransformFileAsync_ValidationRunnerThrowsException_ReturnsSystemValidationError()
     {
         // Arrange
