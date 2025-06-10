@@ -32,7 +32,6 @@ public class FileParser : IFileParser
 
         var rowNumber = 0;
         var fields = new List<string>();
-        var fieldsFound = false;
 
         while (csv.Read())
         {
@@ -46,15 +45,9 @@ public class FileParser : IFileParser
 
                 case FieldsIdentifier:
                     fields = ParseFields(csv);
-                    fieldsFound = true;
                     break;
 
                 case DataIdentifier:
-                    if (!fieldsFound)
-                    {
-                        throw new FileParsingException(
-                        ErrorCodes.MissingFieldHeadings, "Field headings are missing");
-                    }
                     rowNumber++;
                     result.DataRecords.Add(ParseDataRecord(csv, fields, rowNumber));
                     break;
@@ -107,6 +100,11 @@ public class FileParser : IFileParser
 
     private static FileDataRecord ParseDataRecord(CsvReader csv, List<string> columnHeadings, int rowNumber)
     {
+        if (columnHeadings.Count == 0)
+        {
+            throw new FileParsingException(ErrorCodes.MissingFieldHeadings, "Field headings are missing");
+        }
+
         const int dataFieldStartIndex = 1;
 
         var record = new FileDataRecord { RowNumber = rowNumber };
