@@ -22,7 +22,7 @@ public class FileParserTests
 
     private FileStream GetTestFileStream(string fileName)
     {
-        string filePath = Path.Combine(_testDataPath, fileName);
+        var filePath = Path.Combine(_testDataPath, fileName);
         return File.OpenRead(filePath);
     }
 
@@ -154,7 +154,7 @@ public class FileParserTests
         var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(fileStream));
 
         Assert.Equal(ErrorCodes.MissingFieldHeadings, exception.Code);
-        Assert.Equal("Field headings are missing", exception.ErrorMessage);
+        Assert.Equal("Field headings are missing", exception.Message);
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public class FileParserTests
         var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(fileStream));
 
         Assert.Equal(ErrorCodes.UnknownRecordTypeIdentifier, exception.Code);
-        Assert.Equal("Unknown Record Identifier UNKNOWN_TYPE", exception.ErrorMessage);
+        Assert.Equal("Unknown Record Identifier UNKNOWN_TYPE", exception.Message);
     }
 
     [Fact]
@@ -333,7 +333,7 @@ public class FileParserTests
         var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(stream));
 
         Assert.Equal(ErrorCodes.MissingFieldHeadings, exception.Code);
-        Assert.Equal("Field headings are missing", exception.ErrorMessage);
+        Assert.Equal("Field headings are missing", exception.Message);
     }
 
     [Fact]
@@ -346,7 +346,7 @@ public class FileParserTests
         var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(stream));
 
         Assert.Equal(ErrorCodes.UnknownRecordTypeIdentifier, exception.Code);
-        Assert.Equal("Unknown Record Identifier ", exception.ErrorMessage);
+        Assert.Equal("Unknown Record Identifier ", exception.Message);
     }
 
     [Fact]
@@ -359,7 +359,7 @@ public class FileParserTests
         var exception = Assert.Throws<FileParsingException>(() => _fileParser.Parse(stream));
 
         Assert.Equal(ErrorCodes.UnknownRecordTypeIdentifier, exception.Code);
-        Assert.Equal("Unknown Record Identifier ", exception.ErrorMessage);
+        Assert.Equal("Unknown Record Identifier ", exception.Message);
     }
 
     [Fact]
@@ -373,7 +373,7 @@ public class FileParserTests
 
         // Assert
         Assert.Equal("TEST001", exception.Code);
-        Assert.Equal("Test error", exception.ErrorMessage);
+        Assert.Equal("Test error", exception.Message);
         Assert.Equal(innerException, exception.InnerException);
         Assert.Equal("Test error", exception.Message);
     }

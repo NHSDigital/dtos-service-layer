@@ -40,14 +40,14 @@ public class FileTransformer(
     private List<ValidationError> HandleFileParsingException(FileParsingException ex)
     {
         logger.LogError("File parsing failed with validation error. Code: {ErrorCode}, Message: {ErrorMessage}",
-            ex.Code, ex.ErrorMessage);
+            ex.Code, ex.Message);
 
         return
         [
             new ValidationError
             {
                 Code = ex.Code,
-                Error = ex.ErrorMessage,
+                Error = ex.Message,
                 Scope = ValidationErrorScope.File
             }
         ];

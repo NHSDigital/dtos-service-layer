@@ -3,19 +3,17 @@ namespace ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents;
 public class FileParsingException : Exception
 {
     public string Code { get; }
-    public string ErrorMessage { get; }
 
-    public FileParsingException(string code, string errorMessage)
-        : base(errorMessage)
+    public FileParsingException(string code, string message)
+        : base(message)
     {
         Code = code;
-        ErrorMessage = errorMessage;
     }
 
-    public FileParsingException(string code, string errorMessage, Exception innerException)
-        : base(errorMessage, innerException)
+    public FileParsingException(string code, string message, Exception innerException)
+        : base(message, innerException)
     {
         Code = code;
-        ErrorMessage = errorMessage;
     }
 }
+
