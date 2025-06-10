@@ -14,6 +14,12 @@ public class HeaderFieldRegexValidator(
 {
     public IEnumerable<ValidationError> Validate(ParsedFile file)
     {
+        if (file.FileHeader == null)
+        {
+            yield break;
+        }
+
+        var hasErrored = false;
         var header = file.FileHeader!;
         var value = fieldSelector.Compile().Invoke(header);
 
@@ -31,6 +37,7 @@ public class HeaderFieldRegexValidator(
 
         if (!pattern.IsMatch(value))
         {
+            hasErrored = true;
             yield return new ValidationError
             {
                 Scope = ValidationErrorScope.Header,
@@ -39,5 +46,15 @@ public class HeaderFieldRegexValidator(
                 Code = errorCodeInvalidFormat,
             };
         }
+
+        foreach (var additionalError in RunAdditionalChecks(file, value, hasErrored))
+        {
+            yield return additionalError;
+        }
+    }
+
+    protected virtual IEnumerable<ValidationError> RunAdditionalChecks(ParsedFile file, string value, bool hasErrored)
+    {
+        yield break;
     }
 }
