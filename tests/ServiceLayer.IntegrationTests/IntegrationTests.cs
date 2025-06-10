@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,8 +6,9 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Data;
+using ServiceLayer.TestUtilities;
 
-namespace ServiceLayer.Mesh.Tests;
+namespace ServiceLayer.IntegrationTests;
 
 [CollectionDefinition("DockerComposeCollection")]
 public class DockerComposeCollection : ICollectionFixture<DockerComposeFixture>
@@ -19,7 +19,7 @@ public class DockerComposeCollection : ICollectionFixture<DockerComposeFixture>
 public class IntegrationTests
 {
     [Fact]
-    public async Task FileUploadedToMesh_FileIsUploadedToBlobContainerAndInsertedIntoDb()
+    public async Task FileSentToMeshInbox_FileIsUploadedToBlobContainerAndInsertedIntoDb()
     {
         // Arrange
         await WaitForHealthyService();
@@ -38,22 +38,25 @@ public class IntegrationTests
 
     private static async Task WaitForHealthyService()
     {
-        bool isServiceHealthy = false;
+        int attemptCounter = 0;
 
-        while (isServiceHealthy == false)
+        while (attemptCounter < 10)
         {
             var response = await HttpHelper.SendHttpRequestAsync(HttpMethod.Get, "http://localhost:7072/api/health");
+
             if (response.IsSuccessStatusCode)
             {
-                isServiceHealthy = true;
+                Console.WriteLine("Mesh Ingest Service is healthy and ready to start ingesting files.");
+                return;
             }
-            else
-            {
-                await Task.Delay(5000);
-            }
+
+            Console.WriteLine("Mesh Ingest Service is unhealthy");
+            attemptCounter++;
+            await Task.Delay(5000);
         }
 
-        Console.WriteLine("Mesh Ingest Service is healthy and ready to start ingesting files");
+        Console.WriteLine("Max attempts reached. Mesh Ingest Service is still unhealthy.");
+        throw new TimeoutException("Timed out waiting on Mesh Ingest Service health check");
     }
 
     private static async Task<string?> SendFileToMeshInbox(string fileName)
@@ -85,7 +88,7 @@ public class IntegrationTests
 
     private static async Task<bool> WasFileUploadedToBlobContainer(string fileId)
     {
-        var blobConnectionString = "";
+        var blobConnectionString = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1";
 
         var containerClient = new BlobContainerClient(blobConnectionString, "incoming-mesh-files");
 
@@ -105,7 +108,7 @@ public class IntegrationTests
 
     private static async Task<bool> WasFileInsertedIntoDatabase(string fileId)
     {
-        var connectionString = "";
+        var connectionString = "Server=localhost;Database=ServiceLayer;User Id=SA;Password=YourStrong@Passw0rd;TrustServerCertificate=True";
         var options = new DbContextOptionsBuilder<ServiceLayerDbContext>()
             .UseSqlServer(connectionString)
             .Options;
@@ -119,37 +122,6 @@ public class IntegrationTests
     {
         [JsonPropertyName("messageID")]
         public required string MessageID { get; set; }
-    }
-}
-
-public static class HttpHelper
-{
-    private static readonly HttpClient _client = new();
-
-    public static async Task<HttpResponseMessage> SendHttpRequestAsync(
-        HttpMethod method,
-        string url,
-        HttpContent? content = null,
-        Action<HttpRequestHeaders>? configureHeaders = null)
-    {
-        var request = new HttpRequestMessage(method, url)
-        {
-            Content = content
-        };
-
-        configureHeaders?.Invoke(request.Headers);
-
-        try
-        {
-            var response = await _client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-            return response;
-        }
-        catch (HttpRequestException ex)
-        {
-            Console.WriteLine($"HTTP Request failed: {ex.Message}");
-            return new HttpResponseMessage(HttpStatusCode.InternalServerError);
-        }
     }
 }
 
