@@ -150,7 +150,7 @@ public class DockerComposeFixture : IAsyncLifetime
         var startInfo = new ProcessStartInfo
         {
             FileName = "docker",
-            Arguments = "compose up -d svclyr-mesh-ingest mesh-sandbox azurite db db-migrations",
+            Arguments = "compose --env-file .env.tests up -d svclyr-mesh-ingest mesh-sandbox azurite db db-migrations",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
