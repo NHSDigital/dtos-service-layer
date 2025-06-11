@@ -25,9 +25,8 @@ public static class HttpHelper
             var response = await _client.SendAsync(request);
             return response;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"HTTP Request failed: {ex.Message}");
             return new HttpResponseMessage(HttpStatusCode.InternalServerError);
         }
     }

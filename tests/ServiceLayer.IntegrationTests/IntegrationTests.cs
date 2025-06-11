@@ -28,8 +28,8 @@ public class IntegrationTests
         ?? throw new InvalidOperationException($"Environment variable 'MESH_INGEST_PORT' is not set.");
     private readonly string _meshSandboxPort = Environment.GetEnvironmentVariable("MESH_SANDBOX_PORT")
         ?? throw new InvalidOperationException($"Environment variable 'MESH_SANDBOX_PORT' is not set.");
-    private readonly string _blobContainerName = Environment.GetEnvironmentVariable("BLOB_CONTAINER_NAME")
-        ?? throw new InvalidOperationException($"Environment variable 'BLOB_CONTAINER_NAME' is not set.");
+    private readonly string _meshBlobContainerName = Environment.GetEnvironmentVariable("MESH_BLOB_CONTAINER_NAME")
+        ?? throw new InvalidOperationException($"Environment variable 'MESH_BLOB_CONTAINER_NAME' is not set.");
     private readonly string _databaseConnectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
         ?? throw new InvalidOperationException($"Environment variable 'DATABASE_CONNECTION_STRING' is not set.");
 
@@ -53,6 +53,8 @@ public class IntegrationTests
 
     private async Task WaitForHealthyService()
     {
+        Console.WriteLine("Waiting for Mesh Ingest Service health check to pass...");
+
         int attemptCounter = 0;
 
         while (attemptCounter < 10)
@@ -105,7 +107,7 @@ public class IntegrationTests
     {
         var blobConnectionString = $"DefaultEndpointsProtocol=http;AccountName={_azuriteAccountName};AccountKey={_azuriteAccountKey};BlobEndpoint=http://localhost:{_azuriteBlobPort}/{_azuriteAccountName}";
 
-        var containerClient = new BlobContainerClient(blobConnectionString, _blobContainerName);
+        var containerClient = new BlobContainerClient(blobConnectionString, _meshBlobContainerName);
 
         try
         {
@@ -143,11 +145,12 @@ public class DockerComposeFixture : IAsyncLifetime
 {
     public async Task InitializeAsync()
     {
-        // Start Docker Compose
+        Console.WriteLine("Starting up docker containers...");
+
         var startInfo = new ProcessStartInfo
         {
             FileName = "docker",
-            Arguments = "compose up -d mesh-ingest mesh-sandbox azurite db db-migrations",
+            Arguments = "compose up -d svclyr-mesh-ingest mesh-sandbox azurite db db-migrations",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -167,11 +170,14 @@ public class DockerComposeFixture : IAsyncLifetime
         {
             throw new Exception($"Docker process started but failed, error: {process.StandardError.ReadToEnd()}");
         }
+
+        Console.WriteLine("Docker containers successfully started");
     }
 
     public async Task DisposeAsync()
     {
-        // Stop Docker Compose
+        Console.WriteLine("Stopping docker containers...");
+
         var stopInfo = new ProcessStartInfo
         {
             FileName = "docker",
@@ -195,5 +201,7 @@ public class DockerComposeFixture : IAsyncLifetime
         {
             throw new Exception($"Docker process started but failed, error: {process.StandardError.ReadToEnd()}");
         }
+
+        Console.WriteLine("Docker containers stopped");
     }
 }

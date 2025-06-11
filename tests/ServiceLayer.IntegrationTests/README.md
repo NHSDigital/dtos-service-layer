@@ -7,7 +7,7 @@ dotnet test \
     -e AZURITE_BLOB_PORT=10000 \
     -e MESH_INGEST_PORT=7072 \
     -e MESH_SANDBOX_PORT=8700 \
-    -e BLOB_CONTAINER_NAME=incoming-mesh-files \
+    -e MESH_BLOB_CONTAINER_NAME=incoming-mesh-files \
     -e DATABASE_CONNECTION_STRING="Server=localhost;Database=ServiceLayer;User Id=SA;Password=YourStrong@Passw0rd;TrustServerCertificate=True"
 ```
 
