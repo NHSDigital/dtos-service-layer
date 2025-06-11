@@ -140,7 +140,8 @@ services:
     networks:
       - backend
 
-
+  # Clone the mesh sandbox repo so that it is in the same directory as dtos-service-layer
+  # https://github.com/NHSDigital/mesh-sandbox
   mesh-sandbox:
     container_name: mesh-sandbox
     build: ../mesh-sandbox/

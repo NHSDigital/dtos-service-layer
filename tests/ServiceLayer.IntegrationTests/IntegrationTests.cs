@@ -42,7 +42,7 @@ public class IntegrationTests
         // Act
         var fileId = await SendFileToMeshInbox("KMK_20250212095121_APPT_87.dat");
 
-        // Wait to allow functions to ingest the file. The CRON timer trigger for the FileDiscovery function must be considered.
+        // Wait to allow functions to ingest the file
         await Task.Delay(45000);
 
         // Assert
