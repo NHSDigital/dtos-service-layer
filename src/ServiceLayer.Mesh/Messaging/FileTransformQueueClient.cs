@@ -1,15 +1,13 @@
 using Azure.Storage.Queues;
-using Microsoft.Extensions.Logging;
 using ServiceLayer.Data.Models;
 using ServiceLayer.Mesh.Configuration;
 
 namespace ServiceLayer.Mesh.Messaging;
 
 public class FileTransformQueueClient(
-    ILogger<FileTransformQueueClient> logger,
     IFileTransformQueueClientConfiguration configuration,
     QueueServiceClient queueServiceClient)
-    : QueueClientBase(logger, queueServiceClient), IFileTransformQueueClient
+    : QueueClientBase(queueServiceClient), IFileTransformQueueClient
 {
     public async Task EnqueueFileTransformAsync(MeshFile file)
     {

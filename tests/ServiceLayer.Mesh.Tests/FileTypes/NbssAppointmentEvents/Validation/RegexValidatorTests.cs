@@ -4,12 +4,12 @@ using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
 
 namespace ServiceLayer.Mesh.Tests.FileTypes.NbssAppointmentEvents.Validation;
 
-public class RegexValidatorTests
+public partial class RegexValidatorTests
 {
     private const string FieldName = "TestField";
     private const string MissingCode = "ERR001";
     private const string InvalidFormatCode = "ERR002";
-    private readonly Regex _pattern = new(@"^[A-Z]{2}\d{2}$", RegexOptions.Compiled);
+    private readonly Regex _pattern = TestRegex();
 
     [Fact]
     public void Validate_NullValue_ShouldReturnMissingError()
@@ -27,7 +27,7 @@ public class RegexValidatorTests
         var errors = validator.Validate(record).ToList();
 
         // Assert
-        errors.ShouldContainValidationError(FieldName, $"{FieldName} is missing", MissingCode, 1);
+        errors.ShouldContainValidationError(FieldName, $"{FieldName} is missing", MissingCode, ValidationErrorScope.Record,1);
     }
 
     [Theory]
@@ -48,7 +48,7 @@ public class RegexValidatorTests
         var errors = validator.Validate(record).ToList();
 
         // Assert
-        errors.ShouldContainValidationError(FieldName, $"{FieldName} is in an invalid format", InvalidFormatCode, 2);
+        errors.ShouldContainValidationError(FieldName, $"{FieldName} is in an invalid format", InvalidFormatCode,ValidationErrorScope.Record, 2);
     }
 
     [Theory]
@@ -56,6 +56,7 @@ public class RegexValidatorTests
     [InlineData("CD34")]
     public void Validate_ValueMatchingPattern_ShouldReturnNoErrors(string validValue)
     {
+        // Arrange
         var record = new FileDataRecord
         {
             RowNumber = 3
@@ -64,8 +65,13 @@ public class RegexValidatorTests
 
         var validator = new RegexValidator(FieldName, _pattern, MissingCode, InvalidFormatCode);
 
+        // Act
         var errors = validator.Validate(record).ToList();
 
+        // Assert
         Assert.Empty(errors);
     }
+
+    [GeneratedRegex(@"^[A-Z]{2}\d{2}$", RegexOptions.Compiled)]
+    private static partial Regex TestRegex();
 }

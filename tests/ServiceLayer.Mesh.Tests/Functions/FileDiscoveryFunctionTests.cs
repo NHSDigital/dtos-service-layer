@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using Microsoft.Azure.Functions.Worker;
+using Moq;
 using NHS.MESH.Client.Contracts.Services;
 using NHS.MESH.Client.Models;
 using ServiceLayer.Data.Models;
@@ -44,7 +45,7 @@ public class FileDiscoveryFunctionTests : FunctionTestBase<FileDiscoveryFunction
             });
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         var meshFile = AssertFileUpdated(testMessageId, MeshFileStatus.Discovered);
@@ -67,7 +68,7 @@ public class FileDiscoveryFunctionTests : FunctionTestBase<FileDiscoveryFunction
             });
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         var count = DbContext.MeshFiles.Count(f => f.FileId == existingFile.FileId);
@@ -87,7 +88,7 @@ public class FileDiscoveryFunctionTests : FunctionTestBase<FileDiscoveryFunction
             });
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         Assert.Empty(DbContext.MeshFiles);
@@ -107,7 +108,7 @@ public class FileDiscoveryFunctionTests : FunctionTestBase<FileDiscoveryFunction
             });
 
         // Act
-        await _function.Run(null);
+        await _function.Run(new TimerInfo());
 
         // Assert
         foreach (var id in messageIds)

@@ -34,14 +34,14 @@ public class FileRetryFunction(
                 && f.LastUpdatedUtc <= staleDateTimeUtc)
             .ToListAsync();
 
-        logger.LogInformation($"FileRetryFunction: {staleFiles.Count} stale files found for extraction retry");
+        logger.LogInformation("FileRetryFunction: {StaleFilesCount} stale files found for extraction retry", staleFiles.Count);
 
         foreach (var file in staleFiles)
         {
             await fileExtractQueueClient.EnqueueFileExtractAsync(file);
             file.LastUpdatedUtc = DateTime.UtcNow;
             await serviceLayerDbContext.SaveChangesAsync();
-            logger.LogInformation($"FileRetryFunction: File {file.FileId} enqueued to Extract queue");
+            logger.LogInformation("FileRetryFunction: File {FileFileId} enqueued to Extract queue", file.FileId);
         }
     }
 
@@ -53,14 +53,14 @@ public class FileRetryFunction(
                 && f.LastUpdatedUtc <= staleDateTimeUtc)
             .ToListAsync();
 
-        logger.LogInformation($"FileRetryFunction: {staleFiles.Count} stale files found for transforming retry");
+        logger.LogInformation("FileRetryFunction: {StaleFilesCount} stale files found for transforming retry", staleFiles.Count);
 
         foreach (var file in staleFiles)
         {
             await fileTransformQueueClient.EnqueueFileTransformAsync(file);
             file.LastUpdatedUtc = DateTime.UtcNow;
             await serviceLayerDbContext.SaveChangesAsync();
-            logger.LogInformation($"FileRetryFunction: File {file.FileId} enqueued to Transform queue");
+            logger.LogInformation("FileRetryFunction: File {FileFileId} enqueued to Transform queue", file.FileId);
         }
     }
 }

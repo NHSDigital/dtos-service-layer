@@ -1,5 +1,3 @@
-using ServiceLayer.Common;
-
 namespace ServiceLayer.Mesh.Configuration;
 
 public class AppConfiguration :
@@ -8,7 +6,8 @@ public class AppConfiguration :
     IFileTransformQueueClientConfiguration,
     IFileTransformFunctionConfiguration,
     IFileRetryFunctionConfiguration,
-    IMeshHandshakeFunctionConfiguration
+    IMeshHandshakeFunctionConfiguration,
+    IValidationRunnerConfiguration
 {
     public string NbssMeshMailboxId => GetRequired("NbssMailboxId");
 
@@ -16,24 +15,12 @@ public class AppConfiguration :
 
     public string FileTransformQueueName => GetRequired("FileTransformQueueName");
 
-    public int StaleHours => GetRequiredInt("StaleHours");
+    public int MaximumValidationErrors => GetOptionalInt("MaximumValidationErrors", 100);
 
-    private static string GetRequired(string key)
-    {
-        var value = EnvironmentVariables.GetRequired(key);
+    public int StaleHours => GetOptionalInt("StaleHours", 12);
 
-        return value;
-    }
-
-    private static int GetRequiredInt(string key)
-    {
-        var value = GetRequired(key);
-
-        if (!int.TryParse(value, out var intValue))
-        {
-            throw new InvalidOperationException($"Environment variable '{key}' is not a valid integer");
-        }
-
-        return intValue;
-    }
+    private static string GetRequired(string key) =>
+        EnvironmentVariables.GetRequired(key);
+    private static int GetOptionalInt(string key, int defaultValue) =>
+        EnvironmentVariables.GetOptionalInt(key, defaultValue);
 }

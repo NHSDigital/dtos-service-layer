@@ -1,6 +1,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Models;
+using ServiceLayer.Mesh.FileTypes.NbssAppointmentEvents.Validation;
 using System.Globalization;
 using System.Text;
 
@@ -56,7 +57,10 @@ public class FileParser : IFileParser
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Unknown record identifier: {recordIdentifier}");
+                    recordIdentifier ??= "No Record Identifier found";
+                    throw new FileParsingException(
+                        ErrorCodes.UnknownRecordTypeIdentifier,
+                        $"Unknown Record Identifier {recordIdentifier}");
             }
         }
 
@@ -98,7 +102,7 @@ public class FileParser : IFileParser
     {
         if (columnHeadings.Count == 0)
         {
-            throw new InvalidOperationException("Field headers (NBSSAPPT_FLDS) must appear before data records.");
+            throw new FileParsingException(ErrorCodes.MissingFieldHeadings, "Field headings are missing");
         }
 
         const int dataFieldStartIndex = 1;
@@ -140,4 +144,3 @@ public class FileParser : IFileParser
         }
     }
 }
-

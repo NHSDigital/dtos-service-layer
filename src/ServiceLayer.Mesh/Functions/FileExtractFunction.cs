@@ -52,7 +52,7 @@ public class FileExtractFunction(
 
         if (file == null)
         {
-            logger.LogWarning("File with id: {fileId} not found in MeshFiles table.", fileId);
+            logger.LogWarning("File with id: {FileId} not found in MeshFiles table.", fileId);
         }
 
         return file;
@@ -67,7 +67,7 @@ public class FileExtractFunction(
             (file.Status == MeshFileStatus.Extracting && file.LastUpdatedUtc > DateTime.UtcNow.AddHours(-12)))
         {
             logger.LogWarning(
-                "File with id: {fileId} found in MeshFiles table but is not suitable for extraction. Status: {status}, LastUpdatedUtc: {lastUpdatedUtc}.",
+                "File with id: {FileId} found in MeshFiles table but is not suitable for extraction. Status: {Status}, LastUpdatedUtc: {LastUpdatedUtc}.",
                 file.FileId,
                 file.Status,
                 file.LastUpdatedUtc.ToTimestamp());
@@ -109,7 +109,7 @@ public class FileExtractFunction(
 
     private async Task HandleExtractionError(MeshFile file, FileExtractQueueMessage message, Exception ex)
     {
-        logger.LogError(ex, "An exception occurred during file extraction for fileId: {fileId}", message.FileId);
+        logger.LogError(ex, "An exception occurred during file extraction for fileId: {FileId}", message.FileId);
         file.Status = MeshFileStatus.FailedExtract;
         file.LastUpdatedUtc = DateTime.UtcNow;
         await serviceLayerDbContext.SaveChangesAsync();

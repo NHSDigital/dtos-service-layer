@@ -1,0 +1,356 @@
+type: collection.insomnia.rest/5.0
+name: NHS
+meta:
+  id: wrk_738dc23a04ea4e47a7d01738b72201ed
+  created: 1722434681694
+  modified: 1722434681694
+collection:
+  - name: Select
+    meta:
+      id: fld_b916cc57ad9e4964828845e31c1745b0
+      created: 1743004900191
+      modified: 1747733900210
+      sortKey: -1743004900191
+  - name: DataService
+    meta:
+      id: fld_c3382c257b124dacbffd26e7db504bfb
+      created: 1747733934120
+      modified: 1748516742640
+      sortKey: -1747910487990
+    children:
+      - url: "{{ _.mesh_sandbox_url }}/messageexchange/X26ABC1/outbox"
+        name: Mesh Request
+        meta:
+          id: req_a0ecb19c822d40839ae42678de382da1
+          created: 1747992419775
+          modified: 1748514832787
+          isPrivate: false
+          sortKey: -1747992419925
+        method: POST
+        body:
+          mimeType: application/octet-stream
+          fileName: ""
+        headers:
+          - name: Content-Type
+            value: text/csv
+            id: pair_2bb7b8cb72ca413c896900437eb49ffa
+          - name: User-Agent
+            value: HTTPie
+            id: pair_b4b6ec9c767a4a9ea5f37e82beb02b1a
+          - id: pair_20ab5ad1d55f4af487c182bfe3d6869f
+            name: Authorization
+            value: "{{meshAuthorisation}}"
+            disabled: false
+          - id: pair_0d5403dbd6794b00b45d73288e1a7f56
+            name: Host
+            value: localhost:8700
+            disabled: false
+          - id: pair_df1a308d1a0941a4881081e9fd14615b
+            name: Mex-Filename
+            value: test_episodes_20241009_latest.csv
+            disabled: false
+          - id: pair_5d4497fe301246a19b2bbaad0dde8fd4
+            name: Mex-From
+            value: "{{meshSandboxMailbox}}"
+            disabled: false
+          - id: pair_bf20e7dd55b641afa99669d4fad881b9
+            name: Mex-To
+            value: "{{meshSandboxMailbox}}"
+            disabled: false
+          - id: pair_fd17af674fa848a8b36aa9e51affda57
+            name: Mex-Workflowid
+            value: API-DOCS-TEST
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.mesh_sandbox_url }}/messageexchange/X26ABC1/inbox"
+        name: Get MESH Inbox
+        meta:
+          id: req_1b38d6fc1a2e4df3887ba87610c9b4c0
+          created: 1748010148910
+          modified: 1748514818520
+          isPrivate: false
+          sortKey: -1747992419875
+        method: GET
+        headers:
+          - name: User-Agent
+            value: HTTPie
+            id: pair_b4b6ec9c767a4a9ea5f37e82beb02b1a
+          - id: pair_20ab5ad1d55f4af487c182bfe3d6869f
+            name: Authorization
+            value: "{{ meshAuthorisation }}"
+            disabled: false
+          - id: pair_0d5403dbd6794b00b45d73288e1a7f56
+            name: Host
+            value: localhost:8700
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.mesh_ingest_url }}/admin/functions/MeshHandshakeFunction"
+        name: Mesh Handshake (Timer)
+        meta:
+          id: req_f7ab0c0e26d04e2f9d9e08b4f81bcd43
+          created: 1748434699775
+          modified: 1748514921710
+          isPrivate: false
+          sortKey: -1747921258958
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              // Timer trigger - performs MESH handshake health check
+              "input": ""
+            }
+        parameters:
+          - id: pair_892346d6688e43f6b92ee35ad2410b34
+            disabled: false
+        headers:
+          - name: Content-Type
+            value: application/json
+            id: pair_b173458285874ea8b46b5332dcc60570
+          - name: User-Agent
+            value: insomnia/11.1.0
+            id: pair_53388d8cda1945bab47ff7b616bd31a0
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.mesh_ingest_url }}/admin/functions/FileDiscoveryFunction"
+        name: File Discovery (Timer)
+        meta:
+          id: req_a40d10f1d500472383bc34ebf0a0e1e0
+          created: 1748435198587
+          modified: 1748514913043
+          isPrivate: false
+          sortKey: -1747992419825
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              // Timer trigger - scans MESH inbox for new messages
+              "input": ""
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+            id: pair_f49d3291afc2446fac8870418f1fa707
+          - name: User-Agent
+            value: insomnia/11.1.0
+            id: pair_53388d8cda1945bab47ff7b616bd31a0
+          - id: pair_7d6896186cdf4fcab495def4642a007c
+            name: Authorization
+            value: "{{ _.meshAuthorisation }}"
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.mesh_ingest_url }}/admin/functions/FileRetryFunction"
+        name: File Retry (Timer)
+        meta:
+          id: req_7d9acd39d8f2480d9ee3c37e3dc34723
+          created: 1748435262139
+          modified: 1748514918195
+          isPrivate: false
+          sortKey: -1747959380833.625
+        method: POST
+        body:
+          mimeType: application/json
+          text: >-
+            {
+              // Timer trigger - retries stale extraction/transformation operations
+              "input": ""
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+            id: pair_aaf682c7b0334c9c83cf1a26eed66143
+          - name: User-Agent
+            value: insomnia/11.1.0
+            id: pair_53388d8cda1945bab47ff7b616bd31a0
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.mesh_ingest_url }}/admin/functions/FileExtractFunction"
+        name: File Extract (Queue)
+        meta:
+          id: req_73243b5059ea472ba6e7fa6e49549952
+          created: 1748435288094
+          modified: 1748514915919
+          isPrivate: false
+          sortKey: -1747992419812.5
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+              // Replace with actual FileId from MESH inbox
+              // Get FileIds by calling: GET /messageexchange/X26ABC1/inbox
+            {
+                "FileId": "159896E597B24A9F8E82F0674C10AB98"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+            id: pair_7d11f30a765b42ee888503a49c55b7c5
+          - name: User-Agent
+            value: insomnia/11.1.0
+            id: pair_53388d8cda1945bab47ff7b616bd31a0
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.mesh_ingest_url }}/admin/functions/FileTransformFunction"
+        name: File Transform (Queue)
+        meta:
+          id: req_adc34d0696674592adf276cd67cf5195
+          created: 1748435351948
+          modified: 1748514919801
+          isPrivate: false
+          sortKey: -1747992419793.75
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+              // Replace with actual FileId from MESH inbox
+              // Get FileIds by calling: GET /messageexchange/X26ABC1/inbox
+            {
+                "FileId": "159896E597B24A9F8E82F0674C10AB98"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+            id: pair_eb5af6bfc0f54c2f9a3c24087b36e3df
+          - name: User-Agent
+            value: insomnia/11.1.0
+            id: pair_53388d8cda1945bab47ff7b616bd31a0
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.mesh_sandbox_url
+          }}/messageexchange/X26ABC1/inbox/159896E597B24A9F8E82F0674C10AB98"
+        name: Get MESH Message by Id
+        meta:
+          id: req_5a926a7f6d4a49e5a5153f6b3d29b15d
+          created: 1748435488346
+          modified: 1748514809403
+          isPrivate: false
+          sortKey: -1747992419850
+        method: GET
+        parameters:
+          - id: pair_156dd6646ebb4b3da0423ddf4b11ba98
+            name: id
+            value: 0B500E9749834F5AB3C89875346F53B8
+            disabled: false
+        headers:
+          - name: User-Agent
+            value: HTTPie
+            id: pair_b4b6ec9c767a4a9ea5f37e82beb02b1a
+          - id: pair_20ab5ad1d55f4af487c182bfe3d6869f
+            name: Authorization
+            value: "{{ _.meshAuthorisation }}"
+            disabled: false
+          - id: pair_0d5403dbd6794b00b45d73288e1a7f56
+            name: Host
+            value: localhost:8700
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/api/bsselect/episodes/ingress"
+        name: IngressEpisode
+        meta:
+          id: req_a92c6aa106bc4c91bedf34878eda2968
+          created: 1748516009918
+          modified: 1748516657482
+          isPrivate: false
+          sortKey: -1747910792423
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "episode_id": "12345",
+              "nhs_number": "1234567890",
+              "date_of_birth": "1990-01-15",
+              "first_given_name": "John",
+              "family_name": "Smith"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.1.0
+            id: pair_8372df4efdfe451aad23e68982c237a3
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: ParticipantManager
+    meta:
+      id: fld_6e725754fd3e4fc1ad51eefd60e88ec3
+      created: 1747910487890
+      modified: 1747910487890
+      sortKey: -1747910487890
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_f714b7668b974121d51068531b8ab7c1d3a6759c
+    created: 1722434681700
+    modified: 1737026586440
+environments:
+  name: MAYS
+  meta:
+    id: env_f714b7668b974121d51068531b8ab7c1d3a6759c
+    created: 1722434681697
+    modified: 1748515915606
+    isPrivate: false
+  data:
+    mesh_ingest_url: http://localhost:7072
+    mesh_sandbox_url: http://localhost:8700
+    x-functions-key: your-local-master-key-here
+    base_url: http://localhost:7071

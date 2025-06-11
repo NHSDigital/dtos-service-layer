@@ -139,8 +139,8 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
 
         var validationErrors = new List<ValidationError>
         {
-            new() { Code = "NBSSAPPT001", Error = "error message", Field = "field", RowNumber = 1 },
-            new() { Code = "NBSSAPPT002", Error = "error message 2", Field = "field 2" }
+            new() { Scope = ValidationErrorScope.Record, Code = "NBSSAPPT001", Error = "error message", Field = "field", RowNumber = 1 },
+            new() { Scope = ValidationErrorScope.Header, Code = "NBSSAPPT002", Error = "error message 2", Field = "field 2" }
         };
 
         _fileTransformerMock.Setup(c => c.TransformFileAsync(expectedStream, file))
@@ -204,24 +204,5 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
             file.ValidationErrors ?? "[]",
             ValidationErrorJsonOptions
         ) ?? [];
-    }
-
-    private class ValidationErrorComparer : IEqualityComparer<ValidationError>
-    {
-        public bool Equals(ValidationError? x, ValidationError? y)
-        {
-            if (ReferenceEquals(x, y)) return true;
-            if (x is null || y is null) return false;
-
-            return x.Field == y.Field &&
-                x.Error == y.Error &&
-                x.Code == y.Code &&
-                x.RowNumber == y.RowNumber;
-        }
-
-        public int GetHashCode(ValidationError obj)
-        {
-            return HashCode.Combine(obj.Field, obj.Error, obj.Code, obj.RowNumber);
-        }
     }
 }

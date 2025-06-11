@@ -1,8 +1,8 @@
 services:
-  api:
-    container_name: "api"
+  svclyr-api:
+    container_name: "svclyr-api"
     build:
-      context: ./Src
+      context: ./src
       dockerfile: ServiceLayer.API/Dockerfile
     platform: linux/amd64
     restart: always
@@ -30,11 +30,11 @@ services:
     networks:
       - backend
 
-  mesh-ingest:
-    container_name: "mesh-ingest"
+  svclyr-mesh-ingest:
+    container_name: "svclyr-mesh-ingest"
     build:
-      context: ./Src
-      dockerfile: ServiceLayer.MESH/Dockerfile
+      context: ./src
+      dockerfile: ServiceLayer.Mesh/Dockerfile
     platform: linux/amd64
     restart: always
     environment:
@@ -53,10 +53,11 @@ services:
       MeshPassword: "${MeshPassword}"
       MeshSharedKey: "${MeshSharedKey}"
       AZURITE_CONNECTION_STRING: "${AZURITE_CONNECTION_STRING}"
-      MeshStorageAccountUrl: "${AZURITE_CONNECTION_STRING}"
+      MeshBlobStorageUrl: "${AZURITE_CONNECTION_STRING}"
+      MeshQueueStorageUrl: "${AZURITE_CONNECTION_STRING}"
       ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT}"
       ASPNETCORE_URLS: "http://0.0.0.0:8080"
-      BlobContainerName: "${BlobContainerName}"
+      MeshBlobContainerName: "${MeshBlobContainerName}"
     ports:
       - "${MESH_INGEST_PORT}:8080"
     healthcheck:
@@ -72,6 +73,8 @@ services:
         condition: service_healthy
       mesh-sandbox:
         condition: service_started
+    volumes:
+      - mesh-config-data:/azure-functions-host/Secrets/
     networks:
       - backend
 
@@ -124,7 +127,7 @@ services:
     container_name: db-migrations
     build:
       context: .
-      dockerfile: src/ServiceLayer.Common/Dockerfile.migrations
+      dockerfile: src/ServiceLayer.Shared/Dockerfile.migrations
       args:
         DatabaseConnectionString: "${DatabaseConnectionString}"
     depends_on:
@@ -168,4 +171,7 @@ volumes:
     name: azurite-data
   db-data:
     name: db-data
+    driver: local
+  mesh-config-data:
+    name: mesh-config-data
     driver: local
