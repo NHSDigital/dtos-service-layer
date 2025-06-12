@@ -138,11 +138,9 @@ services:
     networks:
       - backend
 
-  # Clone the mesh sandbox repo so that it is in the same directory as dtos-service-layer
-  # https://github.com/NHSDigital/mesh-sandbox
   mesh-sandbox:
     container_name: mesh-sandbox
-    build: ../mesh-sandbox/
+    build: tests/mesh-sandbox/
     ports:
       - "8700:80"
     deploy:
@@ -168,9 +166,6 @@ networks:
 volumes:
   azurite-data:
     name: azurite-data
-  db-data:
-    name: db-data
-    driver: local
   mesh-config-data:
     name: mesh-config-data
     driver: local

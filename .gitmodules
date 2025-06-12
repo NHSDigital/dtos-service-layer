@@ -1,5 +1,8 @@
 [submodule "src/dotnet-mesh-client"]
-	# path = src/Shared/dotnet-mesh-client
 	path = src/dotnet-mesh-client
 	url = https://github.com/NHSDigital/dotnet-mesh-client.git
+	branch = main
+[submodule "tests/mesh-sandbox"]
+	path = tests/mesh-sandbox
+	url = https://github.com/NHSDigital/mesh-sandbox
 	branch = main
