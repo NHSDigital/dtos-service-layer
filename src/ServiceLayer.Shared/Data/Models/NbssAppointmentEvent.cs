@@ -34,7 +34,7 @@ public class NbssAppointmentEvent
     public string? AttendedNotScreened { get; set; }
     [StringLength(27)]
     [Column(TypeName = "varchar(27)")]
-    public required string AppointmenId { get; set; }
+    public required string AppointmentId { get; set; }
     [StringLength(10, MinimumLength = 10)]
     [Column(TypeName = "char(10)")]
     public required string NhsNumber { get; set; }

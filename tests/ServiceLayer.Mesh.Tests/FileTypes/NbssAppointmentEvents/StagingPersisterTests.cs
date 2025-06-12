@@ -54,7 +54,7 @@ public class NbssAppointmentEventsTests
         Assert.Equal(firstRecord["Holding Clinic"], nbssAppointmentEvent.HoldingClinic);
         Assert.Equal(firstRecord["Status"], nbssAppointmentEvent.Status);
         Assert.Equal(firstRecord["Attended Not Scr"], nbssAppointmentEvent.AttendedNotScreened);
-        Assert.Equal(firstRecord["Appointment ID"], nbssAppointmentEvent.AppointmenId);
+        Assert.Equal(firstRecord["Appointment ID"], nbssAppointmentEvent.AppointmentId);
         Assert.Equal(firstRecord["NHS Num"], nbssAppointmentEvent.NhsNumber);
         Assert.Equal(firstRecord["Episode Type"], nbssAppointmentEvent.EpisodeType);
         Assert.Equal(DateOnly.ParseExact(firstRecord.Fields["Episode Start"], "yyyyMMdd"), nbssAppointmentEvent.EpisodeStart);
