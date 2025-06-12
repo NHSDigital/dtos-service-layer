@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/ServiceLayer.Mesh/ServiceLayer.Mesh.csproj" />
-    <ProjectReference Include="../../src/ServiceLayer.Common/ServiceLayer.Common.csproj" />
     <ProjectReference Include="..\ServiceLayer.TestUtilities\ServiceLayer.TestUtilities.csproj" />
   </ItemGroup>
 
