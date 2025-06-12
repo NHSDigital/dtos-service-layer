@@ -5,6 +5,7 @@ The integration tests start up docker containers using [compose.yaml](../../comp
 ## How to run the tests
 
 To run the integration tests, you also need to pass the following environment variables as arguments when executing `dotnet test`:
+
 - AZURITE_ACCOUNT_KEY
 - AZURITE_ACCOUNT_NAME
 - AZURITE_BLOB_PORT
@@ -14,6 +15,7 @@ To run the integration tests, you also need to pass the following environment va
 - DATABASE_CONNECTION_STRING
 
 E.g.
+
 ```sh
 dotnet test \
     -e AZURITE_ACCOUNT_KEY="Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==" \
