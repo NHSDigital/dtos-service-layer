@@ -28,7 +28,7 @@ public class StagingPersister(ServiceLayerDbContext dbContext) : IStagingPersist
             HoldingClinic = NullIfWhiteSpace(record.Fields["Holding Clinic"]),
             Status = record.Fields["Status"],
             AttendedNotScreened = NullIfWhiteSpace(record.Fields["Attended Not Scr"]),
-            AppointmenId = record.Fields["Appointment ID"],
+            AppointmentId = record.Fields["Appointment ID"],
             NhsNumber = record.Fields["NHS Num"],
             EpisodeType = record.Fields["Episode Type"],
             EpisodeStart = DateOnly.ParseExact(record.Fields["Episode Start"], "yyyyMMdd", CultureInfo.InvariantCulture),
