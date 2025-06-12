@@ -7,7 +7,7 @@ if [[ "${1:-}" == "--no-build" ]]; then
 fi
 
 COVERAGE_DIR="coverage"
-TEST_PROJECTS=$(find tests -name '*.csproj')
+TEST_PROJECTS=$(find tests -name '*.csproj' -not -name "ServiceLayer.IntegrationTests.csproj")
 
 rm -rf "$COVERAGE_DIR"
 mkdir -p "$COVERAGE_DIR"
