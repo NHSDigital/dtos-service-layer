@@ -152,10 +152,10 @@ services:
       - SSL=no
     volumes:
       # mount a different mailboxes.jsonl to pre created mailboxes
-      - ../mesh-sandbox/src/mesh_sandbox/store/data/mailboxes.jsonl:/app/mesh_sandbox/store/data/mailboxes.jsonl:ro
-      - ../mesh-sandbox/src/mesh_sandbox/test_plugin:/app/mesh_sandbox/plugins:ro
+      - ./tests/mesh-sandbox/src/mesh_sandbox/store/data/mailboxes.jsonl:/app/mesh_sandbox/store/data/mailboxes.jsonl:ro
+      - ./tests/mesh-sandbox/src/mesh_sandbox/test_plugin:/app/mesh_sandbox/plugins:ro
       # you can mount a directory if you want access the stored messages
-      - ../mesh-sandbox/messages:/tmp/mesh_store
+      - ./tests/mesh-sandbox/messages:/tmp/mesh_store
     networks:
       - backend
 
