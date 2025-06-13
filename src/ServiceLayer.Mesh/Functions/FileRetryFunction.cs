@@ -13,7 +13,7 @@ public class FileRetryFunction(
     ServiceLayerDbContext serviceLayerDbContext,
     IFileExtractQueueClient fileExtractQueueClient,
     IFileTransformQueueClient fileTransformQueueClient,
-    IFileRetryFunctionConfiguration configuration)
+    IFileRetryFunctionConfiguration configuration) : MeshFileFunctionBase(serviceLayerDbContext)
 {
     [Function("FileRetryFunction")]
     public async Task Run([TimerTrigger("%FileRetryTimerExpression%")] TimerInfo myTimer)
@@ -28,7 +28,7 @@ public class FileRetryFunction(
 
     private async Task RetryStaleExtractions(DateTime staleDateTimeUtc)
     {
-        var staleFiles = await serviceLayerDbContext.MeshFiles
+        var staleFiles = await ServiceLayerDbContext.MeshFiles
             .Where(f =>
                 (f.Status == MeshFileStatus.Discovered || f.Status == MeshFileStatus.Extracting)
                 && f.LastUpdatedUtc <= staleDateTimeUtc)
@@ -39,15 +39,15 @@ public class FileRetryFunction(
         foreach (var file in staleFiles)
         {
             await fileExtractQueueClient.EnqueueFileExtractAsync(file);
-            file.LastUpdatedUtc = DateTime.UtcNow;
-            await serviceLayerDbContext.SaveChangesAsync();
+            await UpdateMeshFile(file, file.Status);
+            await ServiceLayerDbContext.SaveChangesAsync();
             logger.LogInformation("FileRetryFunction: File {FileFileId} enqueued to Extract queue", file.FileId);
         }
     }
 
     private async Task RetryStaleTransformations(DateTime staleDateTimeUtc)
     {
-        var staleFiles = await serviceLayerDbContext.MeshFiles
+        var staleFiles = await ServiceLayerDbContext.MeshFiles
             .Where(f =>
                 (f.Status == MeshFileStatus.Extracted || f.Status == MeshFileStatus.Transforming)
                 && f.LastUpdatedUtc <= staleDateTimeUtc)
@@ -58,9 +58,11 @@ public class FileRetryFunction(
         foreach (var file in staleFiles)
         {
             await fileTransformQueueClient.EnqueueFileTransformAsync(file);
-            file.LastUpdatedUtc = DateTime.UtcNow;
-            await serviceLayerDbContext.SaveChangesAsync();
+            await UpdateMeshFile(file, file.Status);
+            await ServiceLayerDbContext.SaveChangesAsync();
             logger.LogInformation("FileRetryFunction: File {FileFileId} enqueued to Transform queue", file.FileId);
         }
     }
+
+    protected override FileEventSource Source => FileEventSource.RetryFunction;
 }

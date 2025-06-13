@@ -24,15 +24,28 @@ public abstract class FunctionTestBase<TFunction>
 
     protected MeshFile SaveMeshFile(MeshFileStatus status = MeshFileStatus.Extracted, int hoursOld = 1)
     {
+        var lastUpdated = DateTime.UtcNow.AddHours(-hoursOld);
+        var fileId = Guid.NewGuid().ToString();
+
         var file = new MeshFile
         {
             FileType = MeshFileType.NbssAppointmentEvents,
             MailboxId = Guid.NewGuid().ToString(),
-            FileId = Guid.NewGuid().ToString(),
+            FileId = fileId,
             Status = status,
-            LastUpdatedUtc = DateTime.UtcNow.AddHours(-hoursOld),
+            LastUpdatedUtc = lastUpdated
         };
+
+        var fileEvent = new MeshFileEvent
+        {
+            FileId = fileId,
+            Status = status,
+            TimestampUtc = lastUpdated,
+            Source = FileEventSource.DiscoveryFunction
+        };
+
         DbContext.MeshFiles.Add(file);
+        DbContext.MeshFileEvents.Add(fileEvent);
         DbContext.SaveChanges();
         return file;
     }
@@ -46,11 +59,22 @@ public abstract class FunctionTestBase<TFunction>
         return unchanged;
     }
 
-    protected MeshFile AssertFileUpdated(string fileId, MeshFileStatus expectedStatus)
+    protected MeshFile AssertFileUpdated(string fileId, MeshFileStatus expectedStatus, FileEventSource expectedSource)
     {
-        var updated = DbContext.MeshFiles.Single(x => x.FileId == fileId);
+        var updated = DbContext.MeshFiles
+            .Single(x => x.FileId == fileId);
         Assert.Equal(expectedStatus, updated.Status);
         Assert.True(updated.LastUpdatedUtc > DateTime.UtcNow.AddSeconds(-10));
+
+        var lastEvent = DbContext.MeshFileEvents
+            .Where(x => x.FileId == fileId)
+            .OrderByDescending(x => x.TimestampUtc)
+            .First();
+
+        Assert.Equal(expectedStatus, lastEvent.Status);
+        Assert.True(lastEvent.TimestampUtc > DateTime.UtcNow.AddSeconds(-10));
+        Assert.Equal(expectedSource, lastEvent.Source);
+
         return updated;
     }
 }

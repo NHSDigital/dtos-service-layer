@@ -48,7 +48,7 @@ public class FileDiscoveryFunctionTests : FunctionTestBase<FileDiscoveryFunction
         await _function.Run(new TimerInfo());
 
         // Assert
-        var meshFile = AssertFileUpdated(testMessageId, MeshFileStatus.Discovered);
+        var meshFile = AssertFileUpdated(testMessageId, MeshFileStatus.Discovered, FileEventSource.DiscoveryFunction);
         Assert.Equal("test-mailbox", meshFile.MailboxId);
 
         // TODO - replace the It.IsAny with a more specific matcher, or use a callback
@@ -113,7 +113,7 @@ public class FileDiscoveryFunctionTests : FunctionTestBase<FileDiscoveryFunction
         // Assert
         foreach (var id in messageIds)
         {
-            var savedFile = AssertFileUpdated(id, MeshFileStatus.Discovered);
+            var savedFile = AssertFileUpdated(id, MeshFileStatus.Discovered, FileEventSource.DiscoveryFunction);
             Assert.Equal("test-mailbox", savedFile.MailboxId);
         }
 

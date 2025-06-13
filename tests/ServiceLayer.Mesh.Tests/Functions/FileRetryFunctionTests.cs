@@ -45,7 +45,7 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
         _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Never);
 
-        AssertFileUpdated(file.FileId, testStatus);
+        AssertFileUpdated(file.FileId, testStatus, FileEventSource.RetryFunction);
     }
 
     [Theory]
@@ -63,7 +63,7 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Once);
         _fileExtractQueueClientMock.Verify(q => q.EnqueueFileExtractAsync(It.Is<MeshFile>(f => f.FileId == file.FileId)), Times.Never);
 
-        AssertFileUpdated(file.FileId, testStatus);
+        AssertFileUpdated(file.FileId, testStatus, FileEventSource.RetryFunction);
     }
 
     [Theory]
@@ -130,9 +130,9 @@ public class FileRetryFunctionTests : FunctionTestBase<FileRetryFunction>
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file2.FileId)), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.EnqueueFileTransformAsync(It.Is<MeshFile>(f => f.FileId == file3.FileId)), Times.Once);
 
-        AssertFileUpdated(file1.FileId, MeshFileStatus.Discovered);
-        AssertFileUpdated(file2.FileId, MeshFileStatus.Extracted);
-        AssertFileUpdated(file3.FileId, MeshFileStatus.Transforming);
+        AssertFileUpdated(file1.FileId, MeshFileStatus.Discovered, FileEventSource.RetryFunction);
+        AssertFileUpdated(file2.FileId, MeshFileStatus.Extracted, FileEventSource.RetryFunction);
+        AssertFileUpdated(file3.FileId, MeshFileStatus.Transforming, FileEventSource.RetryFunction);
     }
 }
 

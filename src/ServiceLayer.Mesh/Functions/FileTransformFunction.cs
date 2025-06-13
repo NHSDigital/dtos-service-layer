@@ -18,7 +18,7 @@ public class FileTransformFunction(
     ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
     IMeshFilesBlobStore meshFileBlobStore,
-    IEnumerable<IFileTransformer> fileTransformers)
+    IEnumerable<IFileTransformer> fileTransformers) : MeshFileFunctionBase(serviceLayerDbContext)
 {
     private static readonly JsonSerializerOptions ValidationErrorJsonOptions = new()
     {
@@ -34,7 +34,7 @@ public class FileTransformFunction(
         logger.LogInformation("{FunctionName} started. Processing fileId: {FileId}", nameof(FileTransformFunction),
             message.FileId);
 
-        await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
+        await using var transaction = await ServiceLayerDbContext.Database.BeginTransactionAsync();
 
         var file = await GetFileAsync(message.FileId);
         if (file == null || !IsFileSuitableForTransformation(file))
@@ -42,7 +42,7 @@ public class FileTransformFunction(
             return;
         }
 
-        await UpdateFileStatusForTransformation(file);
+        await UpdateMeshFile(file, MeshFileStatus.Transforming);
         await transaction.CommitAsync();
 
         try
@@ -57,7 +57,7 @@ public class FileTransformFunction(
 
     private async Task<MeshFile?> GetFileAsync(string fileId)
     {
-        var file = await serviceLayerDbContext.MeshFiles
+        var file = await ServiceLayerDbContext.MeshFiles
             .FirstOrDefaultAsync(f => f.FileId == fileId);
 
         if (file == null)
@@ -87,13 +87,6 @@ public class FileTransformFunction(
         return true;
     }
 
-    private async Task UpdateFileStatusForTransformation(MeshFile file)
-    {
-        file.Status = MeshFileStatus.Transforming;
-        file.LastUpdatedUtc = DateTime.UtcNow;
-        await serviceLayerDbContext.SaveChangesAsync();
-    }
-
     private async Task ProcessFileTransformation(MeshFile file)
     {
         var transformer = GetTransformerFor(file.FileType);
@@ -107,9 +100,7 @@ public class FileTransformFunction(
             throw new InvalidOperationException("Validation errors encountered");
         }
 
-        file.Status = MeshFileStatus.Transformed;
-        file.LastUpdatedUtc = DateTime.UtcNow;
-        await serviceLayerDbContext.SaveChangesAsync();
+        await UpdateMeshFile(file, MeshFileStatus.Transformed);
     }
 
     private IFileTransformer GetTransformerFor(MeshFileType type)
@@ -129,9 +120,9 @@ public class FileTransformFunction(
     private async Task HandleTransformationError(MeshFile file, FileTransformQueueMessage message, Exception ex)
     {
         logger.LogError(ex, "An exception occurred during file transformation for fileId: {FileId}", message.FileId);
-        file.Status = MeshFileStatus.FailedTransform;
-        file.LastUpdatedUtc = DateTime.UtcNow;
-        await serviceLayerDbContext.SaveChangesAsync();
+        await UpdateMeshFile(file, MeshFileStatus.FailedTransform);
         await fileTransformQueueClient.SendToPoisonQueueAsync(message);
     }
+
+    protected override FileEventSource Source => FileEventSource.TransformFunction;
 }
