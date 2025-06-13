@@ -15,6 +15,7 @@ public class FileDiscoveryFunction(
     IMeshInboxService meshInboxService,
     ServiceLayerDbContext serviceLayerDbContext,
     IFileExtractQueueClient fileExtractQueueClient)
+    : MeshFileFunctionBase(serviceLayerDbContext)
 {
     [Function("FileDiscoveryFunction")]
     public async Task Run([TimerTrigger("%FileDiscoveryTimerExpression%")] TimerInfo myTimer)
@@ -26,28 +27,16 @@ public class FileDiscoveryFunction(
         // TODO - check if response.IsSuccessful before proceeding to dereference the Response.Messages
         foreach (var messageId in response.Response.Messages)
         {
-            await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
+            await using var transaction = await ServiceLayerDbContext.Database.BeginTransactionAsync();
 
-            var existing = await serviceLayerDbContext.MeshFiles
+            var existing = await ServiceLayerDbContext.MeshFiles
                 .AnyAsync(f => f.FileId == messageId);
 
             if (!existing)
             {
-                var file = new MeshFile
-                {
-                    FileId = messageId,
-                    FileType = MeshFileType.NbssAppointmentEvents,
-                    MailboxId = configuration.NbssMeshMailboxId,
-                    Status = MeshFileStatus.Discovered,
-                    FirstSeenUtc = DateTime.UtcNow,
-                    LastUpdatedUtc = DateTime.UtcNow
-                };
+                var file = await CreateMeshFile(messageId);
 
-                serviceLayerDbContext.MeshFiles.Add(file);
-
-                await serviceLayerDbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
-
                 await fileExtractQueueClient.EnqueueFileExtractAsync(file);
             }
             else
@@ -56,4 +45,27 @@ public class FileDiscoveryFunction(
             }
         }
     }
+
+    private async Task<MeshFile> CreateMeshFile(string messageId)
+    {
+        var now = DateTime.UtcNow;
+
+        var file = new MeshFile
+        {
+            FileId = messageId,
+            FileType = MeshFileType.NbssAppointmentEvents,
+            MailboxId = configuration.NbssMeshMailboxId,
+            Status = MeshFileStatus.Discovered,
+            FirstSeenUtc = now,
+            LastUpdatedUtc = now
+        };
+
+        ServiceLayerDbContext.MeshFiles.Add(file);
+
+        await UpdateMeshFile(file, MeshFileStatus.Discovered);
+
+        return file;
+    }
+
+    protected override FileEventSource Source => FileEventSource.DiscoveryFunction;
 }

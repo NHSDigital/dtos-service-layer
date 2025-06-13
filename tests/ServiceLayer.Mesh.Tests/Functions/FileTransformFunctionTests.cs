@@ -99,7 +99,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform);
+        AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform, FileEventSource.TransformFunction);
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Never);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform);
+        AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform, FileEventSource.TransformFunction);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
         _fileTransformQueueClientMock.Verify(q => q.SendToPoisonQueueAsync(message), Times.Once);
 
-        var updatedFile = AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform);
+        var updatedFile = AssertFileUpdated(file.FileId, MeshFileStatus.FailedTransform, FileEventSource.TransformFunction);
         var savedValidationErrors = DeserializeValidationErrorsFromMeshFile(updatedFile);
         Assert.Equal(validationErrors, savedValidationErrors, new ValidationErrorComparer());
     }
@@ -187,7 +187,7 @@ public class FileTransformFunctionTests : FunctionTestBase<FileTransformFunction
         LoggerMock.VerifyNoLogs(LogLevel.Warning);
         _blobStoreMock.Verify(x => x.DownloadAsync(file), Times.Once);
         _fileTransformerMock.Verify(x => x.TransformFileAsync(expectedStream, file), Times.Once);
-        AssertFileUpdated(file.FileId, MeshFileStatus.Transformed);
+        AssertFileUpdated(file.FileId, MeshFileStatus.Transformed, FileEventSource.TransformFunction);
     }
 
     private static readonly JsonSerializerOptions ValidationErrorJsonOptions = new()

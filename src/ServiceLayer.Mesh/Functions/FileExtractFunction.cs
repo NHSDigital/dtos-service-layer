@@ -17,14 +17,14 @@ public class FileExtractFunction(
     ServiceLayerDbContext serviceLayerDbContext,
     IFileTransformQueueClient fileTransformQueueClient,
     IFileExtractQueueClient fileExtractQueueClient,
-    IMeshFilesBlobStore meshFileBlobStore)
+    IMeshFilesBlobStore meshFileBlobStore) : MeshFileFunctionBase(serviceLayerDbContext)
 {
     [Function("FileExtractFunction")]
     public async Task Run([QueueTrigger("%FileExtractQueueName%")] FileExtractQueueMessage message)
     {
         logger.LogInformation("{FunctionName} started. Processing fileId: {FileId}", nameof(FileExtractFunction), message.FileId);
 
-        await using var transaction = await serviceLayerDbContext.Database.BeginTransactionAsync();
+        await using var transaction = await ServiceLayerDbContext.Database.BeginTransactionAsync();
 
         var file = await GetFileAsync(message.FileId);
         if (file == null || !IsFileSuitableForExtraction(file))
@@ -32,7 +32,7 @@ public class FileExtractFunction(
             return;
         }
 
-        await UpdateFileStatusForExtraction(file);
+        await UpdateMeshFile(file, MeshFileStatus.Extracting);
         await transaction.CommitAsync();
 
         try
@@ -47,7 +47,7 @@ public class FileExtractFunction(
 
     private async Task<MeshFile?> GetFileAsync(string fileId)
     {
-        var file = await serviceLayerDbContext.MeshFiles
+        var file = await ServiceLayerDbContext.MeshFiles
             .FirstOrDefaultAsync(f => f.FileId == fileId);
 
         if (file == null)
@@ -76,13 +76,6 @@ public class FileExtractFunction(
         return true;
     }
 
-    private async Task UpdateFileStatusForExtraction(MeshFile file)
-    {
-        file.Status = MeshFileStatus.Extracting;
-        file.LastUpdatedUtc = DateTime.UtcNow;
-        await serviceLayerDbContext.SaveChangesAsync();
-    }
-
     private async Task ProcessFileExtraction(MeshFile file)
     {
         var meshResponse = await meshInboxService.GetMessageByIdAsync(file.MailboxId, file.FileId);
@@ -100,9 +93,7 @@ public class FileExtractFunction(
         }
 
         file.BlobPath = blobPath;
-        file.Status = MeshFileStatus.Extracted;
-        file.LastUpdatedUtc = DateTime.UtcNow;
-        await serviceLayerDbContext.SaveChangesAsync();
+        await UpdateMeshFile(file, MeshFileStatus.Extracted);
 
         await fileTransformQueueClient.EnqueueFileTransformAsync(file);
     }
@@ -110,9 +101,9 @@ public class FileExtractFunction(
     private async Task HandleExtractionError(MeshFile file, FileExtractQueueMessage message, Exception ex)
     {
         logger.LogError(ex, "An exception occurred during file extraction for fileId: {FileId}", message.FileId);
-        file.Status = MeshFileStatus.FailedExtract;
-        file.LastUpdatedUtc = DateTime.UtcNow;
-        await serviceLayerDbContext.SaveChangesAsync();
+        await UpdateMeshFile(file, MeshFileStatus.FailedExtract);
         await fileExtractQueueClient.SendToPoisonQueueAsync(message);
     }
+
+    protected override FileEventSource Source => FileEventSource.ExtractFunction;
 }
