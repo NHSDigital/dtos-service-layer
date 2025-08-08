@@ -14,8 +14,15 @@ resources:
     - repository: dtos-devops-templates
       type: github
       name: NHSDigital/dtos-devops-templates
-      ref: cf5e22fe4614b7d077a22301d29883e86ac3defc
+      ref: main
       endpoint: NHSDigital
+
+parameters:
+  - name: imageHash
+    type: string
+    default: ''
+  - name: registryHost
+    type: string
 
 variables:
   - group: DEV_core_backend
@@ -36,6 +43,8 @@ stages:
     condition: eq(variables['Build.Reason'], 'Manual')
     variables:
       tfVarsFile: environments/$(ENVIRONMENT).tfvars
+      imageHash: ${{ parameters.imageHash }}
+      registryHost: ${{ parameters.registryHost }}
     jobs:
       - job: init_and_plan
         displayName: Init, plan, store artifact
